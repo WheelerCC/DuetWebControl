@@ -6,6 +6,16 @@ import DwcPlugin from "./DwcPlugin";
 
 export default initCollection(DwcPlugin, [
 	{
+        id: "CoordinateMonitor",
+        name: "Coordinate Monitor",
+        author: "William Wheeler",
+        version: "3.6.1",
+        loadDwcResources: () => import(
+            /* webpackChunkName: "CoordinateMonitor" */
+            "./CoordinateMonitor/index"
+        )
+    },
+	{
         id: "GCodeViewer",
         name: "G-Code Viewer",
         author: "Juan Rosario",

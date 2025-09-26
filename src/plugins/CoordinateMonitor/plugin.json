@@ -1,0 +1,12 @@
+{
+	"id": "CoordinateMonitor",
+	"name": "Coordinate Monitor",
+	"author": "William Wheeler",
+	"version": "auto",
+	"license": "GPL-3.0-or-later",
+	"homepage": "https://github.com/WheelerCC/CoordinateMonitorPlugin",
+	"dwcVersion": "auto",
+	"tags": [
+	  "endstops"
+	]
+  }
