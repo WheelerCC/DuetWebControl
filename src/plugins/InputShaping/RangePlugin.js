@@ -1,7 +1,7 @@
 // based on the VerticalLinePlugin
 'use strict'
 
-import Chart from 'chart.js';
+import { plugins } from 'chart.js';
 
 const verticalLinePlugin = {
 	renderRect(chartInstance, startX, endX) {
@@ -21,4 +21,4 @@ const verticalLinePlugin = {
 	}
 };
 
-Chart.plugins.register(verticalLinePlugin);
+plugins.register(verticalLinePlugin);

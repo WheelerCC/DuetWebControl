@@ -36,7 +36,7 @@
 </template>
 
 <script lang="ts">
-import Chart, { ChartDataSets, MajorTickOptions, NestedTickOptions } from "chart.js";
+import { Chart, ChartDataset, TickOptions } from "chart.js";
 import dateFnsLocale from "date-fns/locale/en-US";
 import { AnalogSensor } from "@duet3d/objectmodel";
 import Vue from "vue";
@@ -96,7 +96,7 @@ interface ExtraDatasetValues {
 /**
  * Type used for chart datasets in this component
  */
-type TempChartDataset = ChartDataSets & ExtraDatasetValues;
+type TempChartDataset = ChartDataset & ExtraDatasetValues & { showLine: boolean };
 
 /**
  * Make a new dataset to render temperature data
@@ -239,10 +239,16 @@ export default Vue.extend({
 		update() {
 			const now = (new Date()).getTime();
 			if (now - this.lastUpdate >= 1000) {
-				this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
-				this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
-				this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
-				this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
+
+				// this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
+				// this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
+				// this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
+				// this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
+				this.chart.config.options!.scales!.y!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
+				this.chart.config.options!.scales!.y!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
+				const now = (new Date()).getTime();
+				this.chart.config.options!.scales!.x!.min = now - maxSampleTime;
+				this.chart.config.options!.scales!.x!.max = now;
 
 				this.chart.update();
 				this.lastUpdate = now;
@@ -250,16 +256,15 @@ export default Vue.extend({
 		},
 		applyDarkTheme(active: boolean) {
 			const ticksColor = active ? "#FFF" : "#666";
-			this.chart.config.options!.legend!.labels!.fontColor = ticksColor;
-			(this.chart.config.options!.scales!.xAxes![0].ticks!.minor as NestedTickOptions).fontColor = ticksColor;
-			(this.chart.config.options!.scales!.xAxes![0].ticks!.major as MajorTickOptions).fontColor = ticksColor;
-			(this.chart.config.options!.scales!.yAxes![0].ticks!.minor as NestedTickOptions).fontColor = ticksColor;
-			(this.chart.config.options!.scales!.yAxes![0].ticks!.major as MajorTickOptions).fontColor = ticksColor;
+			this.chart.config.options!.plugins!.legend!.labels!.color = ticksColor;
+
+			this.chart.config.options!.scales!.x!.ticks!.color = ticksColor;
+			this.chart.config.options!.scales!.y!.ticks!.color = ticksColor;
 
 			const gridLineColor = active ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
-			this.chart.config.options!.scales!.xAxes![0].gridLines!.color = gridLineColor;
-			this.chart.config.options!.scales!.yAxes![0].gridLines!.color = gridLineColor;
-			this.chart.config.options!.scales!.yAxes![0].gridLines!.zeroLineColor = gridLineColor;
+			this.chart.config.options!.scales!.x!.grid!.color = gridLineColor;
+			this.chart.config.options!.scales!.y!.grid!.color = gridLineColor;
+			// zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
 
 			this.chart.update();
 		}
@@ -285,63 +290,58 @@ export default Vue.extend({
 						tension: 0				// disable bezier curves
 					}
 				},
-				legend: {
-					labels: {
-						filter: (legendItem, data) => data.datasets![legendItem.datasetIndex!].showLine,
-						fontFamily: "Roboto,sans-serif"
-					}
+				plugins: {
+					legend: {
+						labels: {
+							filter: (legendItem, data) => (data.datasets![legendItem.datasetIndex!] as TempChartDataset).showLine,
+							font: {
+								family: "Roboto,sans-serif"
+							}, 
+						}
+					},
 				},
 				maintainAspectRatio: false,
 				responsive: true,
-				responsiveAnimationDuration: 0, // animation duration after a resize
 				scales: {
-					xAxes: [
-						{
-							adapters: {
-								date: {
-									locale: dateFnsLocale
-								}
-							},
-							gridLines: {
-								display: true
-							},
-							ticks: {
-								min: (new Date()).getTime() - maxSampleTime,
-								max: (new Date()).getTime(),
-								minor: {
-									fontFamily: "Roboto,sans-serif"
-								},
-								major: {
-									fontFamily: "Roboto,sans-serif"
-								}
-							},
-							time: {
-								unit: "minute",
-								displayFormats: {
-									minute: "HH:mm"
-								}
-							},
-							type: "time",
+					x: {
+						min: (new Date()).getTime() - maxSampleTime,
+						max: (new Date()).getTime(),
+						type: "time",
+						adapters: {
+						date: {
+							locale: dateFnsLocale
 						}
-					],
-					yAxes: [
-						{
-							gridLines: {
-								display: true
-							},
-							ticks: {
-								minor: {
-									fontFamily: "Roboto,sans-serif"
-								},
-								major: {
-									fontFamily: "Roboto,sans-serif"
-								},
-								min: 0,
-								max: defaultMaxTemperature,
-								stepSize: 50
+						},
+						grid: {
+							display: true
+						},
+						time: {
+							unit: "minute",
+							displayFormats: {
+								minute: "HH:mm"
+							}
+						},
+						ticks: {
+							
+							font: {
+								family: "Roboto,sans-serif"
 							}
 						}
-					]
+					},
+					y: {
+						min: 0,
+						max: defaultMaxTemperature,
+						grid: {
+							display: true
+						},
+						ticks: {
+							
+							stepSize: 50,
+							font: {
+								family: "Roboto,sans-serif"
+							}
+						}
+					}
 				}
 			},
 			data: {
@@ -370,7 +370,8 @@ export default Vue.extend({
 					// Record sensor temperatures
 					store.state.machines[hostname].model.sensors.analog.forEach((sensor, sensorIndex) => {
 						if (sensor !== null) {
-							const heaterIndex = store.state.machines[hostname].model.heat.heaters.findIndex(heater => (heater !== null) && (heater.sensor === sensorIndex));
+							const heaters: Array<{ sensor: number } | null> = store.state.machines[hostname].model.heat.heaters;
+							const heaterIndex: number = heaters.findIndex((heater: { sensor: number } | null, idx: number) => (heater !== null) && (heater.sensor === sensorIndex));
 							if (heaterIndex !== -1) {
 								pushSeriesData(hostname, heaterIndex, false, sensor);
 							} else {

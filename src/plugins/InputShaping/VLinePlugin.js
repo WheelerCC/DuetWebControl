@@ -1,7 +1,7 @@
 // Original code from https://stackoverflow.com/questions/30256695/chart-js-drawing-an-arbitrary-vertical-line
 'use strict'
 
-import Chart from 'chart.js'
+import { plugins } from 'chart.js';
 
 const VLinePlugin = {
 	id: 'vline',
@@ -37,4 +37,4 @@ const VLinePlugin = {
     }
 };
 
-Chart.plugins.register(VLinePlugin);
+plugins.register(VLinePlugin);

@@ -5,7 +5,8 @@
 <script>
 'use strict'
 
-import Chart from 'chart.js'
+// TODO fix tree shaking https://www.chartjs.org/docs/master/getting-started/integration.html#bundlers-webpack-rollup-etc
+import Chart from 'chart.js/auto'
 import { getInputShaperDamping, getInputShaperFactors } from '@duet3d/motionanalysis'
 import { InputShapingType } from "@duet3d/objectmodel";
 import { mapState } from 'vuex'
