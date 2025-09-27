@@ -95,9 +95,9 @@
                   class="d-flex pa-0"
                 >
                   <input-shaping-file-list
+                    v-model="fileDataToAnalyze"
                     title="Motion Profiles"
                     can-delete
-                    v-model="fileDataToAnalyze"
                     :files="files"
                     :files-last-modified="filesLastModified"
                     :selectedFiles.sync="filesToAnalyze"
@@ -106,9 +106,9 @@
                     :sample-end-index.sync="sampleEndIndex"
                     :had-overflow.sync="hadOverflow"
                     :estimate-shaper-effect.sync="estimateShaperEffect"
-                    @refresh="refresh"
                     :show-original-values.sync="showOriginalValues"
                     :wide-band.sync="wideBand"
+                    @refresh="refresh"
                   />
                 </v-col>
                 <v-col

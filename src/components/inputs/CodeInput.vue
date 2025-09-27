@@ -17,9 +17,9 @@
         :items="displayedCodes"
         hide-selected
         append-icon=""
+        maxlength="255"
         @update:search-input="code = $event ?? ''"
         @keyup.enter="sendOnEnter"
-        maxlength="255"
         @change="change"
         @blur="wasFocused = showItems = ignoreEnter = false"
         @click="click"

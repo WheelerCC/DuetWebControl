@@ -75,9 +75,9 @@
         </v-btn>
         <br>
         <v-btn
+          v-show="!(!isJobRunning || loading || visualizingCurrentJob)"
           :title="$t('plugins.gcodeViewer.loadCurrentJob.title')"
           class="toggle-menu-button-close mb-10"
-          v-show="!(!isJobRunning || loading || visualizingCurrentJob)"
           color="secondary"
           small
           @click="loadRunningJob"
@@ -86,9 +86,9 @@
         </v-btn>
         <br>
         <v-btn
+          v-show="loading"
           :title="$t('plugins.gcodeViewer.cancelLoad')"
           class="toggle-menu-button-close"
-          v-show="loading"
           color="warning"
           small
           @click="cancelLoad"
@@ -563,7 +563,7 @@
               persistent-hint
               @start="scrubStart"
               @end="scrubEnd"
-@change="scrubPositionChanged"
+              @change="scrubPositionChanged"
             />
           </v-col>
           <v-col cols="2">

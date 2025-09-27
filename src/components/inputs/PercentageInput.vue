@@ -71,10 +71,10 @@
         :max="max"
         :disabled="disabled"
         :readonly="isLocked && canLock"
-        @change="$emit('input', $event)"
         hide-details
         thumb-label="always"
         class="slider"
+        @change="$emit('input', $event)"
       />
     </v-col>
 

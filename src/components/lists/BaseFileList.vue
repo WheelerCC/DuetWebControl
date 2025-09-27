@@ -11,13 +11,13 @@
       :custom-sort="sort"
       :sort-by.sync="internalSortBy"
       :sort-desc.sync="internalSortDesc"
-      @toggle-select-all="toggleAll"
       must-sort
       disable-pagination
       hide-default-footer
       :mobile-breakpoint="0"
       class="base-file-list elevation-3"
       :class="{ 'empty-table-fix' : !innerFilelist.length, 'loading-cursor' : isLoading }"
+      @toggle-select-all="toggleAll"
     >
       <template #progress>
         <slot name="progress">

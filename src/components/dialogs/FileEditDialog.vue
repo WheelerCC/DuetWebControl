@@ -5,8 +5,8 @@
     hide-overlay
     persistent
     no-click-animation
-@input="$emit('update:shown', $event)"
     transition="dialog-bottom-transition"
+    @input="$emit('update:shown', $event)"
   >
     <v-card class="d-flex flex-column">
       <v-app-bar
