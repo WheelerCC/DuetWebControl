@@ -135,7 +135,7 @@ export default Vue.extend({
 			return this.busyPlugins.includes(plugin.id);
 		},
 		getPluginDependencies(plugin: PluginManifest) {
-			let result = []
+			let result: string[] = [] // todo correctly type
 			if (!store.state.machine.model.plugins.has(plugin.id)) {
 				result.push(`DWC ${packageInfo.version}`);
 			} else if (plugin.dwcVersion) {

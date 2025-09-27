@@ -222,7 +222,7 @@ export default Vue.extend({
 	},
 	methods: {
 		getBigThumbnail(thumbnails: Array<ThumbnailInfo>) {
-			let biggestThumbnail = null;
+			let biggestThumbnail: ThumbnailInfo | null = null;
 			for (const thumbnail of thumbnails) {
 				if (thumbnail.data !== null && (!biggestThumbnail || thumbnail.height > biggestThumbnail.height)) {
 					biggestThumbnail = thumbnail;
@@ -231,7 +231,7 @@ export default Vue.extend({
 			return biggestThumbnail;
 		},
 		getSmallThumbnail(thumbnails: Array<ThumbnailInfo>) {
-			let smallestThumbnail = null;
+			let smallestThumbnail: ThumbnailInfo | null = null;
 			for (const thumbnail of thumbnails) {
 				if (thumbnail.data !== null && (!smallestThumbnail || Math.abs(48 - thumbnail.height) < Math.abs(48 - smallestThumbnail.height))) {
 					smallestThumbnail = thumbnail;

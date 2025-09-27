@@ -672,7 +672,7 @@ export default VDataTable.extend({
 			}
 
 			this.innerDoingFileOperation = true;
-			const deletedItems = [], directory = this.directory;
+			const deletedItems: any[] = [], directory = this.directory;  // todo correctly type
 			for (const item of this.removeDialog.items) {
 				try {
 					await store.dispatch("machine/delete", {

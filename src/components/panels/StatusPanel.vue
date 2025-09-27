@@ -366,7 +366,7 @@ export default Vue.extend({
 			return (probe !== null) && (probe.type !== ProbeType.none);
 		},
 		probeSpanClasses(probe: Probe, isFirstItem: boolean) {
-			let result = [];
+			let result: string[] = []; // todo correctly type
 			if (!isFirstItem) {
 				result.push("ml-2");
 			}

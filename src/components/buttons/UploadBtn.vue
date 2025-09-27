@@ -429,7 +429,7 @@ export default Vue.extend({
 						showSuccess: !zipName
 					});
 				} else {
-					const filelist = [];
+					const filelist: any[] = []; // todo correctly type
 					for (let i = 0; i < files.length; i++) {
 						filelist.push({
 							filename: files[i].name,
