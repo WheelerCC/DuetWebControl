@@ -1,185 +1,265 @@
 <template>
-	<v-dialog v-model="shown" max-width="480px" :persistent="isPersistent" no-click-animation>
-		<v-card>
-			<v-card-title>
-				<span class="headline">
-					{{ title }}
-				</span>
-			</v-card-title>
+  <v-dialog
+    v-model="shown"
+    max-width="480px"
+    :persistent="isPersistent"
+    no-click-animation
+  >
+    <v-card>
+      <v-card-title>
+        <span class="headline">
+          {{ title }}
+        </span>
+      </v-card-title>
 
-			<v-card-text>
-				<v-window v-model="currentPage">
-					<!-- Plugin Installation -->
-					<v-window-item>
-						{{ $t("dialog.pluginInstallation.prompt") }}
+      <v-card-text>
+        <v-window v-model="currentPage">
+          <!-- Plugin Installation -->
+          <v-window-item>
+            {{ $t("dialog.pluginInstallation.prompt") }}
 
-						<v-card outlined class="my-3">
-							<v-card-text>
-								{{ `${pluginManifest.name || $t("generic.noValue")} ${pluginManifest.version || ""}` }}<br>
-								{{ $t("dialog.pluginInstallation.by", [pluginManifest.author || $t("generic.noValue")]) }}<br>
-								<template v-if="pluginManifest.license">
-									{{ $t("dialog.pluginInstallation.license", [pluginManifest.license]) }}<br>
-								</template>
-								<template v-if="pluginManifest.homepage">
-									{{ $t("dialog.pluginInstallation.homepage") }}
-									<a :href="pluginManifest.homepage" target="_blank">
-										{{ homepageDomain }}
-									</a>
-									<br>
-								</template>
-							</v-card-text>
-						</v-card>
+            <v-card
+              outlined
+              class="my-3"
+            >
+              <v-card-text>
+                {{ `${pluginManifest.name || $t("generic.noValue")} ${pluginManifest.version || ""}` }}<br>
+                {{ $t("dialog.pluginInstallation.by", [pluginManifest.author || $t("generic.noValue")]) }}<br>
+                <template v-if="pluginManifest.license">
+                  {{ $t("dialog.pluginInstallation.license", [pluginManifest.license]) }}<br>
+                </template>
+                <template v-if="pluginManifest.homepage">
+                  {{ $t("dialog.pluginInstallation.homepage") }}
+                  <a
+                    :href="pluginManifest.homepage"
+                    target="_blank"
+                  >
+                    {{ homepageDomain }}
+                  </a>
+                  <br>
+                </template>
+              </v-card-text>
+            </v-card>
 
-						<template v-if="hasDsfFiles || hasDwcFiles || hasSdFiles">
-							{{ $t("dialog.pluginInstallation.contents") }}
-							<ul class="mt-1">
-								<li v-show="hasDsfFiles">
-									{{ $t("dialog.pluginInstallation.dsf") }}
-								</li>
-								<li v-show="hasDwcFiles">
-									{{ $t("dialog.pluginInstallation.dwc") }}
-								</li>
-								<li v-show="hasSdFiles">
-									{{ $t("dialog.pluginInstallation.rrf") }}
-								</li>
-							</ul>
-						</template>
-					</v-window-item>
+            <template v-if="hasDsfFiles || hasDwcFiles || hasSdFiles">
+              {{ $t("dialog.pluginInstallation.contents") }}
+              <ul class="mt-1">
+                <li v-show="hasDsfFiles">
+                  {{ $t("dialog.pluginInstallation.dsf") }}
+                </li>
+                <li v-show="hasDwcFiles">
+                  {{ $t("dialog.pluginInstallation.dwc") }}
+                </li>
+                <li v-show="hasSdFiles">
+                  {{ $t("dialog.pluginInstallation.rrf") }}
+                </li>
+              </ul>
+            </template>
+          </v-window-item>
 
-					<!-- Prerequisites -->
-					<v-window-item>
-						<template v-if="pluginManifestValid">
-							<div v-if="hasSdFiles">
-								<h3 class="mt-3">
-									<v-icon :class="checkRrfVersion ? 'success--text' : 'error--text'">
-										{{ checkRrfVersion ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
-									</v-icon>
-									{{ $t("dialog.pluginInstallation.rrf") }}
-								</h3>
-								<span class="ml-8 subtitle-2">
-									{{ $t("dialog.pluginInstallation.version", [rrfVersion]) }}
-								</span>
-							</div>
+          <!-- Prerequisites -->
+          <v-window-item>
+            <template v-if="pluginManifestValid">
+              <div v-if="hasSdFiles">
+                <h3 class="mt-3">
+                  <v-icon :class="checkRrfVersion ? 'success--text' : 'error--text'">
+                    {{ checkRrfVersion ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
+                  </v-icon>
+                  {{ $t("dialog.pluginInstallation.rrf") }}
+                </h3>
+                <span class="ml-8 subtitle-2">
+                  {{ $t("dialog.pluginInstallation.version", [rrfVersion]) }}
+                </span>
+              </div>
 
-							<div v-if="hasDwcFiles" :class="hasSdFiles ? 'pt-3' : ''">
-								<h3>
-									<v-icon :class="checkDwcVersion ? 'success--text' : 'error--text'">
-										{{ checkDwcVersion ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
-									</v-icon>
-									{{ $t("dialog.pluginInstallation.dwc") }}
-								</h3>
-								<span class="ml-8 subtitle-2">
-									{{ $t("dialog.pluginInstallation.version", [dwcVersion]) }}
-								</span>
-							</div>
+              <div
+                v-if="hasDwcFiles"
+                :class="hasSdFiles ? 'pt-3' : ''"
+              >
+                <h3>
+                  <v-icon :class="checkDwcVersion ? 'success--text' : 'error--text'">
+                    {{ checkDwcVersion ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
+                  </v-icon>
+                  {{ $t("dialog.pluginInstallation.dwc") }}
+                </h3>
+                <span class="ml-8 subtitle-2">
+                  {{ $t("dialog.pluginInstallation.version", [dwcVersion]) }}
+                </span>
+              </div>
 
-							<div v-if="showDsfVersion"
-								 :class="(pluginManifest.rrfVersion || pluginManifest.dwcVersion) ? 'pt-3' : ''">
-								<h3>
-									<v-icon :class="checkDsfVersion ? 'success--text' : 'error--text'">
-										{{ checkDsfVersion ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
-									</v-icon>
-									{{ $t("dialog.pluginInstallation.dsf") }}
-								</h3>
-								<span class="ml-8 subtitle-2">
-									{{ $t("dialog.pluginInstallation.version", [dsfVersion]) }}
-								</span>
-							</div>
+              <div
+                v-if="showDsfVersion"
+                :class="(pluginManifest.rrfVersion || pluginManifest.dwcVersion) ? 'pt-3' : ''"
+              >
+                <h3>
+                  <v-icon :class="checkDsfVersion ? 'success--text' : 'error--text'">
+                    {{ checkDsfVersion ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
+                  </v-icon>
+                  {{ $t("dialog.pluginInstallation.dsf") }}
+                </h3>
+                <span class="ml-8 subtitle-2">
+                  {{ $t("dialog.pluginInstallation.version", [dsfVersion]) }}
+                </span>
+              </div>
 
-							<div v-if="!pluginsSupported" class="pt-3">
-								<h3>
-									<v-icon class="error--text">mdi-close-circle-outline</v-icon>
-									{{ $t('dialog.pluginInstallation.noPluginSupport') }}
-								</h3>
-							</div>
-							<div v-else-if="requiresRoot" class="pt-3">
-								<h3>
-									<v-icon :class="checkRoot ? 'success--text' : 'error--text'">
-										{{ checkRoot ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
-									</v-icon>
-									{{ $t("dialog.pluginInstallation.rootSupport") }}
-								</h3>
-							</div>
-						</template>
-						<div v-else class="pt-3">
-							<h3>
-								<v-icon class="error--text">mdi-close-circle-outline</v-icon>
-								{{ $t("dialog.pluginInstallation.invalidManifest") }}
-							</h3>
-						</div>
-					</v-window-item>
+              <div
+                v-if="!pluginsSupported"
+                class="pt-3"
+              >
+                <h3>
+                  <v-icon class="error--text">
+                    mdi-close-circle-outline
+                  </v-icon>
+                  {{ $t('dialog.pluginInstallation.noPluginSupport') }}
+                </h3>
+              </div>
+              <div
+                v-else-if="requiresRoot"
+                class="pt-3"
+              >
+                <h3>
+                  <v-icon :class="checkRoot ? 'success--text' : 'error--text'">
+                    {{ checkRoot ? "mdi-check-circle-outline" : "mdi-close-circle-outline" }}
+                  </v-icon>
+                  {{ $t("dialog.pluginInstallation.rootSupport") }}
+                </h3>
+              </div>
+            </template>
+            <div
+              v-else
+              class="pt-3"
+            >
+              <h3>
+                <v-icon class="error--text">
+                  mdi-close-circle-outline
+                </v-icon>
+                {{ $t("dialog.pluginInstallation.invalidManifest") }}
+              </h3>
+            </div>
+          </v-window-item>
 
-					<!-- Permissions -->
-					<v-window-item>
-						<v-alert v-show="hasDwcFiles" dense outlined type="warning" icon="mdi-alert-outline"
-								 class="subtitle-2 mb-3">
-							{{ $t("dialog.pluginInstallation.dwcWarning") }}
-						</v-alert>
+          <!-- Permissions -->
+          <v-window-item>
+            <v-alert
+              v-show="hasDwcFiles"
+              dense
+              outlined
+              type="warning"
+              icon="mdi-alert-outline"
+              class="subtitle-2 mb-3"
+            >
+              {{ $t("dialog.pluginInstallation.dwcWarning") }}
+            </v-alert>
 
-						<v-alert v-if="requiresRoot" dense outlined type="error" icon="mdi-alert-circle-outline"
-								 class="subtitle-2 mb-0" :class="hasDwcFiles ? 'mt-3' : ''">
-							{{ $t("dialog.pluginInstallation.rootWarning") }}
-						</v-alert>
-						<template v-else-if="permissions.size > 0">
-							{{ $t("dialog.pluginInstallation.sbcPermissions") }}
-							<ul class="mt-1">
-								<li v-for="permission in permissions" :key="permission">
-									{{ $t(`pluginPermissions.${permission}`) }}
-								</li>
-							</ul>
-						</template>
-						<template v-else-if="!hasDwcFiles">
-							{{ $t("dialog.pluginInstallation.noSpecialPermissions") }}
-						</template>
-					</v-window-item>
+            <v-alert
+              v-if="requiresRoot"
+              dense
+              outlined
+              type="error"
+              icon="mdi-alert-circle-outline"
+              class="subtitle-2 mb-0"
+              :class="hasDwcFiles ? 'mt-3' : ''"
+            >
+              {{ $t("dialog.pluginInstallation.rootWarning") }}
+            </v-alert>
+            <template v-else-if="permissions.size > 0">
+              {{ $t("dialog.pluginInstallation.sbcPermissions") }}
+              <ul class="mt-1">
+                <li
+                  v-for="permission in permissions"
+                  :key="permission"
+                >
+                  {{ $t(`pluginPermissions.${permission}`) }}
+                </li>
+              </ul>
+            </template>
+            <template v-else-if="!hasDwcFiles">
+              {{ $t("dialog.pluginInstallation.noSpecialPermissions") }}
+            </template>
+          </v-window-item>
 
-					<!-- Ready To Install -->
-					<v-window-item>
-						{{ $t("dialog.pluginInstallation.readyMessage") }}
-						<br><br>
-						{{ $t("dialog.pluginInstallation.readyDisclaimer") }}
-						<div class="pl-2 pb-2">
-							<v-checkbox v-model="disclaimerAccepted"
-										:label="$t('dialog.pluginInstallation.checkboxDisclaimer')" class="subtitle-2"
-										hide-details />
-						</div>
-					</v-window-item>
+          <!-- Ready To Install -->
+          <v-window-item>
+            {{ $t("dialog.pluginInstallation.readyMessage") }}
+            <br><br>
+            {{ $t("dialog.pluginInstallation.readyDisclaimer") }}
+            <div class="pl-2 pb-2">
+              <v-checkbox
+                v-model="disclaimerAccepted"
+                :label="$t('dialog.pluginInstallation.checkboxDisclaimer')"
+                class="subtitle-2"
+                hide-details
+              />
+            </div>
+          </v-window-item>
 
-					<!-- Installation Progress -->
-					<v-window-item>
-						<span v-show="!isFinished">
-							{{ $t("dialog.pluginInstallation.progressText") }}
-						</span>
-						<span v-show="isFinished && installationError" class="error--text">
-							{{ installationError }}
-						</span>
-						<v-progress-linear v-show="!isFinished" indeterminate color="primary" class="mt-3" />
-					</v-window-item>
-				</v-window>
-			</v-card-text>
+          <!-- Installation Progress -->
+          <v-window-item>
+            <span v-show="!isFinished">
+              {{ $t("dialog.pluginInstallation.progressText") }}
+            </span>
+            <span
+              v-show="isFinished && installationError"
+              class="error--text"
+            >
+              {{ installationError }}
+            </span>
+            <v-progress-linear
+              v-show="!isFinished"
+              indeterminate
+              color="primary"
+              class="mt-3"
+            />
+          </v-window-item>
+        </v-window>
+      </v-card-text>
 
-			<v-card-actions>
-				<v-btn v-show="canCancel" color="blue darken-1" text @click="shown = false">
-					{{ $t("dialog.pluginInstallation.cancel") }}
-				</v-btn>
-				<v-spacer></v-spacer>
-				<v-btn v-show="isFinished" color="blue darken-1" text @click="finish">
-					{{ $t("dialog.pluginInstallation.finish") }}
-				</v-btn>
-				<v-spacer></v-spacer>
-				<v-btn v-show="currentPage > 0 && currentPage < 4" color="blue darken-1" text @click="currentPage--">
-					{{ $t("dialog.pluginInstallation.back") }}
-				</v-btn>
-				<v-btn v-show="currentPage < 4" color="blue darken-1" text :disabled="!canNext" @click="next">
-					{{ $t("dialog.pluginInstallation.next") }}
-				</v-btn>
-			</v-card-actions>
-		</v-card>
+      <v-card-actions>
+        <v-btn
+          v-show="canCancel"
+          color="blue darken-1"
+          text
+          @click="shown = false"
+        >
+          {{ $t("dialog.pluginInstallation.cancel") }}
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          v-show="isFinished"
+          color="blue darken-1"
+          text
+          @click="finish"
+        >
+          {{ $t("dialog.pluginInstallation.finish") }}
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          v-show="currentPage > 0 && currentPage < 4"
+          color="blue darken-1"
+          text
+          @click="currentPage--"
+        >
+          {{ $t("dialog.pluginInstallation.back") }}
+        </v-btn>
+        <v-btn
+          v-show="currentPage < 4"
+          color="blue darken-1"
+          text
+          :disabled="!canNext"
+          @click="next"
+        >
+          {{ $t("dialog.pluginInstallation.next") }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
 
-		<confirm-dialog :title="$t('dialog.pluginInstallation.reloadPrompt.title')"
-						:prompt="$t('dialog.pluginInstallation.reloadPrompt.prompt')" :shown.sync="showReloadPrompt"
-						@confirmed="reload" />
-	</v-dialog>
+    <confirm-dialog
+      :title="$t('dialog.pluginInstallation.reloadPrompt.title')"
+      :prompt="$t('dialog.pluginInstallation.reloadPrompt.prompt')"
+      :shown.sync="showReloadPrompt"
+      @confirmed="reload"
+    />
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -202,6 +282,27 @@ enum Page {
 }
 
 export default Vue.extend({
+	data() {
+		return {
+			shown: false,
+			currentPage: Page.start,
+			disclaimerAccepted: false,
+			isFinished: false,
+			installationError: null,
+			startWhenFinished: false,
+
+			zipFilename: '',
+			zipBlob: null as File | null,
+			zipFile: null as JSZip | null,
+			hasDsfFiles: false,
+			hasDwcFiles: false,
+			hasSdFiles: false,
+			pluginManifest: {} as PluginManifest,
+			pluginManifestValid: false,
+
+			showReloadPrompt: false
+		}
+	},
 	computed: {
 		title(): string {
 			const page = this.currentPage as Page;
@@ -308,25 +409,10 @@ export default Vue.extend({
 			return this.pluginManifest.sbcPermissions || new Set<SbcPermission>();
 		}
 	},
-	data() {
-		return {
-			shown: false,
-			currentPage: Page.start,
-			disclaimerAccepted: false,
-			isFinished: false,
-			installationError: null,
-			startWhenFinished: false,
-
-			zipFilename: '',
-			zipBlob: null as File | null,
-			zipFile: null as JSZip | null,
-			hasDsfFiles: false,
-			hasDwcFiles: false,
-			hasSdFiles: false,
-			pluginManifest: {} as PluginManifest,
-			pluginManifestValid: false,
-
-			showReloadPrompt: false
+	watch: {
+		selectedMachine() {
+			// Dismiss plugin installation prompt when the selected machine changes
+			this.shown = false;
 		}
 	},
 	mounted() {
@@ -405,12 +491,6 @@ export default Vue.extend({
 		},
 		reload() {
 			location.reload(true);
-		}
-	},
-	watch: {
-		selectedMachine() {
-			// Dismiss plugin installation prompt when the selected machine changes
-			this.shown = false;
 		}
 	}
 });

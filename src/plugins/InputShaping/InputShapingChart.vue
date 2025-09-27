@@ -1,5 +1,10 @@
 <template>
-	<canvas ref="chart" @mousedown="mouseDown" @mousemove="mouseMove" @dblclick="doubleClick"></canvas>
+  <canvas
+    ref="chart"
+    @mousedown="mouseDown"
+    @mousemove="mouseMove"
+    @dblclick="doubleClick"
+  />
 </template>
 
 <script>
@@ -67,6 +72,75 @@ export default {
 			dragStart: null,
 			isUpdating: false
 		}
+	},
+	watch: {
+		frequencies(to, from) { if (this.arraysDiffer(to, from)) { this.update(); } },
+		ringingFrequency() { this.update(); },
+		value() { this.update(); },
+		showValues() { this.update(); },
+
+		inputShapers: {
+			deep: true,
+			handler(to, from) { if (this.arraysDiffer(to, from)) { this.update(); } }
+		},
+		inputShaperFrequency() { this.update(); },
+		inputShaperDamping() { this.update(); },
+
+		customAmplitudes: {
+			deep: true,
+			handler() {
+				if (this.customAmplitudes && this.customDelays) {
+					for (let dataset in this.chart.data.datasets) {
+						if (dataset.isCustom) {
+							dataset.data = getInputShaperDamping(this.frequencies, this.customAmplitudes, this.customDelays);
+							this.update();
+							return;
+						}
+					}
+					this.update();
+				}
+			}
+		},
+		customDelays: {
+			deep: true,
+			handler() {
+				if (this.customAmplitudes && this.customDelays) {
+					for (let dataset in this.chart.data.datasets) {
+						if (dataset.isCustom) {
+							dataset.data = getInputShaperDamping(this.frequencies, this.customAmplitudes, this.customDelays);
+							this.update();
+							return;
+						}
+					}
+					this.update();
+				}
+			}
+		},
+
+		darkTheme(to) {
+			this.applyDarkTheme(to);
+		},
+		language() {
+			// TODO!
+			/*
+			this.chart.options.scales.xAxes[0].scaleLabel.labelString = this.$t(this.displaySamples ? 'plugins.accelerometer.samples' : 'plugins.accelerometer.frequency');
+			this.chart.options.scales.yAxes[0].scaleLabel.labelString = this.$t(this.displaySamples ? 'plugins.accelerometer.accelerations' : 'plugins.accelerometer.amplitudes');
+			this.update();
+			 */
+		},
+		sampleStartIndex(to) {
+			if (!this.frequencies || this.frequencies.length === 0) {
+				this.chart.config.options.scales.xAxes[0].ticks.min = isNaN(to) ? 0 : to;
+				this.chart.update();
+			}
+		},
+		sampleEndIndex(to) {
+			if (!this.frequencies || this.frequencies.length === 0) {
+				this.chart.config.options.scales.xAxes[0].ticks.max = isNaN(to) ? this.chart.data.datasets.labels.length : to;
+				this.chart.update();
+			}
+		},
+		estimateShaperEffect() { this.update(); }
 	},
 	mounted() {
 		// TODO: Update translations here -----v
@@ -491,75 +565,6 @@ export default {
 			}
 			return false;
 		}
-	},
-	watch: {
-		frequencies(to, from) { if (this.arraysDiffer(to, from)) { this.update(); } },
-		ringingFrequency() { this.update(); },
-		value() { this.update(); },
-		showValues() { this.update(); },
-
-		inputShapers: {
-			deep: true,
-			handler(to, from) { if (this.arraysDiffer(to, from)) { this.update(); } }
-		},
-		inputShaperFrequency() { this.update(); },
-		inputShaperDamping() { this.update(); },
-
-		customAmplitudes: {
-			deep: true,
-			handler() {
-				if (this.customAmplitudes && this.customDelays) {
-					for (let dataset in this.chart.data.datasets) {
-						if (dataset.isCustom) {
-							dataset.data = getInputShaperDamping(this.frequencies, this.customAmplitudes, this.customDelays);
-							this.update();
-							return;
-						}
-					}
-					this.update();
-				}
-			}
-		},
-		customDelays: {
-			deep: true,
-			handler() {
-				if (this.customAmplitudes && this.customDelays) {
-					for (let dataset in this.chart.data.datasets) {
-						if (dataset.isCustom) {
-							dataset.data = getInputShaperDamping(this.frequencies, this.customAmplitudes, this.customDelays);
-							this.update();
-							return;
-						}
-					}
-					this.update();
-				}
-			}
-		},
-
-		darkTheme(to) {
-			this.applyDarkTheme(to);
-		},
-		language() {
-			// TODO!
-			/*
-			this.chart.options.scales.xAxes[0].scaleLabel.labelString = this.$t(this.displaySamples ? 'plugins.accelerometer.samples' : 'plugins.accelerometer.frequency');
-			this.chart.options.scales.yAxes[0].scaleLabel.labelString = this.$t(this.displaySamples ? 'plugins.accelerometer.accelerations' : 'plugins.accelerometer.amplitudes');
-			this.update();
-			 */
-		},
-		sampleStartIndex(to) {
-			if (!this.frequencies || this.frequencies.length === 0) {
-				this.chart.config.options.scales.xAxes[0].ticks.min = isNaN(to) ? 0 : to;
-				this.chart.update();
-			}
-		},
-		sampleEndIndex(to) {
-			if (!this.frequencies || this.frequencies.length === 0) {
-				this.chart.config.options.scales.xAxes[0].ticks.max = isNaN(to) ? this.chart.data.datasets.labels.length : to;
-				this.chart.update();
-			}
-		},
-		estimateShaperEffect() { this.update(); }
 	}
 }
 </script>

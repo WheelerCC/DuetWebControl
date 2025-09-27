@@ -1,96 +1,167 @@
-<style scoped>
-.persistent {
-	position: absolute;
-	top: 0px;
-	right: 0px;
-}
-</style>
-
 <template>
-	<v-dialog v-model="shown" :no-click-animation="isPersistent" :persistent="isPersistent">
-		<v-card>
-			<v-card-title class="justify-center">
-				<span class="headline">
-					{{ messageBox.title }}
-				</span>
-			</v-card-title>
+  <v-dialog
+    v-model="shown"
+    :no-click-animation="isPersistent"
+    :persistent="isPersistent"
+  >
+    <v-card>
+      <v-card-title class="justify-center">
+        <span class="headline">
+          {{ messageBox.title }}
+        </span>
+      </v-card-title>
 
-			<v-card-text>
-				<!-- Main message -->
-				<div class="text-center" :class="{ 'mb-6': displayedAxes.length > 0 }" v-html="messageBox.message"></div>
+      <v-card-text>
+        <!-- Main message -->
+        <div
+          class="text-center"
+          :class="{ 'mb-6': displayedAxes.length > 0 }"
+          v-html="messageBox.message"
+        />
 
-				<!-- Jog control -->
-				<v-row v-for="axis in displayedAxes" :key="axis.letter" dense>
-					<!-- Decreasing movements -->
-					<v-col>
-						<v-row no-gutters>
-							<v-col v-for="index in numMoveSteps" :key="index" :class="getMoveCellClass(index - 1)">
-								<code-btn :code="getMoveCode(axis, index - 1, true)" :disabled="!canMove(axis)" no-wait
-										  block tile class="move-btn">
-									<v-icon>mdi-chevron-left</v-icon>
-									{{ axis.letter + showSign(-moveSteps(axis.letter)[index - 1]) }}
-								</code-btn>
-							</v-col>
-						</v-row>
-					</v-col>
+        <!-- Jog control -->
+        <v-row
+          v-for="axis in displayedAxes"
+          :key="axis.letter"
+          dense
+        >
+          <!-- Decreasing movements -->
+          <v-col>
+            <v-row no-gutters>
+              <v-col
+                v-for="index in numMoveSteps"
+                :key="index"
+                :class="getMoveCellClass(index - 1)"
+              >
+                <code-btn
+                  :code="getMoveCode(axis, index - 1, true)"
+                  :disabled="!canMove(axis)"
+                  no-wait
+                  block
+                  tile
+                  class="move-btn"
+                >
+                  <v-icon>mdi-chevron-left</v-icon>
+                  {{ axis.letter + showSign(-moveSteps(axis.letter)[index - 1]) }}
+                </code-btn>
+              </v-col>
+            </v-row>
+          </v-col>
 
-					<!-- Current position -->
-					<v-col cols="auto" class="d-flex align-center px-3">
-						<strong>
-							{{ axis.letter + ' = ' + displayAxisPosition(axis) }}
-						</strong>
-					</v-col>
+          <!-- Current position -->
+          <v-col
+            cols="auto"
+            class="d-flex align-center px-3"
+          >
+            <strong>
+              {{ axis.letter + ' = ' + displayAxisPosition(axis) }}
+            </strong>
+          </v-col>
 
-					<!-- Increasing movements -->
-					<v-col>
-						<v-row no-gutters>
-							<v-col v-for="index in numMoveSteps" :key="index"
-								   :class="getMoveCellClass(numMoveSteps - index)">
-								<code-btn :code="getMoveCode(axis, numMoveSteps - index, false)"
-										  :disabled="!canMove(axis)" no-wait block tile class="move-btn">
-									{{ axis.letter + showSign(moveSteps(axis.letter)[numMoveSteps - index]) }}
-									<v-icon>mdi-chevron-right</v-icon>
-								</code-btn>
-							</v-col>
-						</v-row>
-					</v-col>
-				</v-row>
+          <!-- Increasing movements -->
+          <v-col>
+            <v-row no-gutters>
+              <v-col
+                v-for="index in numMoveSteps"
+                :key="index"
+                :class="getMoveCellClass(numMoveSteps - index)"
+              >
+                <code-btn
+                  :code="getMoveCode(axis, numMoveSteps - index, false)"
+                  :disabled="!canMove(axis)"
+                  no-wait
+                  block
+                  tile
+                  class="move-btn"
+                >
+                  {{ axis.letter + showSign(moveSteps(axis.letter)[numMoveSteps - index]) }}
+                  <v-icon>mdi-chevron-right</v-icon>
+                </code-btn>
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
 
-				<!-- Inputs-->
-				<form v-if="needsNumberInput || needsStringInput" @submit.prevent="ok">
-					<v-text-field v-if="needsNumberInput" type="number" autofocus v-model.number="numberInput"
-								  :min="messageBox.min" :max="messageBox.max" :step="needsIntInput ? 1 : 'any'" required
-								  hide-details />
-					<v-text-field v-else type="text" autofocus v-model="stringInput" :minlength="messageBox.min || 0"
-								  :maxlength="messageBox.max || 100" required hide-details />
-				</form>
-			</v-card-text>
+        <!-- Inputs-->
+        <form
+          v-if="needsNumberInput || needsStringInput"
+          @submit.prevent="ok"
+        >
+          <v-text-field
+            v-if="needsNumberInput"
+            v-model.number="numberInput"
+            type="number"
+            autofocus
+            :min="messageBox.min"
+            :max="messageBox.max"
+            :step="needsIntInput ? 1 : 'any'"
+            required
+            hide-details
+          />
+          <v-text-field
+            v-else
+            v-model="stringInput"
+            type="text"
+            autofocus
+            :minlength="messageBox.min || 0"
+            :maxlength="messageBox.max || 100"
+            required
+            hide-details
+          />
+        </form>
+      </v-card-text>
 
-			<v-card-actions v-if="hasButtons" class="flex-wrap justify-center">
-				<template v-if="isMultipleChoice">
-					<v-btn v-for="(choice, index) in messageBox.choices" :key="choice" color="blue darken-1"
-						   :text="messageBox.default !== index" @click="accept(index)">
-						{{ choice }}
-					</v-btn>
-					<v-btn v-if="messageBox.cancelButton" color="blue darken-1" text @click="cancel">
-						{{ $t("generic.cancel") }}
-					</v-btn>
-				</template>
-				<template v-else>
-					<v-btn color="blue darken-1" text @click="ok" :disabled="!canConfirm">
-						{{ $t(isPersistent ? "generic.ok" : "generic.close") }}
-					</v-btn>
-					<v-btn v-if="messageBox.cancelButton" color="blue darken-1" text @click="cancel">
-						{{ $t("generic.cancel") }}
-					</v-btn>
-				</template>
-			</v-card-actions>
-		</v-card>
+      <v-card-actions
+        v-if="hasButtons"
+        class="flex-wrap justify-center"
+      >
+        <template v-if="isMultipleChoice">
+          <v-btn
+            v-for="(choice, index) in messageBox.choices"
+            :key="choice"
+            color="blue darken-1"
+            :text="messageBox.default !== index"
+            @click="accept(index)"
+          >
+            {{ choice }}
+          </v-btn>
+          <v-btn
+            v-if="messageBox.cancelButton"
+            color="blue darken-1"
+            text
+            @click="cancel"
+          >
+            {{ $t("generic.cancel") }}
+          </v-btn>
+        </template>
+        <template v-else>
+          <v-btn
+            color="blue darken-1"
+            text
+            :disabled="!canConfirm"
+            @click="ok"
+          >
+            {{ $t(isPersistent ? "generic.ok" : "generic.close") }}
+          </v-btn>
+          <v-btn
+            v-if="messageBox.cancelButton"
+            color="blue darken-1"
+            text
+            @click="cancel"
+          >
+            {{ $t("generic.cancel") }}
+          </v-btn>
+        </template>
+      </v-card-actions>
+    </v-card>
 
-		<div v-if="showEmergencyStop" class="persistent d-flex justify-end pe-4 pt-3">
-			<emergency-btn />
-		</div>
-	</v-dialog>
+    <div
+      v-if="showEmergencyStop"
+      class="persistent d-flex justify-end pe-4 pt-3"
+    >
+      <emergency-btn />
+    </div>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -102,6 +173,15 @@ import { isNumber } from "@/utils/numbers";
 import { log } from "@/utils/logging";
 
 export default Vue.extend({
+	data() {
+		return {
+			messageBox: new MessageBox(),
+			numberInput: 0,
+			shown: false,
+			showEmergencyStop: false,
+			stringInput: ""
+		}
+	},
 	computed: {
 		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => store.getters["machine/settings/moveSteps"](axisLetter)); },
 		numMoveSteps(): number { return store.getters["machine/settings/numMoveSteps"]; },
@@ -147,13 +227,31 @@ export default Vue.extend({
 			return this.messageBox.mode === MessageBoxMode.stringInput;
 		}
 	},
-	data() {
-		return {
-			messageBox: new MessageBox(),
-			numberInput: 0,
-			shown: false,
-			showEmergencyStop: false,
-			stringInput: ""
+	watch: {
+		isReconnecting(to: boolean) {
+			if (to) {
+				this.shown = false;
+			}
+		},
+		currentMessageBox: {
+			deep: true,
+			handler(to: MessageBox | null) {
+				if (to && to.mode !== null) {
+					this.numberInput = (typeof to.default === "number") ? to.default : 0;
+					this.stringInput = (typeof to.default === "string") ? to.default : "";
+					this.messageBox = JSON.parse(JSON.stringify(to));		// FIXME remove this after upgrading to Vue 3
+					this.shown = true;
+				} else {
+					this.shown = false;
+				}
+			}
+		},
+		shown(to) {
+			if (to && this.isPersistent) {
+				setTimeout(() => this.showEmergencyStop = true, 500);
+			} else {
+				this.showEmergencyStop = false;
+			}
 		}
 	},
 	methods: {
@@ -204,33 +302,14 @@ export default Vue.extend({
 				await store.dispatch("machine/sendCode", { code: `M292 P1 S${this.messageBox.seq}`, noWait: true });
 			}
 		}
-	},
-	watch: {
-		isReconnecting(to: boolean) {
-			if (to) {
-				this.shown = false;
-			}
-		},
-		currentMessageBox: {
-			deep: true,
-			handler(to: MessageBox | null) {
-				if (to && to.mode !== null) {
-					this.numberInput = (typeof to.default === "number") ? to.default : 0;
-					this.stringInput = (typeof to.default === "string") ? to.default : "";
-					this.messageBox = JSON.parse(JSON.stringify(to));		// FIXME remove this after upgrading to Vue 3
-					this.shown = true;
-				} else {
-					this.shown = false;
-				}
-			}
-		},
-		shown(to) {
-			if (to && this.isPersistent) {
-				setTimeout(() => this.showEmergencyStop = true, 500);
-			} else {
-				this.showEmergencyStop = false;
-			}
-		}
 	}
 });
 </script>
+
+<style scoped>
+.persistent {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+}
+</style>

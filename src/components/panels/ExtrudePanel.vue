@@ -1,67 +1,139 @@
 <template>
-	<v-card>
-		<v-card-title class="pb-0">
-			<v-icon small class="mr-1">mdi-opacity</v-icon> {{ $t("panel.extrude.caption") }}
-		</v-card-title>
+  <v-card>
+    <v-card-title class="pb-0">
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-opacity
+      </v-icon> {{ $t("panel.extrude.caption") }}
+    </v-card-title>
 
-		<v-card-text class="pb-0">
-			<v-row class="pb-1" align="center" justify="center">
-				<v-col v-if="currentTool && currentTool.extruders.length > 1" cols="auto">
-					<p class="mb-1">
-						{{ $t("panel.extrude.mixRatio") }}
-					</p>
-					<v-btn-toggle v-model="mix" mandatory multiple>
-						<v-btn text value="mix" :disabled="uiFrozen" color="primary">
-							{{ $t("panel.extrude.mix") }}
-						</v-btn>
-						<v-btn text v-for="extruder in currentTool.extruders" :key="extruder" :value="extruder"
-							   :disabled="uiFrozen" color="primary">
-							{{ `E${extruder}` }}
-						</v-btn>
-					</v-btn-toggle>
-				</v-col>
-				<v-col>
-					<p class="mb-1">
-						{{ $t("panel.extrude.amount", ["mm"]) }}
-					</p>
-					<v-btn-toggle v-model="amount" mandatory class="d-flex">
-						<v-btn v-for="(savedAmount, index) in extruderAmounts" :key="index" :value="savedAmount"
-							   :disabled="uiFrozen" @contextmenu.prevent="editAmount(index)" class="flex-grow-1">
-							{{ savedAmount }}
-						</v-btn>
-					</v-btn-toggle>
-				</v-col>
-				<v-col>
-					<p class="mb-1">
-						{{ $t("panel.extrude.feedrate", ["mm/s"]) }}
-					</p>
-					<v-btn-toggle v-model="feedrate" mandatory class="d-flex">
-						<v-btn v-for="(savedFeedrate, index) in extruderFeedrates" :key="index" :value="savedFeedrate"
-							   :disabled="uiFrozen" @contextmenu.prevent="editFeedrate(index)" class="flex-grow-1">
-							{{ savedFeedrate }}
-						</v-btn>
-					</v-btn-toggle>
-				</v-col>
-				<v-col cols="auto" class="flex-shrink-1">
-					<v-btn block tile :disabled="uiFrozen || !canRetract" :elevation="1" :loading="busy"
-						   @click="buttonClicked(false)">
-						<v-icon>mdi-arrow-up-bold</v-icon> {{ $t("panel.extrude.retract") }}
-					</v-btn>
-					<v-btn block tile :disabled="uiFrozen || !canExtrude" :elevation="1" :loading="busy"
-						   @click="buttonClicked(true)">
-						<v-icon>mdi-arrow-down-bold</v-icon> {{ $t("panel.extrude.extrude") }}
-					</v-btn>
-				</v-col>
-			</v-row>
-		</v-card-text>
+    <v-card-text class="pb-0">
+      <v-row
+        class="pb-1"
+        align="center"
+        justify="center"
+      >
+        <v-col
+          v-if="currentTool && currentTool.extruders.length > 1"
+          cols="auto"
+        >
+          <p class="mb-1">
+            {{ $t("panel.extrude.mixRatio") }}
+          </p>
+          <v-btn-toggle
+            v-model="mix"
+            mandatory
+            multiple
+          >
+            <v-btn
+              text
+              value="mix"
+              :disabled="uiFrozen"
+              color="primary"
+            >
+              {{ $t("panel.extrude.mix") }}
+            </v-btn>
+            <v-btn
+              v-for="extruder in currentTool.extruders"
+              :key="extruder"
+              text
+              :value="extruder"
+              :disabled="uiFrozen"
+              color="primary"
+            >
+              {{ `E${extruder}` }}
+            </v-btn>
+          </v-btn-toggle>
+        </v-col>
+        <v-col>
+          <p class="mb-1">
+            {{ $t("panel.extrude.amount", ["mm"]) }}
+          </p>
+          <v-btn-toggle
+            v-model="amount"
+            mandatory
+            class="d-flex"
+          >
+            <v-btn
+              v-for="(savedAmount, index) in extruderAmounts"
+              :key="index"
+              :value="savedAmount"
+              :disabled="uiFrozen"
+              class="flex-grow-1"
+              @contextmenu.prevent="editAmount(index)"
+            >
+              {{ savedAmount }}
+            </v-btn>
+          </v-btn-toggle>
+        </v-col>
+        <v-col>
+          <p class="mb-1">
+            {{ $t("panel.extrude.feedrate", ["mm/s"]) }}
+          </p>
+          <v-btn-toggle
+            v-model="feedrate"
+            mandatory
+            class="d-flex"
+          >
+            <v-btn
+              v-for="(savedFeedrate, index) in extruderFeedrates"
+              :key="index"
+              :value="savedFeedrate"
+              :disabled="uiFrozen"
+              class="flex-grow-1"
+              @contextmenu.prevent="editFeedrate(index)"
+            >
+              {{ savedFeedrate }}
+            </v-btn>
+          </v-btn-toggle>
+        </v-col>
+        <v-col
+          cols="auto"
+          class="flex-shrink-1"
+        >
+          <v-btn
+            block
+            tile
+            :disabled="uiFrozen || !canRetract"
+            :elevation="1"
+            :loading="busy"
+            @click="buttonClicked(false)"
+          >
+            <v-icon>mdi-arrow-up-bold</v-icon> {{ $t("panel.extrude.retract") }}
+          </v-btn>
+          <v-btn
+            block
+            tile
+            :disabled="uiFrozen || !canExtrude"
+            :elevation="1"
+            :loading="busy"
+            @click="buttonClicked(true)"
+          >
+            <v-icon>mdi-arrow-down-bold</v-icon> {{ $t("panel.extrude.extrude") }}
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-text>
 
-		<input-dialog :shown.sync="editAmountDialog.shown" :title="$t('dialog.editExtrusionAmount.title')"
-					  :prompt="$t('dialog.editExtrusionAmount.prompt')" :preset="editAmountDialog.preset"
-					  is-numeric-value @confirmed="setAmount" />
-		<input-dialog :shown.sync="editFeedrateDialog.shown" :title="$t('dialog.editExtrusionFeedrate.title')"
-					  :prompt="$t('dialog.editExtrusionFeedrate.prompt')" :preset="editFeedrateDialog.preset"
-					  is-numeric-value @confirmed="setFeedrate" />
-	</v-card>
+    <input-dialog
+      :shown.sync="editAmountDialog.shown"
+      :title="$t('dialog.editExtrusionAmount.title')"
+      :prompt="$t('dialog.editExtrusionAmount.prompt')"
+      :preset="editAmountDialog.preset"
+      is-numeric-value
+      @confirmed="setAmount"
+    />
+    <input-dialog
+      :shown.sync="editFeedrateDialog.shown"
+      :title="$t('dialog.editExtrusionFeedrate.title')"
+      :prompt="$t('dialog.editExtrusionFeedrate.prompt')"
+      :preset="editFeedrateDialog.preset"
+      is-numeric-value
+      @confirmed="setFeedrate"
+    />
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -71,6 +143,24 @@ import Vue from "vue";
 import store from "@/store";
 
 export default Vue.extend({
+	data() {
+		return {
+			busy: false,
+			mixValue: ["mix"] as Array<number | "mix">,
+			amount: 10,
+			feedrate: 5,
+			editAmountDialog: {
+				shown: false,
+				index: 0,
+				preset: 0
+			},
+			editFeedrateDialog: {
+				shown: false,
+				index: 0,
+				preset: 0
+			}
+		}
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		currentTool(): Tool | null { return store.getters["machine/model/currentTool"]; },
@@ -132,23 +222,23 @@ export default Vue.extend({
 		extruderAmounts() { return store.state.machine.settings.extruderAmounts; },
 		extruderFeedrates() { return store.state.machine.settings.extruderFeedrates; }
 	},
-	data() {
-		return {
-			busy: false,
-			mixValue: ["mix"] as Array<number | "mix">,
-			amount: 10,
-			feedrate: 5,
-			editAmountDialog: {
-				shown: false,
-				index: 0,
-				preset: 0
-			},
-			editFeedrateDialog: {
-				shown: false,
-				index: 0,
-				preset: 0
+	watch: {
+		currentTool(to: Tool | null) {
+			if (!to || to.extruders.length <= 1) {
+				// Switch back to mixing mode if the selection panel is hidden
+				this.mix = ["mix"];
 			}
+		},
+		extruderAmounts() {
+			this.amount = this.extruderAmounts[3];
+		},
+		extruderFeedrates() {
+			this.feedrate = this.extruderFeedrates[3];
 		}
+	},
+	mounted() {
+		this.amount = store.state.machine.settings.extruderAmounts[3];
+		this.feedrate = store.state.machine.settings.extruderFeedrates[3];
 	},
 	methods: {
 		async buttonClicked(extrude: boolean) {
@@ -191,24 +281,6 @@ export default Vue.extend({
 		setFeedrate(value: number) {
 			store.commit("machine/settings/setExtrusionFeedrate", { index: this.editFeedrateDialog.index, value });
 			this.feedrate = value;
-		}
-	},
-	mounted() {
-		this.amount = store.state.machine.settings.extruderAmounts[3];
-		this.feedrate = store.state.machine.settings.extruderFeedrates[3];
-	},
-	watch: {
-		currentTool(to: Tool | null) {
-			if (!to || to.extruders.length <= 1) {
-				// Switch back to mixing mode if the selection panel is hidden
-				this.mix = ["mix"];
-			}
-		},
-		extruderAmounts() {
-			this.amount = this.extruderAmounts[3];
-		},
-		extruderFeedrates() {
-			this.feedrate = this.extruderFeedrates[3];
 		}
 	}
 });

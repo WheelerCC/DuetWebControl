@@ -1,24 +1,52 @@
 <template>
-	<div>
-		<v-btn v-bind="$props" @click="chooseFile" :disabled="$props.disabled || !canUpload" :block="block" :fab="fab"
-			   :loading="isBusy" :title="title" :color="innerColor" @dragover.prevent.stop="dragOver"
-			   @dragleave.prevent.stop="dragLeave" @drop.prevent.stop="dragDrop">
-			<template #loader>
-				<v-progress-circular indeterminate :size="23" :width="2" class="mr-2" />
-				{{ caption }}
-			</template>
+  <div>
+    <v-btn
+      v-bind="$props"
+      :disabled="$props.disabled || !canUpload"
+      :block="block"
+      :fab="fab"
+      :loading="isBusy"
+      :title="title"
+      @click="chooseFile"
+      :color="innerColor"
+      @dragover.prevent.stop="dragOver"
+      @dragleave.prevent.stop="dragLeave"
+      @drop.prevent.stop="dragDrop"
+    >
+      <template #loader>
+        <v-progress-circular
+          indeterminate
+          :size="23"
+          :width="2"
+          class="mr-2"
+        />
+        {{ caption }}
+      </template>
 
-			<slot>
-				<v-icon class="mr-2">mdi-cloud-upload</v-icon>
-				{{ caption }}
-			</slot>
-		</v-btn>
+      <slot>
+        <v-icon class="mr-2">
+          mdi-cloud-upload
+        </v-icon>
+        {{ caption }}
+      </slot>
+    </v-btn>
 
-		<input ref="fileInput" type="file" :accept="accept" hidden @change="fileSelected" multiple>
-		<firmware-update-dialog :shown.sync="confirmUpdate" :multipleUpdates="multipleUpdates"
-								:updateWiFiFirmware.sync="updates.wifiServer" @confirmed="startUpdate" />
-		<config-updated-dialog :shown.sync="confirmFirmwareReset" />
-	</div>
+    <input
+      ref="fileInput"
+      type="file"
+      :accept="accept"
+      hidden
+      multiple
+      @change="fileSelected"
+    >
+    <firmware-update-dialog
+      :shown.sync="confirmUpdate"
+      :multiple-updates="multipleUpdates"
+      :updateWiFiFirmware.sync="updates.wifiServer"
+      @confirmed="startUpdate"
+    />
+    <config-updated-dialog :shown.sync="confirmFirmwareReset" />
+  </div>
 </template>
 
 <script lang="ts">
@@ -103,6 +131,25 @@ export default Vue.extend({
 		},
 		uploadPrint: Boolean
 	},
+	data() {
+		return {
+			innerColor: this.color,
+			extracting: false,
+			uploading: false,
+
+			confirmUpdate: false,
+			updates: {
+				webInterface: false,
+				firmwareBoards: new Array<number>(),
+				wifiServer: false,
+				wifiServerSpiffs: false,
+				display: false,
+
+				codeSent: false
+			},
+			confirmReset: false
+		}
+	},
 	computed: {
 		isConnected(): boolean { return store.getters["isConnected"]; },
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
@@ -174,23 +221,12 @@ export default Vue.extend({
 			return numUpdates > 1;
 		}
 	},
-	data() {
-		return {
-			innerColor: this.color,
-			extracting: false,
-			uploading: false,
-
-			confirmUpdate: false,
-			updates: {
-				webInterface: false,
-				firmwareBoards: new Array<number>(),
-				wifiServer: false,
-				wifiServerSpiffs: false,
-				display: false,
-
-				codeSent: false
-			},
-			confirmReset: false
+	watch: {
+		isConnected(to: boolean) {
+			if (to && store.state.selectedMachine === location.host && this.updates.codeSent && this.updates.webInterface) {
+				// Reload the web interface when the connection could be established again
+				location.reload(true);
+			}
 		}
 	},
 	methods: {
@@ -563,14 +599,6 @@ export default Vue.extend({
 			this.innerColor = this.color;
 			if (!this.isBusy && e.dataTransfer && e.dataTransfer.files.length) {
 				await this.doUpload(e.dataTransfer.files);
-			}
-		}
-	},
-	watch: {
-		isConnected(to: boolean) {
-			if (to && store.state.selectedMachine === location.host && this.updates.codeSent && this.updates.webInterface) {
-				// Reload the web interface when the connection could be established again
-				location.reload(true);
 			}
 		}
 	}

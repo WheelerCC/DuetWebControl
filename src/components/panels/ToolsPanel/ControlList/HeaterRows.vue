@@ -1,142 +1,169 @@
-<style scoped>
-.disabled {
-    color: inherit;
-    cursor: default;
-}
-
-.disabled-heater {
-    cursor: default;
-}
-
-.disabled:hover,
-.disabled-heater {
-    text-decoration: none;
-}
-</style>
-
 <template>
-    <tbody>
-        <template v-if="singleControl && firstHeater !== null">
-            <!-- Single Heater Control-->
-            <tr>
-                <!-- Heater item name -->
-                <th class="pl-2">
-                    <v-menu bottom offset-y :disabled="disabled">
-                        <template #activator="{ on, attrs }">
-                            <a href="javascript:void(0)" v-bind="attrs" :classes="{ disabled: disabled }" v-on="on">
-                                {{ singleHeaterCaption }}
-                                <v-icon dense class="ms-n1">mdi-menu-down</v-icon>
-                            </a>
-                        </template>
-                        <v-list>
-                            <v-list-item @click="selectHeater(-1, null, -1)">
-                                <v-list-item-title>
-                                    <v-icon small>
-                                        {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
-                                    </v-icon>
-                                    {{ (props.type === "bed") ? $t("panel.tools.allBeds") : $t("panel.tools.allChambers") }}
-                                </v-list-item-title>
-                            </v-list-item>
-
-                            <template v-for="{ heater, heaterIndex, index } in heaterItems">
-                                <v-list-item v-if="heater !== null" :key="index"
-                                             @click="selectHeater(index, heater, heaterIndex)">
-                                    <v-list-item-title>
-                                        <v-icon class="mr-1">
-                                            {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
-                                        </v-icon>
-                                        {{ (props.type === "bed") ? $t("panel.tools.bed", [index]) : $t("panel.tools.chamber", [index]) }}
-                                    </v-list-item-title>
-                                </v-list-item>
-                            </template>
-                        </v-list>
-                    </v-menu>
-                </th>
-
-                <!-- Heater name -->
-                <th v-if="selectedHeater !== null">
-                    <a href="javascript:void(0)" :class="getHeaterClasses(selectedHeaterIndex)" @click="heaterClick(selectedIndex, selectedHeater)">
-                        {{ getHeaterName(selectedHeater, selectedHeaterIndex) }}
-                    </a>
-                    <br>
-                    <span class="font-weight-regular caption">
-                        {{ $t(`generic.heaterStates.${selectedHeater.state}`) }}
-                    </span>
-                </th>
-                <th v-else>
-                    <a href="javascript:void(0)" class="font-weight-regular" @click="allHeatersClick">
-                        {{ $t(`generic.heaterStates.${firstHeater.state}`) }}
-                    </a>
-                </th>
-
-                <!-- Heater value -->
-                <td>
-                    {{ getHeaterValue(firstHeater) }}
-                </td>
-
-                <!-- Heater active -->
-                <td class="pl-2 pr-1">
-                    <control-input type="all"
-                                   :control-beds="type === 'bed' && store.state.machine.settings.singleBedControl"
-                                   :control-chambers="type == 'chamber' && store.state.machine.settings.singleChamberControl"
-                                   active />
-                </td>
-
-                <!-- Heater standby -->
-                <td class="pl-1 pr-2">
-                    <control-input type="all"
-                                   :control-beds="type === 'bed' && store.state.machine.settings.singleBedControl"
-                                   :control-chambers="type == 'chamber' && store.state.machine.settings.singleChamberControl"
-                                   standby />
-                </td>
-            </tr>
-        </template>
-        <template v-else-if="heaterItems.some(item => item.heater !== null)">
-            <template v-for="{ index, heater, heaterIndex } in heaterItems">
-                <!-- Individual Heater Control-->
-                <template v-if="heater !== null">
-                    <!-- Heater -->
-                    <tr :key="index">
-                        <!-- Heater item name -->
-                        <th class="pl-2">
-                            <a href="javascript:void(0)" :class="{ disabled: disabled }" @click="heaterClick(index, heater)">
-                                <v-icon small>
-                                    {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
-                                </v-icon>
-                                {{ (props.type === "bed") ? $t("panel.tools.bed", [(heaterItems.length === 1) ? "" : index]) : $t("panel.tools.chamber", [(heaterItems.length === 1) ? "" : index]) }}
-                            </a>
-                        </th>
-
-                        <!-- Heater name -->
-                        <th>
-                            <a href="javascript:void(0)" :class="getHeaterClasses(heaterIndex)" @click="heaterClick(index, heater)">
-                                {{ getHeaterName(heater, heaterIndex) }}
-                            </a>
-                            <br>
-                            <span class="font-weight-regular caption">
-                                {{ $t(`generic.heaterStates.${heater.state}`) }}
-                            </span>
-                        </th>
-
-                        <!-- Heater value -->
-                        <td>
-                            {{ getHeaterValue(heater) }}
-                        </td>
-
-                        <!-- Heater active -->
-                        <td class="pl-2 pr-1">
-                            <control-input :type="props.type" :index="index" active />
-                        </td>
-
-                        <!-- Heater standby -->
-                        <td class="pl-1 pr-2">
-                            <control-input :type="props.type" :index="index" standby />
-                        </td>
-                    </tr>
-                </template>
+  <tbody>
+    <template v-if="singleControl && firstHeater !== null">
+      <!-- Single Heater Control-->
+      <tr>
+        <!-- Heater item name -->
+        <th class="pl-2">
+          <v-menu
+            bottom
+            offset-y
+            :disabled="disabled"
+          >
+            <template #activator="{ on, attrs }">
+              <a
+                href="javascript:void(0)"
+                v-bind="attrs"
+                :classes="{ disabled: disabled }"
+                v-on="on"
+              >
+                {{ singleHeaterCaption }}
+                <v-icon
+                  dense
+                  class="ms-n1"
+                >mdi-menu-down</v-icon>
+              </a>
             </template>
+            <v-list>
+              <v-list-item @click="selectHeater(-1, null, -1)">
+                <v-list-item-title>
+                  <v-icon small>
+                    {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                  </v-icon>
+                  {{ (props.type === "bed") ? $t("panel.tools.allBeds") : $t("panel.tools.allChambers") }}
+                </v-list-item-title>
+              </v-list-item>
+
+              <template v-for="{ heater, heaterIndex, index } in heaterItems">
+                <v-list-item
+                  v-if="heater !== null"
+                  :key="index"
+                  @click="selectHeater(index, heater, heaterIndex)"
+                >
+                  <v-list-item-title>
+                    <v-icon class="mr-1">
+                      {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                    </v-icon>
+                    {{ (props.type === "bed") ? $t("panel.tools.bed", [index]) : $t("panel.tools.chamber", [index]) }}
+                  </v-list-item-title>
+                </v-list-item>
+              </template>
+            </v-list>
+          </v-menu>
+        </th>
+
+        <!-- Heater name -->
+        <th v-if="selectedHeater !== null">
+          <a
+            href="javascript:void(0)"
+            :class="getHeaterClasses(selectedHeaterIndex)"
+            @click="heaterClick(selectedIndex, selectedHeater)"
+          >
+            {{ getHeaterName(selectedHeater, selectedHeaterIndex) }}
+          </a>
+          <br>
+          <span class="font-weight-regular caption">
+            {{ $t(`generic.heaterStates.${selectedHeater.state}`) }}
+          </span>
+        </th>
+        <th v-else>
+          <a
+            href="javascript:void(0)"
+            class="font-weight-regular"
+            @click="allHeatersClick"
+          >
+            {{ $t(`generic.heaterStates.${firstHeater.state}`) }}
+          </a>
+        </th>
+
+        <!-- Heater value -->
+        <td>
+          {{ getHeaterValue(firstHeater) }}
+        </td>
+
+        <!-- Heater active -->
+        <td class="pl-2 pr-1">
+          <control-input
+            type="all"
+            :control-beds="type === 'bed' && store.state.machine.settings.singleBedControl"
+            :control-chambers="type == 'chamber' && store.state.machine.settings.singleChamberControl"
+            active
+          />
+        </td>
+
+        <!-- Heater standby -->
+        <td class="pl-1 pr-2">
+          <control-input
+            type="all"
+            :control-beds="type === 'bed' && store.state.machine.settings.singleBedControl"
+            :control-chambers="type == 'chamber' && store.state.machine.settings.singleChamberControl"
+            standby
+          />
+        </td>
+      </tr>
+    </template>
+    <template v-else-if="heaterItems.some(item => item.heater !== null)">
+      <template v-for="{ index, heater, heaterIndex } in heaterItems">
+        <!-- Individual Heater Control-->
+        <template v-if="heater !== null">
+          <!-- Heater -->
+          <tr :key="index">
+            <!-- Heater item name -->
+            <th class="pl-2">
+              <a
+                href="javascript:void(0)"
+                :class="{ disabled: disabled }"
+                @click="heaterClick(index, heater)"
+              >
+                <v-icon small>
+                  {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                </v-icon>
+                {{ (props.type === "bed") ? $t("panel.tools.bed", [(heaterItems.length === 1) ? "" : index]) : $t("panel.tools.chamber", [(heaterItems.length === 1) ? "" : index]) }}
+              </a>
+            </th>
+
+            <!-- Heater name -->
+            <th>
+              <a
+                href="javascript:void(0)"
+                :class="getHeaterClasses(heaterIndex)"
+                @click="heaterClick(index, heater)"
+              >
+                {{ getHeaterName(heater, heaterIndex) }}
+              </a>
+              <br>
+              <span class="font-weight-regular caption">
+                {{ $t(`generic.heaterStates.${heater.state}`) }}
+              </span>
+            </th>
+
+            <!-- Heater value -->
+            <td>
+              {{ getHeaterValue(heater) }}
+            </td>
+
+            <!-- Heater active -->
+            <td class="pl-2 pr-1">
+              <control-input
+                :type="props.type"
+                :index="index"
+                active
+              />
+            </td>
+
+            <!-- Heater standby -->
+            <td class="pl-1 pr-2">
+              <control-input
+                :type="props.type"
+                :index="index"
+                standby
+              />
+            </td>
+          </tr>
         </template>
-    </tbody>
+      </template>
+    </template>
+  </tbody>
 </template>
 
 <script setup lang="ts">
@@ -333,3 +360,19 @@ async function heaterClick(index: number, heater: Heater | null) {
     }
 }
 </script>
+
+<style scoped>
+.disabled {
+    color: inherit;
+    cursor: default;
+}
+
+.disabled-heater {
+    cursor: default;
+}
+
+.disabled:hover,
+.disabled-heater {
+    text-decoration: none;
+}
+</style>

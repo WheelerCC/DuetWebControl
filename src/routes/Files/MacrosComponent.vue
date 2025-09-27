@@ -1,9 +1,9 @@
 <template>
-	<v-row>
-		<v-col>
-			<macro-file-list />
-		</v-col>
-	</v-row>
+  <v-row>
+    <v-col>
+      <macro-file-list />
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">

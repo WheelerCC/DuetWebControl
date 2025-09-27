@@ -1,30 +1,48 @@
 <template>
-	<v-dialog v-model="innerShown" persistent width="360" @keydown.escape="hide">
-		<v-card>
-			<v-card-title class="headline">
-				{{ $t(tool ? (tool.filament ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }}
-			</v-card-title>
+  <v-dialog
+    v-model="innerShown"
+    persistent
+    width="360"
+    @keydown.escape="hide"
+  >
+    <v-card>
+      <v-card-title class="headline">
+        {{ $t(tool ? (tool.filament ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }}
+      </v-card-title>
 
-			<v-card-text>
-				{{ $t(filaments.length > 0 ? "dialog.filament.prompt" : "dialog.filament.noFilaments") }}
+      <v-card-text>
+        {{ $t(filaments.length > 0 ? "dialog.filament.prompt" : "dialog.filament.noFilaments") }}
 
-				<v-progress-linear indeterminate v-if="loading" />
-				<v-list v-if="!loading">
-					<v-list-item v-for="filament in filaments" :key="filament" @click="filamentClick(filament)">
-						<v-icon class="mr-1">mdi-radiobox-marked</v-icon> {{ filament }}
-					</v-list-item>
-				</v-list>
-			</v-card-text>
+        <v-progress-linear
+          v-if="loading"
+          indeterminate
+        />
+        <v-list v-if="!loading">
+          <v-list-item
+            v-for="filament in filaments"
+            :key="filament"
+            @click="filamentClick(filament)"
+          >
+            <v-icon class="mr-1">
+              mdi-radiobox-marked
+            </v-icon> {{ filament }}
+          </v-list-item>
+        </v-list>
+      </v-card-text>
 
-			<v-card-actions>
-				<v-spacer />
-				<v-btn color="blue darken-1" text @click="hide">
-					{{ $t("generic.cancel") }}
-				</v-btn>
-				<v-spacer />
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          color="blue darken-1"
+          text
+          @click="hide"
+        >
+          {{ $t("generic.cancel") }}
+        </v-btn>
+        <v-spacer />
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -49,15 +67,32 @@ export default Vue.extend({
 		},
 		tool: Object
 	},
-	computed: {
-		currentTool(): Tool { return store.getters["machine/model/currentTool"]; }
-	},
 	data() {
 		return {
 			filaments: new Array<string>(),
 			innerShown: this.shown,
 			loading: false
 		}
+	},
+	computed: {
+		currentTool(): Tool { return store.getters["machine/model/currentTool"]; }
+	},
+	watch: {
+		shown(to: boolean) {
+			if (this.innerShown !== to) {
+				this.innerShown = to;
+			}
+			if (to) {
+				// Load filaments when this dialog is shown
+				this.loadFilaments();
+			}
+		},
+		
+		innerShown(to: boolean) {
+			if (this.shown !== to) {
+				this.$emit("update:shown", to);
+			}
+		},
 	},
 	methods: {
 		async loadFilaments() {
@@ -107,23 +142,6 @@ export default Vue.extend({
 		hide() {
 			this.innerShown = false;
 		}
-	},
-	watch: {
-		shown(to: boolean) {
-			if (this.innerShown !== to) {
-				this.innerShown = to;
-			}
-			if (to) {
-				// Load filaments when this dialog is shown
-				this.loadFilaments();
-			}
-		},
-		
-		innerShown(to: boolean) {
-			if (this.shown !== to) {
-				this.$emit("update:shown", to);
-			}
-		},
 	}
 });
 </script>

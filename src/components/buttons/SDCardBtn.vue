@@ -1,20 +1,35 @@
 <template>
-	<v-menu offset-y>
-		<template #activator="{ on }">
-			<v-btn v-bind="$props" v-on="on" color="success" :loading="mounting">
-				<v-icon class="mr-1">mdi-sd</v-icon>
-				{{ getVolumeName(value) }}
-				<v-icon class="ml-1">mdi-menu-down</v-icon>
-			</v-btn>
-		</template>
+  <v-menu offset-y>
+    <template #activator="{ on }">
+      <v-btn
+        v-bind="$props"
+        color="success"
+        :loading="mounting"
+        v-on="on"
+      >
+        <v-icon class="mr-1">
+          mdi-sd
+        </v-icon>
+        {{ getVolumeName(value) }}
+        <v-icon class="ml-1">
+          mdi-menu-down
+        </v-icon>
+      </v-btn>
+    </template>
 
-		<v-list ref="list">
-			<v-list-item v-for="(volume, index) in volumes" :key="index" @click="selectVolume(index)">
-				<v-icon class="mr-1">{{ volume.mounted ? "mdi-check" : "mdi-close" }}</v-icon>
-				{{ getVolumeName(index) }} ({{ $t(volume.mounted ? "generic.mounted" : "generic.notMounted") }})
-			</v-list-item>
-		</v-list>
-	</v-menu>
+    <v-list ref="list">
+      <v-list-item
+        v-for="(volume, index) in volumes"
+        :key="index"
+        @click="selectVolume(index)"
+      >
+        <v-icon class="mr-1">
+          {{ volume.mounted ? "mdi-check" : "mdi-close" }}
+        </v-icon>
+        {{ getVolumeName(index) }} ({{ $t(volume.mounted ? "generic.mounted" : "generic.notMounted") }})
+      </v-list-item>
+    </v-list>
+  </v-menu>
 </template>
 
 <script lang="ts">
@@ -32,14 +47,14 @@ export default Vue.extend({
 			required: true
 		}
 	},
-	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; },
-		volumes(): Array<Volume> { return store.state.machine.model.volumes; }
-	},
 	data() {
 		return {
 			mounting: false
 		}
+	},
+	computed: {
+		isConnected(): boolean { return store.getters["isConnected"]; },
+		volumes(): Array<Volume> { return store.state.machine.model.volumes; }
 	},
 	methods: {
 		getVolumeName(index: number) {

@@ -1,81 +1,40 @@
-<style scoped>
-iframe {
-	width: 100%;
-	height: 100%;
-	border: 0px;
-	overflow: hidden;
-}
-
-img,
-video {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-.img-container {
-	overflow: hidden;
-}
-
-.flip-x {
-	-moz-transform: scaleX(-1);
-	-o-transform: scaleX(-1);
-	-webkit-transform: scaleX(-1);
-	transform: scaleX(-1);
-	filter: FlipH;
-	-ms-filter: "FlipH";
-}
-
-.flip-y {
-	-moz-transform: scaleY(-1);
-	-o-transform: scaleY(-1);
-	-webkit-transform: scaleY(-1);
-	transform: scaleY(-1);
-	filter: FlipV;
-	-ms-filter: "FlipV";
-}
-
-.rotate-90 {
-	transform: rotate(90deg);
-	-ms-transform: rotate(90deg);
-	-moz-transform: rotate(90deg);
-	-webkit-transform: rotate(90deg);
-	-o-transform: rotate(90deg);
-}
-
-.rotate-180 {
-	transform: rotate(180deg);
-	-ms-transform: rotate(180deg);
-	-moz-transform: rotate(180deg);
-	-webkit-transform: rotate(180deg);
-	-o-transform: rotate(180deg);
-}
-
-.rotate-270 {
-	transform: rotate(270deg);
-	-ms-transform: rotate(270deg);
-	-moz-transform: rotate(270deg);
-	-webkit-transform: rotate(270deg);
-	-o-transform: rotate(270deg);
-}
-</style>
-
 <template>
-	<v-card>
-		<v-card-title>
-			{{ $t("panel.webcam.caption") }}
-		</v-card-title>
+  <v-card>
+    <v-card-title>
+      {{ $t("panel.webcam.caption") }}
+    </v-card-title>
 
-		<v-card-text class="pa-0 img-container">
-			<v-responsive v-if="webcam.embedded" :aspect-ratio="16/9">
-				<iframe :src="webcam.url" :class="classList"></iframe>
-			</v-responsive>
+    <v-card-text class="pa-0 img-container">
+      <v-responsive
+        v-if="webcam.embedded"
+        :aspect-ratio="16/9"
+      >
+        <iframe
+          :src="webcam.url"
+          :class="classList"
+        />
+      </v-responsive>
 
-			<a v-else-if="webcam.enabled" :href="webcam.liveUrl ? webcam.liveUrl : 'javascript:void(0)'">
-				<video v-if="webcamIsRTC" ref="remoteVideo" autoplay playsinline="true" :class="classList"></video>
-				<img v-else :alt="$t('panel.webcam.alt')" :src="active ? url : ''" :class="classList">
-			</a>
-		</v-card-text>
-	</v-card>
+      <a
+        v-else-if="webcam.enabled"
+        :href="webcam.liveUrl ? webcam.liveUrl : 'javascript:void(0)'"
+      >
+        <video
+          v-if="webcamIsRTC"
+          ref="remoteVideo"
+          autoplay
+          playsinline="true"
+          :class="classList"
+        />
+        <img
+          v-else
+          :alt="$t('panel.webcam.alt')"
+          :src="active ? url : ''"
+          :class="classList"
+        >
+      </a>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -236,3 +195,64 @@ const classList = computed(() => {
 	return result;
 });
 </script>
+
+<style scoped>
+iframe {
+	width: 100%;
+	height: 100%;
+	border: 0px;
+	overflow: hidden;
+}
+
+img,
+video {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+.img-container {
+	overflow: hidden;
+}
+
+.flip-x {
+	-moz-transform: scaleX(-1);
+	-o-transform: scaleX(-1);
+	-webkit-transform: scaleX(-1);
+	transform: scaleX(-1);
+	filter: FlipH;
+	-ms-filter: "FlipH";
+}
+
+.flip-y {
+	-moz-transform: scaleY(-1);
+	-o-transform: scaleY(-1);
+	-webkit-transform: scaleY(-1);
+	transform: scaleY(-1);
+	filter: FlipV;
+	-ms-filter: "FlipV";
+}
+
+.rotate-90 {
+	transform: rotate(90deg);
+	-ms-transform: rotate(90deg);
+	-moz-transform: rotate(90deg);
+	-webkit-transform: rotate(90deg);
+	-o-transform: rotate(90deg);
+}
+
+.rotate-180 {
+	transform: rotate(180deg);
+	-ms-transform: rotate(180deg);
+	-moz-transform: rotate(180deg);
+	-webkit-transform: rotate(180deg);
+	-o-transform: rotate(180deg);
+}
+
+.rotate-270 {
+	transform: rotate(270deg);
+	-ms-transform: rotate(270deg);
+	-moz-transform: rotate(270deg);
+	-webkit-transform: rotate(270deg);
+	-o-transform: rotate(270deg);
+}
+</style>

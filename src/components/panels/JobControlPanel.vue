@@ -1,49 +1,100 @@
 <template>
-	<v-card>
-		<v-card-title class="pb-1">
-			<v-icon small class="mr-1">mdi-wrench</v-icon>
-			{{ $t("panel.jobControl.caption") }}
-		</v-card-title>
+  <v-card>
+    <v-card-title class="pb-1">
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-wrench
+      </v-icon>
+      {{ $t("panel.jobControl.caption") }}
+    </v-card-title>
 
-		<v-card-text class="pt-0">
-			<code-btn color="warning" block :disabled="uiFrozen || !isPrinting || isPausing || isCancelling"
-					  :code="isPaused ? 'M24' : 'M25'" tabindex="0">
-				<v-icon class="mr-1">{{ isPaused ? 'mdi-play' : 'mdi-pause' }}</v-icon>
-				{{ pauseResumeText }}
-			</code-btn>
+    <v-card-text class="pt-0">
+      <code-btn
+        color="warning"
+        block
+        :disabled="uiFrozen || !isPrinting || isPausing || isCancelling"
+        :code="isPaused ? 'M24' : 'M25'"
+        tabindex="0"
+      >
+        <v-icon class="mr-1">
+          {{ isPaused ? 'mdi-play' : 'mdi-pause' }}
+        </v-icon>
+        {{ pauseResumeText }}
+      </code-btn>
 
-			<code-btn v-if="isPaused" block :disabled="isCancelling" class="mt-3" color="error" code="M0">
-				<v-icon class="mr-1">mdi-stop</v-icon>
-				{{ cancelText }}
-			</code-btn>
+      <code-btn
+        v-if="isPaused"
+        block
+        :disabled="isCancelling"
+        class="mt-3"
+        color="error"
+        code="M0"
+      >
+        <v-icon class="mr-1">
+          mdi-stop
+        </v-icon>
+        {{ cancelText }}
+      </code-btn>
 
-			<code-btn v-if="!isPrinting && processAnotherCode" block class="mt-3" color="success" :code="processAnotherCode">
-				<v-icon class="mr-1">{{ processAnotherIcon }}</v-icon>
-				{{ processAnotherText }}
-			</code-btn>
+      <code-btn
+        v-if="!isPrinting && processAnotherCode"
+        block
+        class="mt-3"
+        color="success"
+        :code="processAnotherCode"
+      >
+        <v-icon class="mr-1">
+          {{ processAnotherIcon }}
+        </v-icon>
+        {{ processAnotherText }}
+      </code-btn>
 
-			<v-menu v-if="thumbnails.some(thumbnail => thumbnail.data !== null)" open-on-click offset-y>
-				<template #activator="{ attrs, on }">
-					<v-btn color="info" block :disabled="uiFrozen" class="mt-3" v-bind="attrs" v-on="on">
-						<v-icon class="mr-1">mdi-image</v-icon>
-						{{ $t("panel.jobControl.showPreview" )}}
-					</v-btn>
-				</template>
+      <v-menu
+        v-if="thumbnails.some(thumbnail => thumbnail.data !== null)"
+        open-on-click
+        offset-y
+      >
+        <template #activator="{ attrs, on }">
+          <v-btn
+            color="info"
+            block
+            :disabled="uiFrozen"
+            class="mt-3"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon class="mr-1">
+              mdi-image
+            </v-icon>
+            {{ $t("panel.jobControl.showPreview" ) }}
+          </v-btn>
+        </template>
 
-				<v-card>
-					<v-carousel height="auto" hide-delimiters :show-arrows="validThumbnails.length > 1"
-								show-arrows-on-hover>
-						<v-carousel-item v-for="thumbnail in validThumbnails"
-										 :key="`${thumbnail.format}-${thumbnail.width}x${thumbnail.height}`">
-							<div class="d-flex fill-height align-center">
-								<thumbnail-img :thumbnail="thumbnail" class="mx-auto" />
-							</div>
-						</v-carousel-item>
-					</v-carousel>
-				</v-card>
-			</v-menu>
-		</v-card-text>
-	</v-card>
+        <v-card>
+          <v-carousel
+            height="auto"
+            hide-delimiters
+            :show-arrows="validThumbnails.length > 1"
+            show-arrows-on-hover
+          >
+            <v-carousel-item
+              v-for="thumbnail in validThumbnails"
+              :key="`${thumbnail.format}-${thumbnail.width}x${thumbnail.height}`"
+            >
+              <div class="d-flex fill-height align-center">
+                <thumbnail-img
+                  :thumbnail="thumbnail"
+                  class="mx-auto"
+                />
+              </div>
+            </v-carousel-item>
+          </v-carousel>
+        </v-card>
+      </v-menu>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -55,6 +106,11 @@ import { isPaused, isPrinting } from "@/utils/enums";
 import { escapeFilename } from "@/utils/path";
 
 export default Vue.extend({
+	data() {
+		return {
+			isSimulating: false
+		}
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		isPausing(): boolean { return store.state.machine.model.state.status === MachineStatus.pausing; },
@@ -115,14 +171,6 @@ export default Vue.extend({
 			return this.thumbnails.filter(thumbnail => !!thumbnail.data);
 		}
 	},
-	data() {
-		return {
-			isSimulating: false
-		}
-	},
-	mounted() {
-		this.isSimulating = (store.state.machine.model.state.status === MachineStatus.simulating);
-	},
 	watch: {
 		isPrinting(to: boolean) {
 			if (to) {
@@ -131,6 +179,9 @@ export default Vue.extend({
 				this.isSimulating = false;
 			}
 		}
+	},
+	mounted() {
+		this.isSimulating = (store.state.machine.model.state.status === MachineStatus.simulating);
 	}
 });
 </script>

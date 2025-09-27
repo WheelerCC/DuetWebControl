@@ -1,13 +1,10 @@
-<style scoped>
-span {
-	border-radius: 5px;
-}
-</style>
-
 <template>
-	<span class="px-2 subtitle-2" :class="statusClass">
-		{{ statusText }}
-	</span>
+  <span
+    class="px-2 subtitle-2"
+    :class="statusClass"
+  >
+    {{ statusText }}
+  </span>
 </template>
 
 <script lang="ts">
@@ -52,3 +49,9 @@ export default Vue.extend({
 	}
 });
 </script>
+
+<style scoped>
+span {
+	border-radius: 5px;
+}
+</style>

@@ -1,134 +1,218 @@
-<style scoped>
-.filelist {
-	overflow-y: scroll;
-	max-height: 480px;
-}
-
-.no-overflow {
-	text-overflow: clip
-}
-
-.no-wrap {
-	flex-wrap: nowrap;
-	white-space: nowrap;
-}
-</style>
-
 <template>
-	<v-card flat class="d-flex flex-column">
-		<v-card-title class="pt-2 pb-1 no-wrap">
-			<v-icon class="mr-2">mdi-format-list-bulleted</v-icon> {{ title }}
-			<v-spacer />
-			<v-icon class="ml-2" :disabled="uiFrozen" @click="$emit('refresh')">mdi-refresh</v-icon>
-		</v-card-title>
+  <v-card
+    flat
+    class="d-flex flex-column"
+  >
+    <v-card-title class="pt-2 pb-1 no-wrap">
+      <v-icon class="mr-2">
+        mdi-format-list-bulleted
+      </v-icon> {{ title }}
+      <v-spacer />
+      <v-icon
+        class="ml-2"
+        :disabled="uiFrozen"
+        @click="$emit('refresh')"
+      >
+        mdi-refresh
+      </v-icon>
+    </v-card-title>
 
-		<v-card-text class="pa-0" v-show="files.length === 0">
-			<v-alert :value="true" type="info" class="mb-0">
-				No Profiles
-			</v-alert>
-		</v-card-text>
-		<v-progress-linear :active="progress !== progressMax" :value="(progress / progressMax) * 100" />
+    <v-card-text
+      v-show="files.length === 0"
+      class="pa-0"
+    >
+      <v-alert
+        :value="true"
+        type="info"
+        class="mb-0"
+      >
+        No Profiles
+      </v-alert>
+    </v-card-text>
+    <v-progress-linear
+      :active="progress !== progressMax"
+      :value="(progress / progressMax) * 100"
+    />
 
-		<template v-if="profiles.length > 0">
-			<template v-if="!individualFiles">
-				<v-list class="filelist py-0" :disabled="uiFrozen || progress !== progressMax" dense>
-					<v-list-item-group color="primary" v-model="selection">
-						<v-list-item v-for="(profile, index) in profiles" :key="index"
-									 :value="profile.files.map(item => item.filename)" :title="profile.lastModified"
-									 two-line v-ripple>
-							<v-list-item-icon class="align-self-center">
-								<v-icon>
-									{{ profile.icon }}
-								</v-icon>
-							</v-list-item-icon>
-							<v-list-item-content>
-								<v-list-item-title class="no-overflow">
-									{{ profile.title }}
-								</v-list-item-title>
-								<v-list-item-subtitle class="no-overflow">
-									{{ profile.subtitle }}
-								</v-list-item-subtitle>
-								<v-list-item-subtitle v-if="profile.secondSubtitle" class="no-overflow">
-									{{ profile.secondSubtitle }}
-								</v-list-item-subtitle>
-							</v-list-item-content>
-							<v-list-item-icon v-if="canDelete" class="align-self-center"
-											  @click.stop.prevent="deleteProfile(profile)">
-								<v-icon>
-									mdi-delete
-								</v-icon>
-							</v-list-item-icon>
-						</v-list-item>
-					</v-list-item-group>
-				</v-list>
-			</template>
-			<template v-else>
-				<v-list class="py-0 filelist" :disabled="uiFrozen || progress !== progressMax" dense>
-					<v-list-group v-for="(profile, index) in profiles" :key="index" :title="profile.lastModified">
-						<template #activator>
-							<v-list-item-icon class="align-self-center">
-								<v-icon>
-									{{ profile.icon }}
-								</v-icon>
-							</v-list-item-icon>
-							<v-list-item-content>
-								<v-list-item-title class="no-overflow">
-									{{ profile.title }}
-								</v-list-item-title>
-								<v-list-item-subtitle class="no-overflow">
-									{{ profile.subtitle }}
-								</v-list-item-subtitle>
-								<v-list-item-subtitle v-if="profile.secondSubtitle" class="no-overflow">
-									{{ profile.secondSubtitle }}
-								</v-list-item-subtitle>
-							</v-list-item-content>
-						</template>
+    <template v-if="profiles.length > 0">
+      <template v-if="!individualFiles">
+        <v-list
+          class="filelist py-0"
+          :disabled="uiFrozen || progress !== progressMax"
+          dense
+        >
+          <v-list-item-group
+            v-model="selection"
+            color="primary"
+          >
+            <v-list-item
+              v-for="(profile, index) in profiles"
+              :key="index"
+              v-ripple
+              :value="profile.files.map(item => item.filename)"
+              :title="profile.lastModified"
+              two-line
+            >
+              <v-list-item-icon class="align-self-center">
+                <v-icon>
+                  {{ profile.icon }}
+                </v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title class="no-overflow">
+                  {{ profile.title }}
+                </v-list-item-title>
+                <v-list-item-subtitle class="no-overflow">
+                  {{ profile.subtitle }}
+                </v-list-item-subtitle>
+                <v-list-item-subtitle
+                  v-if="profile.secondSubtitle"
+                  class="no-overflow"
+                >
+                  {{ profile.secondSubtitle }}
+                </v-list-item-subtitle>
+              </v-list-item-content>
+              <v-list-item-icon
+                v-if="canDelete"
+                class="align-self-center"
+                @click.stop.prevent="deleteProfile(profile)"
+              >
+                <v-icon>
+                  mdi-delete
+                </v-icon>
+              </v-list-item-icon>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </template>
+      <template v-else>
+        <v-list
+          class="py-0 filelist"
+          :disabled="uiFrozen || progress !== progressMax"
+          dense
+        >
+          <v-list-group
+            v-for="(profile, index) in profiles"
+            :key="index"
+            :title="profile.lastModified"
+          >
+            <template #activator>
+              <v-list-item-icon class="align-self-center">
+                <v-icon>
+                  {{ profile.icon }}
+                </v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title class="no-overflow">
+                  {{ profile.title }}
+                </v-list-item-title>
+                <v-list-item-subtitle class="no-overflow">
+                  {{ profile.subtitle }}
+                </v-list-item-subtitle>
+                <v-list-item-subtitle
+                  v-if="profile.secondSubtitle"
+                  class="no-overflow"
+                >
+                  {{ profile.secondSubtitle }}
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
 
-						<v-list-item-group v-model="selection">
-							<v-list-item v-for="(file, fileIndex) in profile.files" :key="fileIndex"
-										 :title="file.lastModified" :value="[file.filename]" v-ripple>
-								<v-list-item-icon>
-									<v-icon>mdi-file</v-icon>
-								</v-list-item-icon>
-								<v-list-item-title class="no-overflow">
-									{{ file.title }}
-								</v-list-item-title>
-								<v-list-item-icon v-if="canDelete" @click.stop.prevent="deleteFile(file.filename)">
-									<v-icon>
-										mdi-delete
-									</v-icon>
-								</v-list-item-icon>
-							</v-list-item>
-						</v-list-item-group>
-					</v-list-group>
-				</v-list>
-			</template>
-		</template>
-		<template v-else>
-			<v-alert type="info" class="mb-0">
-				No Profiles found
-			</v-alert>
-		</template>
+            <v-list-item-group v-model="selection">
+              <v-list-item
+                v-for="(file, fileIndex) in profile.files"
+                :key="fileIndex"
+                v-ripple
+                :title="file.lastModified"
+                :value="[file.filename]"
+              >
+                <v-list-item-icon>
+                  <v-icon>mdi-file</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title class="no-overflow">
+                  {{ file.title }}
+                </v-list-item-title>
+                <v-list-item-icon
+                  v-if="canDelete"
+                  @click.stop.prevent="deleteFile(file.filename)"
+                >
+                  <v-icon>
+                    mdi-delete
+                  </v-icon>
+                </v-list-item-icon>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list-group>
+        </v-list>
+      </template>
+    </template>
+    <template v-else>
+      <v-alert
+        type="info"
+        class="mb-0"
+      >
+        No Profiles found
+      </v-alert>
+    </template>
 
-		<v-spacer />
+    <v-spacer />
 
-		<v-checkbox v-show="!individualFiles && estimateEffect" :input-value="showOriginalValues"
-					@change="$emit('update:showOriginalValues', $event)" label="Show original values" hide-details
-					class="ma-3 mb-0" />
-		<v-checkbox v-show="!individualFiles" v-model="estimateEffect" label="Estimate shaper effect" hide-details
-					class="ma-3 mb-0" />
-		<div :class="individualFiles ? 'd-flex' : 'd-none'" class="justify-space-between ma-3 mb-0">
-			<v-checkbox :value="showSamples" @change="setShowSamples($event)" label="Show samples" hide-details
-						class="mt-0" />
-			<v-btn v-show="showSamples" color="primary" small :disabled="selection.length === 0"
-				   @click="showSamples = false">
-				<v-icon class="mr-1" small>mdi-poll</v-icon>
-				Analyze
-			</v-btn>
-		</div>
-		<v-checkbox v-model="individualFiles" label="Display individual files" hide-details class="mx-3" />
-		<v-checkbox :value="wideBand" @change="$emit('update:wideBand', $event)" label="Wide-band analysis" hide-details class="ma-3" />
-	</v-card>
+    <v-checkbox
+      v-show="!individualFiles && estimateEffect"
+      :input-value="showOriginalValues"
+      label="Show original values"
+      hide-details
+      class="ma-3 mb-0"
+      @change="$emit('update:showOriginalValues', $event)"
+    />
+    <v-checkbox
+      v-show="!individualFiles"
+      v-model="estimateEffect"
+      label="Estimate shaper effect"
+      hide-details
+      class="ma-3 mb-0"
+    />
+    <div
+      :class="individualFiles ? 'd-flex' : 'd-none'"
+      class="justify-space-between ma-3 mb-0"
+    >
+      <v-checkbox
+        :value="showSamples"
+        label="Show samples"
+        hide-details
+        class="mt-0"
+        @change="setShowSamples($event)"
+      />
+      <v-btn
+        v-show="showSamples"
+        color="primary"
+        small
+        :disabled="selection.length === 0"
+        @click="showSamples = false"
+      >
+        <v-icon
+          class="mr-1"
+          small
+        >
+          mdi-poll
+        </v-icon>
+        Analyze
+      </v-btn>
+    </div>
+    <v-checkbox
+      v-model="individualFiles"
+      label="Display individual files"
+      hide-details
+      class="mx-3"
+    />
+    <v-checkbox
+      :value="wideBand"
+      label="Wide-band analysis"
+      hide-details
+      class="ma-3"
+      @change="$emit('update:wideBand', $event)"
+    />
+  </v-card>
 </template>
 
 <script>
@@ -486,3 +570,19 @@ export default {
 	}
 }
 </script>
+
+<style scoped>
+.filelist {
+	overflow-y: scroll;
+	max-height: 480px;
+}
+
+.no-overflow {
+	text-overflow: clip
+}
+
+.no-wrap {
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+</style>

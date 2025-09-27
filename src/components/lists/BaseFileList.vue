@@ -1,140 +1,210 @@
-<style scoped>
-td {
-	cursor: pointer;
-}
-
-.loading-cursor {
-	cursor: wait;
-}
-
-.loading-cursor td {
-	cursor: wait;
-}
-</style>
-
-<style>
-.base-file-list th {
-	white-space: nowrap;
-}
-</style>
-
 <template>
-	<div>
-		<v-data-table v-model="innerValue" v-bind="$props" @toggle-select-all="toggleAll" :items="innerFilelist"
-					  item-key="name" :headers="headers || defaultHeaders" show-select
-					  :loading="loading || innerLoading" :custom-sort="sort" :sort-by.sync="internalSortBy"
-					  :sort-desc.sync="internalSortDesc" must-sort disable-pagination hide-default-footer
-					  :mobile-breakpoint="0" class="base-file-list elevation-3"
-					  :class="{ 'empty-table-fix' : !innerFilelist.length, 'loading-cursor' : isLoading }">
+  <div>
+    <v-data-table
+      v-model="innerValue"
+      v-bind="$props"
+      :items="innerFilelist"
+      item-key="name"
+      :headers="headers || defaultHeaders"
+      show-select
+      :loading="loading || innerLoading"
+      :custom-sort="sort"
+      :sort-by.sync="internalSortBy"
+      :sort-desc.sync="internalSortDesc"
+      @toggle-select-all="toggleAll"
+      must-sort
+      disable-pagination
+      hide-default-footer
+      :mobile-breakpoint="0"
+      class="base-file-list elevation-3"
+      :class="{ 'empty-table-fix' : !innerFilelist.length, 'loading-cursor' : isLoading }"
+    >
+      <template #progress>
+        <slot name="progress">
+          <v-progress-linear indeterminate />
+        </slot>
+      </template>
 
-			<template #progress>
-				<slot name="progress">
-					<v-progress-linear indeterminate />
-				</slot>
-			</template>
+      <template #no-data>
+        <slot name="no-data">
+          <v-alert
+            :value="true"
+            type="info"
+            class="text-left ma-0"
+            @contextmenu.prevent=""
+          >
+            {{ $t(noItemsText) }}
+          </v-alert>
+        </slot>
+      </template>
 
-			<template #no-data>
-				<slot name="no-data">
-					<v-alert :value="true" type="info" class="text-left ma-0" @contextmenu.prevent="">
-						{{ $t(noItemsText) }}
-					</v-alert>
-				</slot>
-			</template>
+      <template #item="props">
+        <tr
+          :data-filename="(props.item.isDirectory ? '*' : '') + props.item.name"
+          draggable="true"
+          tabindex="0"
+          @keydown.space.prevent="props.select(!props.isSelected)"
+          @touchstart="onItemTouchStart(props, $event)"
+          @touchend="onItemTouchEnd"
+          @click="onItemClick(props)"
+          @keydown.enter.prevent="onItemClick(props)"
+          @contextmenu.stop.prevent="onItemContextmenu(props, $event)"
+          @keydown.escape.prevent="contextMenu.shown = false"
+          @dragstart="onItemDragStart(props.item, $event)"
+          @dragover="onItemDragOver(props.item, $event)"
+          @drop.prevent="onItemDragDrop(props.item, $event)"
+        >
+          <td
+            v-for="header in props.headers"
+            :key="header.value"
+            :class="header.cellClass"
+          >
+            <template v-if="header.value === 'data-table-select'">
+              <v-simple-checkbox
+                :value="props.isSelected"
+                class="mt-n1"
+                tabindex="-1"
+                @touchstart.stop=""
+                @touchend.stop=""
+                @input="props.select($event)"
+              />
+            </template>
+            <template v-else-if="header.value === 'name'">
+              <div class="d-inline-flex align-center">
+                <slot
+                  :name="`${props.item.isDirectory ? 'folder' : 'file'}.${props.item.name}`"
+                  :item="props.item"
+                >
+                  <slot
+                    :name="props.item.isDirectory ? 'folder' : 'file'"
+                    :item="props.item"
+                  >
+                    <v-icon
+                      class="mr-1"
+                    >
+                      {{ props.item.isDirectory ? folderIcon : fileIcon }}
+                    </v-icon>
+                    {{ props.item.name }}
+                  </slot>
+                </slot>
+              </div>
+            </template>
+            <template v-else-if="header.unit === 'bytes'">
+              {{ (props.item[header.value] !== null && !props.item.isDirectory) ? $displaySize(props.item[header.value]) : "" }}
+            </template>
+            <template v-else-if="header.unit === 'date'">
+              {{ props.item.lastModified ? props.item.lastModified.toLocaleString() : $t("generic.noValue") }}
+            </template>
+            <template v-else-if="header.unit === 'filaments'">
+              <v-tooltip
+                bottom
+                :disabled="!props.item[header.value] || props.item[header.value].length <= 1"
+              >
+                <template #activator="{ on }">
+                  <span v-on="on">
+                    {{ displayLoadingValue(props.item, header.value, 1, "mm") }}
+                  </span>
+                </template>
 
-			<template #item="props">
-				<tr :data-filename="(props.item.isDirectory ? '*' : '') + props.item.name" draggable="true" tabindex="0"
-					@keydown.space.prevent="props.select(!props.isSelected)"
-					@touchstart="onItemTouchStart(props, $event)" @touchend="onItemTouchEnd" @click="onItemClick(props)"
-					@keydown.enter.prevent="onItemClick(props)"
-					@contextmenu.stop.prevent="onItemContextmenu(props, $event)"
-					@keydown.escape.prevent="contextMenu.shown = false" @dragstart="onItemDragStart(props.item, $event)"
-					@dragover="onItemDragOver(props.item, $event)" @drop.prevent="onItemDragDrop(props.item, $event)">
+                {{ $display(props.item[header.value], 1, "mm") }}
+              </v-tooltip>
+            </template>
+            <template v-else-if="header.unit === 'time'">
+              {{ displayTimeValue(props.item, header.value) }}
+            </template>
+            <template v-else>
+              {{ displayLoadingValue(props.item, header.value, header.precision, header.unit) }}
+            </template>
+          </td>
+        </tr>
+      </template>
+    </v-data-table>
 
-					<td v-for="header in props.headers" :key="header.value" :class="header.cellClass">
-						<template v-if="header.value === 'data-table-select'">
-							<v-simple-checkbox :value="props.isSelected" @touchstart.stop="" @touchend.stop=""
-											   @input="props.select($event)" class="mt-n1" tabindex="-1" />
-						</template>
-						<template v-else-if="header.value === 'name'">
-							<div class="d-inline-flex align-center">
-								<slot :name="`${props.item.isDirectory ? 'folder' : 'file'}.${props.item.name}`"
-									  :item="props.item">
-									<slot :name="props.item.isDirectory ? 'folder' : 'file'" :item="props.item">
-										<v-icon
-												class="mr-1">{{ props.item.isDirectory ? folderIcon : fileIcon }}</v-icon>
-										{{ props.item.name }}
-									</slot>
-								</slot>
-							</div>
-						</template>
-						<template v-else-if="header.unit === 'bytes'">
-							{{ (props.item[header.value] !== null && !props.item.isDirectory) ? $displaySize(props.item[header.value]) : "" }}
-						</template>
-						<template v-else-if="header.unit === 'date'">
-							{{ props.item.lastModified ? props.item.lastModified.toLocaleString() : $t("generic.noValue") }}
-						</template>
-						<template v-else-if="header.unit === 'filaments'">
-							<v-tooltip bottom
-									   :disabled="!props.item[header.value] || props.item[header.value].length <= 1">
-								<template #activator="{ on }">
-									<span v-on="on">
-										{{ displayLoadingValue(props.item, header.value, 1, "mm") }}
-									</span>
-								</template>
+    <v-menu
+      v-model="contextMenu.shown"
+      :position-x="contextMenu.x"
+      :position-y="contextMenu.y"
+      absolute
+      offset-y
+    >
+      <v-list>
+        <slot name="context-menu" />
 
-								{{ $display(props.item[header.value], 1, "mm") }}
-							</v-tooltip>
-						</template>
-						<template v-else-if="header.unit === 'time'">
-							{{ displayTimeValue(props.item, header.value) }}
-						</template>
-						<template v-else>
-							{{ displayLoadingValue(props.item, header.value, header.precision, header.unit) }}
-						</template>
-					</td>
-				</tr>
-			</template>
-		</v-data-table>
+        <v-list-item
+          v-show="!noDownload && innerValue.length === 1 && filesSelected"
+          @click="download"
+        >
+          <v-icon class="mr-1">
+            mdi-cloud-download
+          </v-icon>
+          {{ $tc("list.baseFileList.download", innerValue.length) }}
+        </v-list-item>
+        <v-list-item
+          v-show="!noEdit && innerValue.length === 1 && filesSelected"
+          :disabled="!canEditFile"
+          @click="edit(innerValue[0])"
+        >
+          <v-icon class="mr-1">
+            mdi-file-document-edit
+          </v-icon>
+          {{ $t("list.baseFileList.edit") }}
+        </v-list-item>
+        <v-list-item
+          v-show="!noRename && innerValue.length === 1"
+          @click="rename"
+        >
+          <v-icon class="mr-1">
+            mdi-rename-box
+          </v-icon>
+          {{ $t("list.baseFileList.rename") }}
+        </v-list-item>
+        <v-list-item
+          v-show="!noDelete"
+          @click="remove()"
+        >
+          <v-icon class="mr-1">
+            mdi-delete
+          </v-icon>
+          {{ $t("list.baseFileList.delete") }}
+        </v-list-item>
+        <v-list-item
+          v-show="!foldersSelected && innerValue.length > 1"
+          @click="downloadZIP()"
+        >
+          <v-icon class="mr-1">
+            mdi-package-down
+          </v-icon>
+          {{ $t("list.baseFileList.downloadZIP") }}
+        </v-list-item>
+      </v-list>
+    </v-menu>
 
-		<v-menu v-model="contextMenu.shown" :position-x="contextMenu.x" :position-y="contextMenu.y" absolute offset-y>
-			<v-list>
-				<slot name="context-menu"></slot>
-
-				<v-list-item v-show="!noDownload && innerValue.length === 1 && filesSelected" @click="download">
-					<v-icon class="mr-1">mdi-cloud-download</v-icon>
-					{{ $tc("list.baseFileList.download", innerValue.length) }}
-				</v-list-item>
-				<v-list-item v-show="!noEdit && innerValue.length === 1 && filesSelected" :disabled="!canEditFile"
-							 @click="edit(innerValue[0])">
-					<v-icon class="mr-1">mdi-file-document-edit</v-icon>
-					{{ $t("list.baseFileList.edit") }}
-				</v-list-item>
-				<v-list-item v-show="!noRename && innerValue.length === 1" @click="rename">
-					<v-icon class="mr-1">mdi-rename-box</v-icon>
-					{{ $t("list.baseFileList.rename") }}
-				</v-list-item>
-				<v-list-item v-show="!noDelete" @click="remove()">
-					<v-icon class="mr-1">mdi-delete</v-icon>
-					{{ $t("list.baseFileList.delete") }}
-				</v-list-item>
-				<v-list-item v-show="!foldersSelected && innerValue.length > 1" @click="downloadZIP()">
-					<v-icon class="mr-1">mdi-package-down</v-icon>
-					{{ $t("list.baseFileList.downloadZIP") }}
-				</v-list-item>
-			</v-list>
-		</v-menu>
-
-		<file-edit-dialog :shown.sync="editDialog.shown" :filename="editDialog.filename" v-model="editDialog.content"
-						  @editComplete="$emit('fileEdited', $event)" />
-		<confirm-dialog :shown.sync="forceMoveDialog.shown" :title="$t('dialog.forceMove.title')"
-						:prompt="$t('dialog.forceMove.prompt')" @confirmed="forceMove" />
-		<confirm-dialog :shown.sync="removeDialog.shown" :title="$tc('dialog.deleteFiles.title', removeDialog.items.length)"
-						:prompt="(removeDialog.items.length > 1) ? $t('dialog.deleteFiles.deleteMulitiplePrompt') : $t('dialog.deleteFiles.deletePrompt', [(removeDialog.items.length > 0) ? removeDialog.items[0].name : ''])"
-						@confirmed="removeCallback" />
-		<input-dialog :shown.sync="renameDialog.shown" :title="$t('dialog.renameFile.title')"
-					  :prompt="$t('dialog.renameFile.prompt')" :preset="renameDialog.item && renameDialog.item.name"
-					  @confirmed="renameCallback" />
-	</div>
+    <file-edit-dialog
+      v-model="editDialog.content"
+      :shown.sync="editDialog.shown"
+      :filename="editDialog.filename"
+      @editComplete="$emit('fileEdited', $event)"
+    />
+    <confirm-dialog
+      :shown.sync="forceMoveDialog.shown"
+      :title="$t('dialog.forceMove.title')"
+      :prompt="$t('dialog.forceMove.prompt')"
+      @confirmed="forceMove"
+    />
+    <confirm-dialog
+      :shown.sync="removeDialog.shown"
+      :title="$tc('dialog.deleteFiles.title', removeDialog.items.length)"
+      :prompt="(removeDialog.items.length > 1) ? $t('dialog.deleteFiles.deleteMulitiplePrompt') : $t('dialog.deleteFiles.deletePrompt', [(removeDialog.items.length > 0) ? removeDialog.items[0].name : ''])"
+      @confirmed="removeCallback"
+    />
+    <input-dialog
+      :shown.sync="renameDialog.shown"
+      :title="$t('dialog.renameFile.title')"
+      :prompt="$t('dialog.renameFile.prompt')"
+      :preset="renameDialog.item && renameDialog.item.name"
+      @confirmed="renameCallback"
+    />
+  </div>
 </template>
 
 <script lang="ts">
@@ -819,3 +889,23 @@ export default VDataTable.extend({
 	}
 });
 </script>
+
+<style scoped>
+td {
+	cursor: pointer;
+}
+
+.loading-cursor {
+	cursor: wait;
+}
+
+.loading-cursor td {
+	cursor: wait;
+}
+</style>
+
+<style>
+.base-file-list th {
+	white-space: nowrap;
+}
+</style>

@@ -1,9 +1,9 @@
 <template>
-	<v-row :dense="$vuetify.breakpoint.mobile">
-		<v-col>
-			<webcam-panel />
-		</v-col>
-	</v-row>
+  <v-row :dense="$vuetify.breakpoint.mobile">
+    <v-col>
+      <webcam-panel />
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">

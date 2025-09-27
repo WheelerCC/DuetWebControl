@@ -1,35 +1,59 @@
-<style scoped>
-.grow {
-	flex-grow: 1;
-}
-</style>
-
 <template>
-	<v-row class="component flex-shrink-1" :class="{ 'mt-2': solo, 'grow': grow }" no-gutters align="center">
-		<v-col>
-			<v-combobox ref="input" :solo="solo" hide-details :disabled="uiFrozen"
-						:placeholder="$t('input.code.placeholder')"
-						:search-input="(code instanceof Object) ? code.value : (code ?? '')"
-						@update:search-input="code = $event ?? ''" :loading="doingCode" @keyup.enter="sendOnEnter"
-						@change="change" @blur="wasFocused = showItems = ignoreEnter = false" @click="click"
-						:items="displayedCodes" hide-selected @keyup.down="showItems = true" append-icon=""
-						maxlength="255">
-				<template #item="{ item }">
-					<code>{{ item.text }}</code>
-					<v-spacer></v-spacer>
-					<v-btn icon @click.prevent.stop="removeLastSentCode(item.value)">
-						<v-icon>mdi-delete</v-icon>
-					</v-btn>
-				</template>
-			</v-combobox>
-		</v-col>
+  <v-row
+    class="component flex-shrink-1"
+    :class="{ 'mt-2': solo, 'grow': grow }"
+    no-gutters
+    align="center"
+  >
+    <v-col>
+      <v-combobox
+        ref="input"
+        :solo="solo"
+        hide-details
+        :disabled="uiFrozen"
+        :placeholder="$t('input.code.placeholder')"
+        :search-input="(code instanceof Object) ? code.value : (code ?? '')"
+        :loading="doingCode"
+        :items="displayedCodes"
+        hide-selected
+        append-icon=""
+        @update:search-input="code = $event ?? ''"
+        @keyup.enter="sendOnEnter"
+        maxlength="255"
+        @change="change"
+        @blur="wasFocused = showItems = ignoreEnter = false"
+        @click="click"
+        @keyup.down="showItems = true"
+      >
+        <template #item="{ item }">
+          <code>{{ item.text }}</code>
+          <v-spacer />
+          <v-btn
+            icon
+            @click.prevent.stop="removeLastSentCode(item.value)"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </template>
+      </v-combobox>
+    </v-col>
 
-		<v-col class="ml-2 flex-shrink-1" cols="auto">
-			<v-btn color="info" :disabled="uiFrozen" :loading="doingCode" @click="send">
-				<v-icon class="mr-2">mdi-send</v-icon> {{ $t("input.code.send") }}
-			</v-btn>
-		</v-col>
-	</v-row>
+    <v-col
+      class="ml-2 flex-shrink-1"
+      cols="auto"
+    >
+      <v-btn
+        color="info"
+        :disabled="uiFrozen"
+        :loading="doingCode"
+        @click="send"
+      >
+        <v-icon class="mr-2">
+          mdi-send
+        </v-icon> {{ $t("input.code.send") }}
+      </v-btn>
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">
@@ -41,6 +65,20 @@ import { MessageBox } from "@duet3d/objectmodel";
 const conditionalKeywords = ["abort", "echo", "if", "elif", "else", "while", "break", "continue", "var", "global", "set"];
 
 export default Vue.extend({
+	props: {
+		grow: Boolean,
+		solo: Boolean
+	},
+	data() {
+		return {
+			code: "" as string | { value: string },
+			ignoreEnter: false,
+			wasFocused: false,
+			showItems: false,
+			sendPending: false,
+			doingCode: false
+		}
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		displayedCodes(): Array<{ text: string, value: string }> {
@@ -55,19 +93,19 @@ export default Vue.extend({
 		},
 		messageBox(): MessageBox | null { return store.state.machine.model.state.messageBox; }
 	},
-	data() {
-		return {
-			code: "" as string | { value: string },
-			ignoreEnter: false,
-			wasFocused: false,
-			showItems: false,
-			sendPending: false,
-			doingCode: false
+	watch: {
+		code(to: string | { value: string }) {
+			if (typeof to === "string" && to.length >= 2) {
+				this.showItems = true;
+			}
+		},
+		messageBox(to: MessageBox | null) {
+			if (to) {
+				// Don't handle "Enter" immediately when returning from a message box
+				this.ignoreEnter = true;
+				setTimeout(() => this.ignoreEnter = false, 1000);
+			}
 		}
-	},
-	props: {
-		grow: Boolean,
-		solo: Boolean
 	},
 	methods: {
 		click() {
@@ -169,20 +207,12 @@ export default Vue.extend({
 				this.doingCode = false;
 			}
 		}
-	},
-	watch: {
-		code(to: string | { value: string }) {
-			if (typeof to === "string" && to.length >= 2) {
-				this.showItems = true;
-			}
-		},
-		messageBox(to: MessageBox | null) {
-			if (to) {
-				// Don't handle "Enter" immediately when returning from a message box
-				this.ignoreEnter = true;
-				setTimeout(() => this.ignoreEnter = false, 1000);
-			}
-		}
 	}
 });
 </script>
+
+<style scoped>
+.grow {
+	flex-grow: 1;
+}
+</style>

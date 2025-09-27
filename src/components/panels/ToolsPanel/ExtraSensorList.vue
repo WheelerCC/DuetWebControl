@@ -1,52 +1,57 @@
-<style scoped>
-table {
-	width: 100%;
-	border-spacing: 0;
-}
-
-table td,
-table th {
-	text-align: center;
-}
-</style>
-
 <template>
-    <table v-if="extraSensors.length > 0" class="ml-2 mr-2">
-        <colgroup>
-            <col style="width: 50%;">
-            <col style="width: 25%;">
-            <col style="width: 25%;">
-        </colgroup>
-        <thead>
-            <tr>
-                <th class="hidden-sm-and-down"></th>
-                <th>
-                    {{ $t("panel.tools.extra.sensor") }}
-                </th>
-                <th>
-                    {{ $t("panel.tools.extra.value") }}
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="extraSensor in extraSensors" :key="`extra-${extraSensor.index}`">
-                <td class="hidden-sm-and-down">
-                    <v-switch class="ml-3" :input-value="displayedExtraTemperatures.indexOf(extraSensor.index) !== -1"
-                              @change="toggleExtraVisibility(extraSensor.index)"
-                              :label="$t('panel.tools.extra.showInChart')" :disabled="uiFrozen" />
-                </td>
-                <th class="py-2" :class="getExtraColor(extraSensor.index)">
-                    {{ formatExtraName(extraSensor) }}
-                </th>
-                <td class="py-2">
-                    {{ displaySensorValue(extraSensor.sensor) }}
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <v-alert v-else :value="true" type="info">
-        {{ $t("panel.tools.extra.noItems") }}
-    </v-alert>
+  <table
+    v-if="extraSensors.length > 0"
+    class="ml-2 mr-2"
+  >
+    <colgroup>
+      <col style="width: 50%;">
+      <col style="width: 25%;">
+      <col style="width: 25%;">
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="hidden-sm-and-down" />
+        <th>
+          {{ $t("panel.tools.extra.sensor") }}
+        </th>
+        <th>
+          {{ $t("panel.tools.extra.value") }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        v-for="extraSensor in extraSensors"
+        :key="`extra-${extraSensor.index}`"
+      >
+        <td class="hidden-sm-and-down">
+          <v-switch
+            class="ml-3"
+            :input-value="displayedExtraTemperatures.indexOf(extraSensor.index) !== -1"
+            :label="$t('panel.tools.extra.showInChart')"
+            :disabled="uiFrozen"
+            @change="toggleExtraVisibility(extraSensor.index)"
+          />
+        </td>
+        <th
+          class="py-2"
+          :class="getExtraColor(extraSensor.index)"
+        >
+          {{ formatExtraName(extraSensor) }}
+        </th>
+        <td class="py-2">
+          {{ displaySensorValue(extraSensor.sensor) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <v-alert
+    v-else
+    :value="true"
+    type="info"
+  >
+    {{ $t("panel.tools.extra.noItems") }}
+  </v-alert>
 </template>
 
 <script setup lang="ts">
@@ -92,3 +97,15 @@ function formatExtraName(sensor: { sensor: AnalogSensor, index: number }) {
     return i18n.t("panel.tools.extra.sensorIndex", [sensor.index]);
 }
 </script>
+
+<style scoped>
+table {
+	width: 100%;
+	border-spacing: 0;
+}
+
+table td,
+table th {
+	text-align: center;
+}
+</style>

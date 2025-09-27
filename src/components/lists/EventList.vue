@@ -1,74 +1,89 @@
-<style>
-td.log-cell {
-	padding-top: 8px !important;
-	padding-bottom: 8px !important;
-	height: auto !important;
-}
-
-td.title-cell {
-	vertical-align: top;
-}
-</style>
-
-<style scoped>
-.message {
-	white-space: pre-wrap;
-}
-
-th:last-child {
-	padding-right: 0 !important;
-	width: 1%;
-}
-</style>
-
 <template>
-	<div class="component">
-		<v-data-table :headers="headers" :items="events" item-key="date" disable-pagination hide-default-footer
-					  :mobile-breakpoint="0" :custom-sort="sort" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc"
-					  must-sort class="elevation-3" :class="{ 'empty-table-fix' : !events.length }">
+  <div class="component">
+    <v-data-table
+      :headers="headers"
+      :items="events"
+      item-key="date"
+      disable-pagination
+      hide-default-footer
+      :mobile-breakpoint="0"
+      :custom-sort="sort"
+      :sort-by.sync="sortBy"
+      :sort-desc.sync="sortDesc"
+      must-sort
+      class="elevation-3"
+      :class="{ 'empty-table-fix' : !events.length }"
+    >
+      <template #no-data>
+        <v-alert
+          :value="true"
+          type="info"
+          class="text-left ma-0"
+        >
+          {{ $t("list.eventLog.noEvents") }}
+        </v-alert>
+      </template>
 
-			<template #no-data>
-				<v-alert :value="true" type="info" class="text-left ma-0">
-					{{ $t("list.eventLog.noEvents") }}
-				</v-alert>
-			</template>
+      <template #[`header.btn`]>
+        <v-menu offset-y>
+          <template #activator="{ on }">
+            <v-btn
+              icon
+              v-on="on"
+            >
+              <v-icon small>
+                mdi-menu
+              </v-icon>
+            </v-btn>
+          </template>
 
-			<template v-slot:[`header.btn`]>
-				<v-menu offset-y>
-					<template #activator="{ on }">
-						<v-btn v-on="on" icon>
-							<v-icon small>mdi-menu</v-icon>
-						</v-btn>
-					</template>
+          <v-list>
+            <v-list-item @click="clearLog">
+              <v-icon class="mr-1">
+                mdi-notification-clear-all
+              </v-icon> {{ $t("list.eventLog.clear") }}
+            </v-list-item>
+            <v-list-item
+              :disabled="!events.length"
+              @click="downloadText"
+            >
+              <v-icon class="mr-1">
+                mdi-file-download
+              </v-icon> {{ $t("list.eventLog.downloadText") }}
+            </v-list-item>
+            <v-list-item
+              :disabled="!events.length"
+              @click="downloadCSV"
+            >
+              <v-icon class="mr-1">
+                mdi-cloud-download
+              </v-icon> {{ $t("list.eventLog.downloadCSV") }}
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </template>
 
-					<v-list>
-						<v-list-item @click="clearLog">
-							<v-icon class="mr-1">mdi-notification-clear-all</v-icon> {{ $t("list.eventLog.clear") }}
-						</v-list-item>
-						<v-list-item :disabled="!events.length" @click="downloadText">
-							<v-icon class="mr-1">mdi-file-download</v-icon> {{ $t("list.eventLog.downloadText") }}
-						</v-list-item>
-						<v-list-item :disabled="!events.length" @click="downloadCSV">
-							<v-icon class="mr-1">mdi-cloud-download</v-icon> {{ $t("list.eventLog.downloadCSV") }}
-						</v-list-item>
-					</v-list>
-				</v-menu>
-			</template>
-
-			<template #item="{ item }">
-				<tr :class="getClassByEvent(item.type)">
-					<td class="log-cell title-cell">
-						{{ item.date.toLocaleString() }}
-					</td>
-					<td class="log-cell content-cell" colspan="2">
-						<strong>{{ item.title }}</strong>
-						<br v-if="item.title && item.message">
-						<span v-if="item.message" class="message" v-html="formatMessage(item.message)"></span>
-					</td>
-				</tr>
-			</template>
-		</v-data-table>
-	</div>
+      <template #item="{ item }">
+        <tr :class="getClassByEvent(item.type)">
+          <td class="log-cell title-cell">
+            {{ item.date.toLocaleString() }}
+          </td>
+          <td
+            class="log-cell content-cell"
+            colspan="2"
+          >
+            <strong>{{ item.title }}</strong>
+            <br v-if="item.title && item.message">
+            <span
+              v-if="item.message"
+              class="message"
+              v-html="formatMessage(item.message)"
+            />
+          </td>
+        </tr>
+      </template>
+    </v-data-table>
+  </div>
 </template>
 
 <script lang="ts">
@@ -213,3 +228,26 @@ export default Vue.extend({
 	}
 });
 </script>
+
+<style>
+td.log-cell {
+	padding-top: 8px !important;
+	padding-bottom: 8px !important;
+	height: auto !important;
+}
+
+td.title-cell {
+	vertical-align: top;
+}
+</style>
+
+<style scoped>
+.message {
+	white-space: pre-wrap;
+}
+
+th:last-child {
+	padding-right: 0 !important;
+	width: 1%;
+}
+</style>

@@ -1,15 +1,21 @@
 <template>
-	<v-row dense>
-		<v-col cols="12" class="d-flex">
-			<span>{{ printStatus }}</span>
-			<v-spacer />
-			<span>{{ printDetails }}</span>
-		</v-col>
+  <v-row dense>
+    <v-col
+      cols="12"
+      class="d-flex"
+    >
+      <span>{{ printStatus }}</span>
+      <v-spacer />
+      <span>{{ printDetails }}</span>
+    </v-col>
 
-		<v-col cols="12">
-			<v-progress-linear :value="jobProgress * 100" class="my-1" />
-		</v-col>
-	</v-row>
+    <v-col cols="12">
+      <v-progress-linear
+        :value="jobProgress * 100"
+        class="my-1"
+      />
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">
@@ -21,6 +27,11 @@ import { isPrinting } from "@/utils/enums";
 import { extractFileName } from "@/utils/path";
 
 export default Vue.extend({
+	data() {
+		return {
+			isSimulating: false
+		}
+	},
 	computed: {
 		jobProgress(): number { return store.getters["machine/model/jobProgress"]; },
 		status(): MachineStatus { return store.state.machine.model.state.status; },
@@ -80,14 +91,6 @@ export default Vue.extend({
 			return (store.state.machine.model.job.lastFileName !== null) ? extractFileName(store.state.machine.model.job.lastFileName) : null;
 		}
 	},
-	data() {
-		return {
-			isSimulating: false
-		}
-	},
-	mounted() {
-		this.isSimulating = (store.state.machine.model.state.status === MachineStatus.simulating);
-	},
 	watch: {
 		status(to: MachineStatus) {
 			if (to === MachineStatus.simulating) {
@@ -96,6 +99,9 @@ export default Vue.extend({
 				this.isSimulating = false;
 			}
 		}
+	},
+	mounted() {
+		this.isSimulating = (store.state.machine.model.state.status === MachineStatus.simulating);
 	}
 });
 </script>

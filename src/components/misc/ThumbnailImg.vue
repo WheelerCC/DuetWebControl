@@ -1,12 +1,9 @@
-<style scoped>
-.icon-thumbnail {
-	height: 48px;
-	width: 48px;
-}
-</style>
-
 <template>
-	<img :class="{ 'icon-thumbnail': icon }" :src="imgData" alt="thumbnail">
+  <img
+    :class="{ 'icon-thumbnail': icon }"
+    :src="imgData"
+    alt="thumbnail"
+  >
 </template>
 
 <script lang="ts">
@@ -27,6 +24,18 @@ export default Vue.extend({
 			imgData: "",
 			thumbnailData: ""
 		}
+	},
+	watch: {
+		thumbnail: {
+			deep: true,
+			handler() {
+				// only the data of job.file.thumbnails[] may be replaced, so use a deep watcher here
+				this.renderImage();
+			}
+		}
+	},
+	mounted() {
+		this.renderImage();
 	},
 	methods: {
 		async renderImage() {
@@ -62,18 +71,13 @@ export default Vue.extend({
 				this.thumbnailData = this.thumbnail.data;
 			}
 		}
-	},
-	mounted() {
-		this.renderImage();
-	},
-	watch: {
-		thumbnail: {
-			deep: true,
-			handler() {
-				// only the data of job.file.thumbnails[] may be replaced, so use a deep watcher here
-				this.renderImage();
-			}
-		}
 	}
 });
 </script>
+
+<style scoped>
+.icon-thumbnail {
+	height: 48px;
+	width: 48px;
+}
+</style>

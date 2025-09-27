@@ -1,36 +1,10 @@
-<style>
-.simple-keyboard {
-	position: fixed;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	z-index: 9999;
-}
-
-.simple-keyboard.dark {
-	background-color: #1E1E1E;
-	border-radius: 0;
-	border-bottom-right-radius: 5px;
-	border-bottom-left-radius: 5px;
-}
-
-.simple-keyboard.dark .hg-button {
-	height: 50px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	background: #1E1E1E;
-	color: white;
-}
-
-.simple-keyboard.dark .hg-button:active {
-	background: #1c4995;
-	color: white;
-}
-</style>
-
 <template>
-	<div ref="keyboard" v-if="input" class="simple-keyboard" @click.stop.prevent=""></div>
+  <div
+    v-if="input"
+    ref="keyboard"
+    class="simple-keyboard"
+    @click.stop.prevent=""
+  />
 </template>
 
 <script lang="ts">
@@ -168,3 +142,34 @@ export default Vue.extend({
 	}
 });
 </script>
+
+<style>
+.simple-keyboard {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 9999;
+}
+
+.simple-keyboard.dark {
+	background-color: #1E1E1E;
+	border-radius: 0;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+}
+
+.simple-keyboard.dark .hg-button {
+	height: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: #1E1E1E;
+	color: white;
+}
+
+.simple-keyboard.dark .hg-button:active {
+	background: #1c4995;
+	color: white;
+}
+</style>

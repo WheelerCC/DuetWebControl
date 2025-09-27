@@ -1,172 +1,299 @@
-<style scoped>
-.move-btn {
-	padding-left: 0px !important;
-	padding-right: 0px !important;
-	min-width: 0;
-	height: 65px !important;
-}
-
-.wcs-selection {
-	max-width: 200px;
-}
-</style>
-
 <template>
-	<v-card>
-		<v-card-title class="pt-0">
-			<v-icon small class="mr-1">mdi-swap-horizontal</v-icon>
-			{{ $t("panel.movement.caption") }}
-			<v-spacer />
-			<v-select v-model="currentWorkplace" :items="workCoordinates" class="wcs-selection"
-					  hint="Work Coordinate System" @change="updateWorkplaceCoordinate" persistent-hint />
-		</v-card-title>
-		<v-card-text v-show="visibleAxes.length">
-			<v-row dense>
-				<v-col cols="6" order="1" md="2" order-md="1">
-					<code-btn block v-show="visibleAxes.length" color="primary" code="G28"
-							  :title="$t('button.home.titleAll')" class="ml-0 move-btn">
-						{{ $t("button.home.captionAll") }}
-					</code-btn>
-				</v-col>
-				<v-col cols="6" order="2" md="8" order-md="2">
-					<v-menu offset-y left :disabled="uiFrozen">
-						<template #activator="{ on }">
-							<v-btn v-show="visibleAxes.length" color="primary" block class="mx-0 move-btn"
-								   :disabled="uiFrozen" v-on="on">
-								{{ $t("panel.movement.compensation") }}
-								<v-icon>mdi-menu-down</v-icon>
-							</v-btn>
-						</template>
+  <v-card>
+    <v-card-title class="pt-0">
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-swap-horizontal
+      </v-icon>
+      {{ $t("panel.movement.caption") }}
+      <v-spacer />
+      <v-select
+        v-model="currentWorkplace"
+        :items="workCoordinates"
+        class="wcs-selection"
+        hint="Work Coordinate System"
+        persistent-hint
+        @change="updateWorkplaceCoordinate"
+      />
+    </v-card-title>
+    <v-card-text v-show="visibleAxes.length">
+      <v-row dense>
+        <v-col
+          cols="6"
+          order="1"
+          md="2"
+          order-md="1"
+        >
+          <code-btn
+            v-show="visibleAxes.length"
+            block
+            color="primary"
+            code="G28"
+            :title="$t('button.home.titleAll')"
+            class="ml-0 move-btn"
+          >
+            {{ $t("button.home.captionAll") }}
+          </code-btn>
+        </v-col>
+        <v-col
+          cols="6"
+          order="2"
+          md="8"
+          order-md="2"
+        >
+          <v-menu
+            offset-y
+            left
+            :disabled="uiFrozen"
+          >
+            <template #activator="{ on }">
+              <v-btn
+                v-show="visibleAxes.length"
+                color="primary"
+                block
+                class="mx-0 move-btn"
+                :disabled="uiFrozen"
+                v-on="on"
+              >
+                {{ $t("panel.movement.compensation") }}
+                <v-icon>mdi-menu-down</v-icon>
+              </v-btn>
+            </template>
 
-						<v-card>
-							<v-list>
-								<div v-show="isCompensationEnabled">
-									<v-list-item>
-										<v-spacer />
-										{{ $t("panel.movement.compensationInUse", [compensationType]) }}
-										<v-spacer />
-									</v-list-item>
+            <v-card>
+              <v-list>
+                <div v-show="isCompensationEnabled">
+                  <v-list-item>
+                    <v-spacer />
+                    {{ $t("panel.movement.compensationInUse", [compensationType]) }}
+                    <v-spacer />
+                  </v-list-item>
 
-									<v-divider />
-								</div>
+                  <v-divider />
+                </div>
 
-								<v-list-item @click="sendCode('G32')">
-									<v-icon class="mr-1">mdi-format-vertical-align-center</v-icon>
-									{{ $t(isDelta ? "panel.movement.runDelta" : "panel.movement.runBed") }}
-								</v-list-item>
-								<v-list-item :disabled="!isCompensationEnabled" @click="sendCode('M561')">
-									<v-icon class="mr-1">mdi-border-none</v-icon>
-									{{ $t("panel.movement.disableBedCompensation") }}
-								</v-list-item>
+                <v-list-item @click="sendCode('G32')">
+                  <v-icon class="mr-1">
+                    mdi-format-vertical-align-center
+                  </v-icon>
+                  {{ $t(isDelta ? "panel.movement.runDelta" : "panel.movement.runBed") }}
+                </v-list-item>
+                <v-list-item
+                  :disabled="!isCompensationEnabled"
+                  @click="sendCode('M561')"
+                >
+                  <v-icon class="mr-1">
+                    mdi-border-none
+                  </v-icon>
+                  {{ $t("panel.movement.disableBedCompensation") }}
+                </v-list-item>
 
-								<v-divider />
+                <v-divider />
 
-								<v-list-item @click="sendCode('G29')">
-									<v-icon class="mr-1">mdi-grid</v-icon>
-									{{ $t("panel.movement.runMesh") }}
-								</v-list-item>
-								<v-list-item @click="showMeshEditDialog = true">
-									<v-icon class="mr-1">mdi-pencil</v-icon>
-									{{ $t("panel.movement.editMesh") }}
-								</v-list-item>
-								<v-list-item @click="sendCode('G29 S1')">
-									<v-icon class="mr-1">mdi-content-save</v-icon>
-									{{ $t("panel.movement.loadMesh") }}
-								</v-list-item>
-								<v-list-item :disabled="!isCompensationEnabled" @click="sendCode('G29 S2')">
-									<v-icon class="mr-1">mdi-grid-off</v-icon>
-									{{ $t("panel.movement.disableMeshCompensation") }}
-								</v-list-item>
-							</v-list>
-						</v-card>
-					</v-menu>
-				</v-col>
-				<v-col cols="12" order="3" md="2" order-md="3">
-					<v-btn @click="setWorkplaceZero" block class="move-btn">
-						{{ $t("panel.movement.setWorkXYZ") }}
-					</v-btn>
-				</v-col>
-			</v-row>
+                <v-list-item @click="sendCode('G29')">
+                  <v-icon class="mr-1">
+                    mdi-grid
+                  </v-icon>
+                  {{ $t("panel.movement.runMesh") }}
+                </v-list-item>
+                <v-list-item @click="showMeshEditDialog = true">
+                  <v-icon class="mr-1">
+                    mdi-pencil
+                  </v-icon>
+                  {{ $t("panel.movement.editMesh") }}
+                </v-list-item>
+                <v-list-item @click="sendCode('G29 S1')">
+                  <v-icon class="mr-1">
+                    mdi-content-save
+                  </v-icon>
+                  {{ $t("panel.movement.loadMesh") }}
+                </v-list-item>
+                <v-list-item
+                  :disabled="!isCompensationEnabled"
+                  @click="sendCode('G29 S2')"
+                >
+                  <v-icon class="mr-1">
+                    mdi-grid-off
+                  </v-icon>
+                  {{ $t("panel.movement.disableMeshCompensation") }}
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-menu>
+        </v-col>
+        <v-col
+          cols="12"
+          order="3"
+          md="2"
+          order-md="3"
+        >
+          <v-btn
+            block
+            class="move-btn"
+            @click="setWorkplaceZero"
+          >
+            {{ $t("panel.movement.setWorkXYZ") }}
+          </v-btn>
+        </v-col>
+      </v-row>
 
-			<v-row v-for="(axis, axisIndex) in visibleAxes" :key="axisIndex" dense>
-				<!-- Regular home buttons -->
-				<v-col cols="2" order="1" sm="4" md="1" order-md="1">
-					<v-row dense>
-						<v-col>
-							<code-btn tile block :color="axis.homed ? 'primary' : 'warning'" :disabled="uiFrozen"
-									  :title="$t('button.home.title', [/[a-z]/.test(axis.letter) ? `'${axis.letter}` : axis.letter])"
-									  :code="`G28 ${/[a-z]/.test(axis.letter) ? '\'' : ''}${axis.letter}`" class="move-btn">
-								{{ $t("button.home.caption", [axis.letter]) }}
-							</code-btn>
-						</v-col>
-					</v-row>
-				</v-col>
+      <v-row
+        v-for="(axis, axisIndex) in visibleAxes"
+        :key="axisIndex"
+        dense
+      >
+        <!-- Regular home buttons -->
+        <v-col
+          cols="2"
+          order="1"
+          sm="4"
+          md="1"
+          order-md="1"
+        >
+          <v-row dense>
+            <v-col>
+              <code-btn
+                tile
+                block
+                :color="axis.homed ? 'primary' : 'warning'"
+                :disabled="uiFrozen"
+                :title="$t('button.home.title', [/[a-z]/.test(axis.letter) ? `'${axis.letter}` : axis.letter])"
+                :code="`G28 ${/[a-z]/.test(axis.letter) ? '\'' : ''}${axis.letter}`"
+                class="move-btn"
+              >
+                {{ $t("button.home.caption", [axis.letter]) }}
+              </code-btn>
+            </v-col>
+          </v-row>
+        </v-col>
 
-				<!-- Decreasing movements -->
-				<v-col cols="6" order="3" md="5" order-md="2">
-					<v-row dense>
-						<v-col v-for="index in numMoveSteps" :key="index" :class="getMoveCellClass(index - 1)">
-							<code-btn :code="getMoveCode(axis, index - 1, true)" no-wait
-									  @contextmenu.prevent="showMoveStepDialog(axis.letter, index - 1)" block tile
-									  class="move-btn">
-								<v-icon>mdi-chevron-left</v-icon>
-								{{ axis.letter + showSign(-moveSteps(axis.letter)[index - 1]) }}
-							</code-btn>
-						</v-col>
-					</v-row>
-				</v-col>
+        <!-- Decreasing movements -->
+        <v-col
+          cols="6"
+          order="3"
+          md="5"
+          order-md="2"
+        >
+          <v-row dense>
+            <v-col
+              v-for="index in numMoveSteps"
+              :key="index"
+              :class="getMoveCellClass(index - 1)"
+            >
+              <code-btn
+                :code="getMoveCode(axis, index - 1, true)"
+                no-wait
+                block
+                tile
+                class="move-btn"
+                @contextmenu.prevent="showMoveStepDialog(axis.letter, index - 1)"
+              >
+                <v-icon>mdi-chevron-left</v-icon>
+                {{ axis.letter + showSign(-moveSteps(axis.letter)[index - 1]) }}
+              </code-btn>
+            </v-col>
+          </v-row>
+        </v-col>
 
-				<!-- Increasing movements -->
-				<v-col cols="6" order="4" md="5" order-md="3">
-					<v-row dense>
-						<v-col v-for="index in numMoveSteps" :key="index" :class="getMoveCellClass(numMoveSteps - index)">
-							<code-btn :code="getMoveCode(axis, numMoveSteps - index, false)" no-wait
-									  @contextmenu.prevent="showMoveStepDialog(axis.letter, numMoveSteps - index)" block
-									  tile class="move-btn">
-								{{ axis.letter + showSign(moveSteps(axis.letter)[numMoveSteps - index]) }}
-								<v-icon>mdi-chevron-right</v-icon>
-							</code-btn>
-						</v-col>
-					</v-row>
-				</v-col>
+        <!-- Increasing movements -->
+        <v-col
+          cols="6"
+          order="4"
+          md="5"
+          order-md="3"
+        >
+          <v-row dense>
+            <v-col
+              v-for="index in numMoveSteps"
+              :key="index"
+              :class="getMoveCellClass(numMoveSteps - index)"
+            >
+              <code-btn
+                :code="getMoveCode(axis, numMoveSteps - index, false)"
+                no-wait
+                block
+                tile
+                class="move-btn"
+                @contextmenu.prevent="showMoveStepDialog(axis.letter, numMoveSteps - index)"
+              >
+                {{ axis.letter + showSign(moveSteps(axis.letter)[numMoveSteps - index]) }}
+                <v-icon>mdi-chevron-right</v-icon>
+              </code-btn>
+            </v-col>
+          </v-row>
+        </v-col>
 
-				<!-- Set axis-->
-				<v-col cols="2" order="2" offset="8" sm="4" offset-sm="4" md="1" order-md="4" offset-md="0">
-					<v-row dense>
-						<v-col>
-							<code-btn color="warning" tile block :code="`G10 L20 P${currentWorkplace} ${axis.letter}0`"
-									  class="move-btn">
-								{{ $t("panel.movement.set", [axis.letter]) }}
-							</code-btn>
-						</v-col>
-					</v-row>
-				</v-col>
-			</v-row>
+        <!-- Set axis-->
+        <v-col
+          cols="2"
+          order="2"
+          offset="8"
+          sm="4"
+          offset-sm="4"
+          md="1"
+          order-md="4"
+          offset-md="0"
+        >
+          <v-row dense>
+            <v-col>
+              <code-btn
+                color="warning"
+                tile
+                block
+                :code="`G10 L20 P${currentWorkplace} ${axis.letter}0`"
+                class="move-btn"
+              >
+                {{ $t("panel.movement.set", [axis.letter]) }}
+              </code-btn>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
 
-			<v-row dense>
-				<v-col>
-					<v-btn color="warning" @click="goToWorkplaceZero" tile block class="move-btn">
-						{{ $t("panel.movement.workzero") }}
-					</v-btn>
-				</v-col>
-			</v-row>
-		</v-card-text>
+      <v-row dense>
+        <v-col>
+          <v-btn
+            color="warning"
+            tile
+            block
+            class="move-btn"
+            @click="goToWorkplaceZero"
+          >
+            {{ $t("panel.movement.workzero") }}
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-text>
 
-		<v-alert :value="unhomedAxes.length !== 0" type="warning" class="mb-0">
-			{{ $tc("panel.movement.axesNotHomed", unhomedAxes.length) }}
-			<strong>
-				{{ unhomedAxes.map(axis => axis.letter).join(", ") }}
-			</strong>
-		</v-alert>
-		<v-alert :value="visibleAxes.length === 0" type="info">
-			{{ $t("panel.movement.noAxes") }}
-		</v-alert>
+    <v-alert
+      :value="unhomedAxes.length !== 0"
+      type="warning"
+      class="mb-0"
+    >
+      {{ $tc("panel.movement.axesNotHomed", unhomedAxes.length) }}
+      <strong>
+        {{ unhomedAxes.map(axis => axis.letter).join(", ") }}
+      </strong>
+    </v-alert>
+    <v-alert
+      :value="visibleAxes.length === 0"
+      type="info"
+    >
+      {{ $t("panel.movement.noAxes") }}
+    </v-alert>
 
-		<mesh-edit-dialog :shown.sync="showMeshEditDialog" />
-		<input-dialog :shown.sync="moveStepDialog.shown" :title="$t('dialog.changeMoveStep.title')"
-					  :prompt="$t('dialog.changeMoveStep.prompt')" :preset="moveStepDialog.preset" is-numeric-value
-					  @confirmed="moveStepDialogConfirmed" />
-	</v-card>
+    <mesh-edit-dialog :shown.sync="showMeshEditDialog" />
+    <input-dialog
+      :shown.sync="moveStepDialog.shown"
+      :title="$t('dialog.changeMoveStep.title')"
+      :prompt="$t('dialog.changeMoveStep.prompt')"
+      :preset="moveStepDialog.preset"
+      is-numeric-value
+      @confirmed="moveStepDialogConfirmed"
+    />
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -176,6 +303,18 @@ import Vue from "vue";
 import store from "@/store";
 
 export default Vue.extend({
+	data() {
+		return {
+			showMeshEditDialog: false,
+			moveStepDialog: {
+				shown: false,
+				axis: AxisLetter.X,
+				index: 0,
+				preset: 0
+			},
+			currentWorkplace: 0
+		};
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => store.getters["machine/settings/moveSteps"](axisLetter)); },
@@ -188,17 +327,18 @@ export default Vue.extend({
 		workCoordinates(): Array<number> { return [...Array(9).keys()].map(i => i + 1); },
 		workplaceNumber(): number { return store.state.machine.model.move.workplaceNumber; }
 	},
-	data() {
-		return {
-			showMeshEditDialog: false,
-			moveStepDialog: {
-				shown: false,
-				axis: AxisLetter.X,
-				index: 0,
-				preset: 0
-			},
-			currentWorkplace: 0
-		};
+	watch: {
+		isConnected() {
+			// Hide dialogs when the connection is interrupted
+			this.showMeshEditDialog = false;
+			this.moveStepDialog.shown = false;
+		},
+		workplaceNumber(to: number) {
+			this.currentWorkplace = to + 1;
+		}
+	},
+	mounted() {
+		this.currentWorkplace = this.workplaceNumber + 1;
 	},
 	methods: {
 		getMoveCellClass(index: number) {
@@ -252,18 +392,18 @@ export default Vue.extend({
 			}
 		},
 	},
-	mounted() {
-		this.currentWorkplace = this.workplaceNumber + 1;
-	},
-	watch: {
-		isConnected() {
-			// Hide dialogs when the connection is interrupted
-			this.showMeshEditDialog = false;
-			this.moveStepDialog.shown = false;
-		},
-		workplaceNumber(to: number) {
-			this.currentWorkplace = to + 1;
-		}
-	},
 });
 </script>
+
+<style scoped>
+.move-btn {
+	padding-left: 0px !important;
+	padding-right: 0px !important;
+	min-width: 0;
+	height: 65px !important;
+}
+
+.wcs-selection {
+	max-width: 200px;
+}
+</style>

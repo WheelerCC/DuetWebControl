@@ -1,110 +1,108 @@
-<style>
-.v-snack {
-	z-index: 1 !important;
-}
-
-@keyframes animate-progress {
-	from {
-		width: 0%;
-	}
-
-	to {
-		width: 100%;
-	}
-}
-
-@keyframes animate-progress-bg {
-	from {
-		left: 0%;
-		width: 100%;
-	}
-
-	to {
-		left: 100%;
-		width: 0%;
-	}
-}
-
-.animate-progress .v-progress-linear__determinate {
-	animation-name: "animate-progress";
-	animation-duration: 5s;
-	animation-timing-function: linear;
-}
-
-.animate-progress .v-progress-linear__background {
-	animation-name: "animate-progress-bg";
-	animation-duration: 5s;
-	animation-timing-function: linear;
-}
-</style>
-
-<style scoped>
-.progress-bar {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 0;
-	border-radius: 4px;
-}
-
-.pointer {
-	cursor: pointer;
-}
-</style>
-
 <template>
-	<v-fade-transition>
-		<v-snackbar v-if="fileTransferNotification !== null" :value="true"
-					:style="{ 'padding-bottom': `${$vuetify.application.bottom + 8}px` }" :timeout="-1" color="info">
-			<v-progress-linear :color="progressColor" :indeterminate="fileTransferNotification.progress === 0" striped
-							   :value="fileTransferNotification.progress" class="progress-bar" />
+  <v-fade-transition>
+    <v-snackbar
+      v-if="fileTransferNotification !== null"
+      :value="true"
+      :style="{ 'padding-bottom': `${$vuetify.application.bottom + 8}px` }"
+      :timeout="-1"
+      color="info"
+    >
+      <v-progress-linear
+        :color="progressColor"
+        :indeterminate="fileTransferNotification.progress === 0"
+        striped
+        :value="fileTransferNotification.progress"
+        class="progress-bar"
+      />
 
-			<div class="d-flex mt-1">
-				<v-icon class="mr-4">
-					{{ fileTransferIcon }}
-				</v-icon>
+      <div class="d-flex mt-1">
+        <v-icon class="mr-4">
+          {{ fileTransferIcon }}
+        </v-icon>
 
-				<div class="d-block">
-					<strong>
-						{{ $t(`notification.${fileTransferNotification.type}.title`, [fileTransferNotification.filename, $displayTransferSpeed(fileTransferNotification.speed), Math.round(fileTransferNotification.progress || 0)]) }}
-					</strong>
-					<p class="mb-0">
-						{{ $t(`notification.${fileTransferNotification.type}.message`) }}
-					</p>
-				</div>
-			</div>
+        <div class="d-block">
+          <strong>
+            {{ $t(`notification.${fileTransferNotification.type}.title`, [fileTransferNotification.filename, $displayTransferSpeed(fileTransferNotification.speed), Math.round(fileTransferNotification.progress || 0)]) }}
+          </strong>
+          <p class="mb-0">
+            {{ $t(`notification.${fileTransferNotification.type}.message`) }}
+          </p>
+        </div>
+      </div>
 
-			<template #action="{ attrs }">
-				<v-btn v-bind="attrs" color="white" text @click.stop="cancel">
-					{{ $t("generic.cancel") }}
-				</v-btn>
-			</template>
-		</v-snackbar>
-		<v-snackbar v-else-if="notification !== null" :value="true" :timeout="-1" :color="(notification !== null) ? notification.type : 'info'"
-					:style="{ 'padding-bottom': `${$vuetify.application.bottom + 8}px` }"
-					:class="{ pointer: !!notification.route }" @click.native="clicked">
-			<v-progress-linear v-if="animateProgress" ref="progressBar" :color="progressColor"
-							   :indeterminate="notification.progress === 0" :value="100" class="progress-bar"
-							   :class="{ 'animate-progress': animateProgress }" />
-			<v-progress-linear v-else-if="notification.progress !== null" :color="progressColor"
-							   :indeterminate="notification.progress === 0" :value="notification.progress" class="progress-bar" />
+      <template #action="{ attrs }">
+        <v-btn
+          v-bind="attrs"
+          color="white"
+          text
+          @click.stop="cancel"
+        >
+          {{ $t("generic.cancel") }}
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <v-snackbar
+      v-else-if="notification !== null"
+      :value="true"
+      :timeout="-1"
+      :color="(notification !== null) ? notification.type : 'info'"
+      :style="{ 'padding-bottom': `${$vuetify.application.bottom + 8}px` }"
+      :class="{ pointer: !!notification.route }"
+      @click.native="clicked"
+    >
+      <v-progress-linear
+        v-if="animateProgress"
+        ref="progressBar"
+        :color="progressColor"
+        :indeterminate="notification.progress === 0"
+        :value="100"
+        class="progress-bar"
+        :class="{ 'animate-progress': animateProgress }"
+      />
+      <v-progress-linear
+        v-else-if="notification.progress !== null"
+        :color="progressColor"
+        :indeterminate="notification.progress === 0"
+        :value="notification.progress"
+        class="progress-bar"
+      />
 
-			<div class="d-flex" :class="{ 'mt-1' : (notification.timeout !== null) && (notification.timeout > 0)}">
-				<v-icon v-if="notification.icon !== null" class="mr-4">{{ notification.icon }}</v-icon>
+      <div
+        class="d-flex"
+        :class="{ 'mt-1' : (notification.timeout !== null) && (notification.timeout > 0)}"
+      >
+        <v-icon
+          v-if="notification.icon !== null"
+          class="mr-4"
+        >
+          {{ notification.icon }}
+        </v-icon>
 
-				<div class="d-block">
-					<strong v-if="notification.title !== null" v-html="notificationTitle"></strong>
-					<p v-if="notification.message !== null" class="mb-0" v-html="notificationMessage"></p>
-				</div>
-			</div>
+        <div class="d-block">
+          <strong
+            v-if="notification.title !== null"
+            v-html="notificationTitle"
+          />
+          <p
+            v-if="notification.message !== null"
+            class="mb-0"
+            v-html="notificationMessage"
+          />
+        </div>
+      </div>
 
-			<template #action="{ attrs }">
-				<v-btn v-bind="attrs" color="white" text @click.stop="close">
-					{{ notification.cancel ? $t("generic.cancel") : $t("generic.close") }}
-				</v-btn>
-			</template>
-		</v-snackbar>
-	</v-fade-transition>
+      <template #action="{ attrs }">
+        <v-btn
+          v-bind="attrs"
+          color="white"
+          text
+          @click.stop="close"
+        >
+          {{ notification.cancel ? $t("generic.cancel") : $t("generic.close") }}
+        </v-btn>
+      </template>
+    </v-snackbar>
+  </v-fade-transition>
 </template>
 
 <script lang="ts">
@@ -113,6 +111,14 @@ import Vue from "vue";
 import { notifications, fileTransferNotifications, FileTransferType, Notification } from "@/utils/notifications";
 
 export default Vue.extend({
+	data() {
+		return {
+			autoCloseTimer: null as NodeJS.Timeout | null,
+			fileTransferNotifications,
+			notifications,
+			whenShown: null as Date | null
+		}
+	},
 	computed: {
 		animateProgress(): boolean {
 			return (this.notification !== null) && (this.notification.timeout !== null) && (this.notification.timeout > 0)
@@ -153,13 +159,20 @@ export default Vue.extend({
 			return "";
 		}
 	},
-	data() {
-		return {
-			autoCloseTimer: null as NodeJS.Timeout | null,
-			fileTransferNotifications,
-			notifications,
-			whenShown: null as Date | null
+	watch: {
+		notification(to: Notification | null, from: Notification | null) {
+			this.notificationChanged(to, from);
+		},
+		fileTransferNotification(to: Notification | null) {
+			if (this.notification !== null) {
+				if (to !== null) {
+					this.notificationChanged(null, this.notification);
+				} else {
+					this.notificationChanged(this.notification, null);
+				}
+			}
 		}
+
 	},
 	methods: {
 		clicked() {
@@ -232,21 +245,60 @@ export default Vue.extend({
 				}
 			}
 		}
-	},
-	watch: {
-		notification(to: Notification | null, from: Notification | null) {
-			this.notificationChanged(to, from);
-		},
-		fileTransferNotification(to: Notification | null) {
-			if (this.notification !== null) {
-				if (to !== null) {
-					this.notificationChanged(null, this.notification);
-				} else {
-					this.notificationChanged(this.notification, null);
-				}
-			}
-		}
-
 	}
 });
 </script>
+
+<style>
+.v-snack {
+	z-index: 1 !important;
+}
+
+@keyframes animate-progress {
+	from {
+		width: 0%;
+	}
+
+	to {
+		width: 100%;
+	}
+}
+
+@keyframes animate-progress-bg {
+	from {
+		left: 0%;
+		width: 100%;
+	}
+
+	to {
+		left: 100%;
+		width: 0%;
+	}
+}
+
+.animate-progress .v-progress-linear__determinate {
+	animation-name: "animate-progress";
+	animation-duration: 5s;
+	animation-timing-function: linear;
+}
+
+.animate-progress .v-progress-linear__background {
+	animation-name: "animate-progress-bg";
+	animation-duration: 5s;
+	animation-timing-function: linear;
+}
+</style>
+
+<style scoped>
+.progress-bar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	border-radius: 4px;
+}
+
+.pointer {
+	cursor: pointer;
+}
+</style>

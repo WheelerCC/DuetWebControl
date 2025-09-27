@@ -1,15 +1,15 @@
 <template>
-    <div>
-		<div class="center-label">{{label}}</div>
-        <div ref="gaugeContainer" class="gaugeContainer" :title="getTitle()"  />
+  <div>
+    <div class="center-label">
+      {{ label }}
     </div>
+    <div
+      ref="gaugeContainer"
+      class="gaugeContainer"
+      :title="getTitle()"
+    />
+  </div>
 </template>
-
-<style scoped>
-.center-label {
-	text-align: center;
-}
-</style>
 
 <script>
 'use strict';
@@ -29,15 +29,6 @@ export default {
 			gauge: Object,
 		};
 	},
-	mounted() {
-		this.gauge = new Gauge(this.$refs.gaugeContainer);
-		this.gauge.max = this.max;
-		this.gauge.setTemperature = this.settemp;
-		this.updateGauge();
-		setTimeout(() => {this.updateGauge()}, 200);
-	},
-	beforeDestroy(){
-	},
 	watch: {
 		max : function(to){
 			this.gauge.max = to;
@@ -54,6 +45,15 @@ export default {
 			this.updateGauge();
 		}
 	},
+	mounted() {
+		this.gauge = new Gauge(this.$refs.gaugeContainer);
+		this.gauge.max = this.max;
+		this.gauge.setTemperature = this.settemp;
+		this.updateGauge();
+		setTimeout(() => {this.updateGauge()}, 200);
+	},
+	beforeDestroy(){
+	},
 	methods: {
 		getTitle() {
 			return '';
@@ -65,3 +65,9 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+.center-label {
+	text-align: center;
+}
+</style>

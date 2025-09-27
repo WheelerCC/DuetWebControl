@@ -1,8 +1,8 @@
 <template>
-	<div class="mb-3">
-		<fff-container-panel v-if="isFFForUnset" />
-		<cnc-container-panel v-else />
-	</div>
+  <div class="mb-3">
+    <fff-container-panel v-if="isFFForUnset" />
+    <cnc-container-panel v-else />
+  </div>
 </template>
 
 <script lang="ts">

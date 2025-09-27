@@ -1,106 +1,202 @@
-<style scoped>
-.list-icon {
-	display: flex;
-	flex-shrink: 0;
-	align-content: center;
-	justify-content: center;
-	width: 48px;
-}
-</style>
-
 <template>
-	<div>
-		<v-toolbar>
-			<sd-card-btn v-if="volumes.length > 1" v-model="volume" class="hidden-sm-and-down" />
-			<directory-breadcrumbs v-model="directory" />
+  <div>
+    <v-toolbar>
+      <sd-card-btn
+        v-if="volumes.length > 1"
+        v-model="volume"
+        class="hidden-sm-and-down"
+      />
+      <directory-breadcrumbs v-model="directory" />
 
-			<v-spacer />
+      <v-spacer />
 
-			<v-btn class="hidden-sm-and-down mr-3" :disabled="uiFrozen" :elevation="1" @click="showNewDirectory = true">
-				<v-icon class="mr-1">mdi-folder-plus</v-icon> {{ $t("button.newDirectory.caption") }}
-			</v-btn>
-			<v-btn class="hidden-sm-and-down mr-3" color="info" :loading="loading || fileinfoProgress !== -1"
-				   :disabled="uiFrozen" :elevation="1" @click="refresh">
-				<v-icon class="mr-1">mdi-refresh</v-icon> {{ $t("button.refresh.caption") }}
-			</v-btn>
-			<upload-btn class="hidden-sm-and-down" :elevation="1" :directory="directory" target="gcodes"
-						color="primary" />
-		</v-toolbar>
+      <v-btn
+        class="hidden-sm-and-down mr-3"
+        :disabled="uiFrozen"
+        :elevation="1"
+        @click="showNewDirectory = true"
+      >
+        <v-icon class="mr-1">
+          mdi-folder-plus
+        </v-icon> {{ $t("button.newDirectory.caption") }}
+      </v-btn>
+      <v-btn
+        class="hidden-sm-and-down mr-3"
+        color="info"
+        :loading="loading || fileinfoProgress !== -1"
+        :disabled="uiFrozen"
+        :elevation="1"
+        @click="refresh"
+      >
+        <v-icon class="mr-1">
+          mdi-refresh
+        </v-icon> {{ $t("button.refresh.caption") }}
+      </v-btn>
+      <upload-btn
+        class="hidden-sm-and-down"
+        :elevation="1"
+        :directory="directory"
+        target="gcodes"
+        color="primary"
+      />
+    </v-toolbar>
 
-		<base-file-list ref="filelist" v-model="selection" :headers="headers" :directory.sync="directory"
-						:filelist.sync="filelist" :loading.sync="loading" sort-table="jobs"
-						@directoryLoaded="directoryLoaded" @fileClicked="fileClicked" no-files-text="list.jobs.noJobs">
-			<template v-slot:progress>
-				<v-progress-linear  :indeterminate="fileinfoProgress === -1"
-									:value="(fileinfoProgress / filelist.length) * 100" />
-			</template>
+    <base-file-list
+      ref="filelist"
+      v-model="selection"
+      :headers="headers"
+      :directory.sync="directory"
+      :filelist.sync="filelist"
+      :loading.sync="loading"
+      sort-table="jobs"
+      no-files-text="list.jobs.noJobs"
+      @directoryLoaded="directoryLoaded"
+      @fileClicked="fileClicked"
+    >
+      <template #progress>
+        <v-progress-linear
+          :indeterminate="fileinfoProgress === -1"
+          :value="(fileinfoProgress / filelist.length) * 100"
+        />
+      </template>
 
-			<template #folder="{ item }">
-				<div :class="{ 'list-icon mr-2': hasThumbnails, 'mr-1': !hasThumbnails }">
-					<v-icon>mdi-folder</v-icon>
-				</div>
-				{{ item.name }}
-			</template>
-			<template #file="{ item }">
-				<div :class="{ 'list-icon mr-2': hasThumbnails, 'mr-1': !hasThumbnails }">
-					<v-icon v-if="!(item.thumbnails instanceof Array) || !getSmallThumbnail(item.thumbnails)">
-						{{ (item.thumbnails instanceof Array) ? "mdi-file" : "mdi-asterisk" }}
-					</v-icon>
-					<v-menu v-else right offset-x open-on-hover open-on-focus close-on-content-click :min-width="16">
-						<template #activator="{ on, attrs }">
-							<div v-bind="attrs" v-on="on" @click.stop="" tabindex="0">
-								<thumbnail-img :thumbnail="getSmallThumbnail(item.thumbnails)" icon />
-							</div>
-						</template>
+      <template #folder="{ item }">
+        <div :class="{ 'list-icon mr-2': hasThumbnails, 'mr-1': !hasThumbnails }">
+          <v-icon>mdi-folder</v-icon>
+        </div>
+        {{ item.name }}
+      </template>
+      <template #file="{ item }">
+        <div :class="{ 'list-icon mr-2': hasThumbnails, 'mr-1': !hasThumbnails }">
+          <v-icon v-if="!(item.thumbnails instanceof Array) || !getSmallThumbnail(item.thumbnails)">
+            {{ (item.thumbnails instanceof Array) ? "mdi-file" : "mdi-asterisk" }}
+          </v-icon>
+          <v-menu
+            v-else
+            right
+            offset-x
+            open-on-hover
+            open-on-focus
+            close-on-content-click
+            :min-width="16"
+          >
+            <template #activator="{ on, attrs }">
+              <div
+                v-bind="attrs"
+                tabindex="0"
+                v-on="on"
+                @click.stop=""
+              >
+                <thumbnail-img
+                  :thumbnail="getSmallThumbnail(item.thumbnails)"
+                  icon
+                />
+              </div>
+            </template>
 
-						<v-card class="d-flex">
-							<thumbnail-img :thumbnail="getBigThumbnail(item.thumbnails)" />
-						</v-card>
-					</v-menu>
-				</div>
-				{{ item.name }}
-			</template>
+            <v-card class="d-flex">
+              <thumbnail-img :thumbnail="getBigThumbnail(item.thumbnails)" />
+            </v-card>
+          </v-menu>
+        </div>
+        {{ item.name }}
+      </template>
 
-			<template #context-menu>
-				<v-list-item v-show="isFile && !isPrinting" @click="start">
-					<v-icon class="mr-1">mdi-play</v-icon> {{ $t("list.jobs.start") }}
-				</v-list-item>
-				<v-list-item v-show="isFile && !isPrinting" @click="simulate">
-					<v-icon class="mr-1">mdi-fast-forward</v-icon> {{ $t("list.jobs.simulate") }}
-				</v-list-item>
-				<v-list-item v-show="isFile" v-for="(menuItem, index) in contextMenuItems" :key="index"
-							 @click="contextMenuAction(menuItem)">
-					<v-icon class="mr-1">{{ menuItem.icon }}</v-icon> {{ menuItem.name }}
-				</v-list-item>
-			</template>
-		</base-file-list>
+      <template #context-menu>
+        <v-list-item
+          v-show="isFile && !isPrinting"
+          @click="start"
+        >
+          <v-icon class="mr-1">
+            mdi-play
+          </v-icon> {{ $t("list.jobs.start") }}
+        </v-list-item>
+        <v-list-item
+          v-show="isFile && !isPrinting"
+          @click="simulate"
+        >
+          <v-icon class="mr-1">
+            mdi-fast-forward
+          </v-icon> {{ $t("list.jobs.simulate") }}
+        </v-list-item>
+        <v-list-item
+          v-for="(menuItem, index) in contextMenuItems"
+          v-show="isFile"
+          :key="index"
+          @click="contextMenuAction(menuItem)"
+        >
+          <v-icon class="mr-1">
+            {{ menuItem.icon }}
+          </v-icon> {{ menuItem.name }}
+        </v-list-item>
+      </template>
+    </base-file-list>
 
-		<v-speed-dial v-model="fab" bottom right fixed direction="top" transition="scale-transition"
-					  class="hidden-md-and-up">
-			<template #activator>
-				<v-btn v-model="fab" dark color="primary" fab>
-					<v-icon v-if="fab">mdi-close</v-icon>
-					<v-icon v-else>mdi-dots-vertical</v-icon>
-				</v-btn>
-			</template>
+    <v-speed-dial
+      v-model="fab"
+      bottom
+      right
+      fixed
+      direction="top"
+      transition="scale-transition"
+      class="hidden-md-and-up"
+    >
+      <template #activator>
+        <v-btn
+          v-model="fab"
+          dark
+          color="primary"
+          fab
+        >
+          <v-icon v-if="fab">
+            mdi-close
+          </v-icon>
+          <v-icon v-else>
+            mdi-dots-vertical
+          </v-icon>
+        </v-btn>
+      </template>
 
-			<v-btn fab :disabled="uiFrozen" @click="showNewDirectory = true">
-				<v-icon>mdi-folder-plus</v-icon>
-			</v-btn>
+      <v-btn
+        fab
+        :disabled="uiFrozen"
+        @click="showNewDirectory = true"
+      >
+        <v-icon>mdi-folder-plus</v-icon>
+      </v-btn>
 
-			<v-btn fab color="info" :loading="loading || fileinfoProgress !== -1" :disabled="uiFrozen" @click="refresh">
-				<v-icon>mdi-refresh</v-icon>
-			</v-btn>
+      <v-btn
+        fab
+        color="info"
+        :loading="loading || fileinfoProgress !== -1"
+        :disabled="uiFrozen"
+        @click="refresh"
+      >
+        <v-icon>mdi-refresh</v-icon>
+      </v-btn>
 
-			<upload-btn fab dark :directory="directory" target="gcodes" color="primary">
-				<v-icon>mdi-cloud-upload</v-icon>
-			</upload-btn>
-		</v-speed-dial>
+      <upload-btn
+        fab
+        dark
+        :directory="directory"
+        target="gcodes"
+        color="primary"
+      >
+        <v-icon>mdi-cloud-upload</v-icon>
+      </upload-btn>
+    </v-speed-dial>
 
-		<new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
-		<confirm-dialog :shown.sync="startJobDialog.shown" :title="startJobDialog.title" :prompt="startJobDialog.prompt"
-						@confirmed="start(startJobDialog.item)" />
-	</div>
+    <new-directory-dialog
+      :shown.sync="showNewDirectory"
+      :directory="directory"
+    />
+    <confirm-dialog
+      :shown.sync="startJobDialog.shown"
+      :title="startJobDialog.title"
+      :prompt="startJobDialog.prompt"
+      @confirmed="start(startJobDialog.item)"
+    />
+  </div>
 </template>
 
 <script lang="ts">
@@ -130,6 +226,25 @@ interface JobListItemProperties {
 type JobListItem = BaseFileListItem & JobListItemProperties;
 
 export default Vue.extend({
+	data() {
+		return {
+			directory: Path.gCodes,
+			selection: new Array<JobListItem>,
+			hasThumbnails: false,
+			filelist: new Array<JobListItem>,
+			loadingValue: false,
+			fileinfoDirectory: null as string | null,
+			fileinfoProgress: -1,
+			startJobDialog: {
+				title: "",
+				prompt: "",
+				item: null as JobListItem | null,
+				shown: false
+			},
+			showNewDirectory: false,
+			fab: false
+		}
+	},
 	computed: {
 		isConnected(): boolean { return store.getters["isConnected"]; },
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
@@ -203,24 +318,21 @@ export default Vue.extend({
 			set(value: number) { this.directory = (value === Path.getVolume(this.gcodesDirectory)) ? this.gcodesDirectory : `${value}:`; }
 		}
 	},
-	data() {
-		return {
-			directory: Path.gCodes,
-			selection: new Array<JobListItem>,
-			hasThumbnails: false,
-			filelist: new Array<JobListItem>,
-			loadingValue: false,
-			fileinfoDirectory: null as string | null,
-			fileinfoProgress: -1,
-			startJobDialog: {
-				title: "",
-				prompt: "",
-				item: null as JobListItem | null,
-				shown: false
-			},
-			showNewDirectory: false,
-			fab: false
+	watch: {
+		gCodesDirectory(to: string, from: string) {
+			if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
+				this.directory = to;
+			}
+		},
+		lastJobFile(to: string | null) {
+			if (to !== null && Path.equals(this.directory, Path.extractDirectory(to))) {
+				// Refresh the filelist after a short moment so DSF and RRF can update the simulation time first
+				setTimeout((this.$refs.filelist as any).refresh.bind(this), 2000);
+			}
 		}
+	},
+	mounted() {
+		this.directory = this.gcodesDirectory;
 	},
 	methods: {
 		getBigThumbnail(thumbnails: Array<ThumbnailInfo>) {
@@ -361,22 +473,16 @@ export default Vue.extend({
 			}
 			this.$root.$emit(menuItem.action, path);
 		}
-	},
-	mounted() {
-		this.directory = this.gcodesDirectory;
-	},
-	watch: {
-		gCodesDirectory(to: string, from: string) {
-			if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
-				this.directory = to;
-			}
-		},
-		lastJobFile(to: string | null) {
-			if (to !== null && Path.equals(this.directory, Path.extractDirectory(to))) {
-				// Refresh the filelist after a short moment so DSF and RRF can update the simulation time first
-				setTimeout((this.$refs.filelist as any).refresh.bind(this), 2000);
-			}
-		}
 	}
 });
 </script>
+
+<style scoped>
+.list-icon {
+	display: flex;
+	flex-shrink: 0;
+	align-content: center;
+	justify-content: center;
+	width: 48px;
+}
+</style>

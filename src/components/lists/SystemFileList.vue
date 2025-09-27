@@ -1,77 +1,168 @@
-<style scoped>
-.pointer-cursor {
-	cursor: pointer;
-}
-</style>
-
 <template>
-	<div class="component">
-		<v-toolbar>
-			<directory-breadcrumbs v-model="directory" />
+  <div class="component">
+    <v-toolbar>
+      <directory-breadcrumbs v-model="directory" />
 
-			<v-spacer />
+      <v-spacer />
 
-			<v-btn v-show="!isFirmwareDirectory" class="hidden-sm-and-down mr-3" :disabled="uiFrozen" :elevation="1"
-				   @click="showNewFile = true">
-				<v-icon class="mr-1">mdi-file-plus</v-icon> {{ $t("button.newFile.caption") }}
-			</v-btn>
-			<v-btn class="hidden-sm-and-down mr-3" :disabled="uiFrozen" :elevation="1" @click="showNewDirectory = true">
-				<v-icon class="mr-1">mdi-folder-plus</v-icon> {{ $t("button.newDirectory.caption") }}
-			</v-btn>
-			<v-btn class="hidden-sm-and-down mr-3" color="info" :loading="loading" :disabled="uiFrozen" :elevation="1"
-				   @click="refresh">
-				<v-icon class="mr-1">mdi-refresh</v-icon> {{ $t("button.refresh.caption") }}
-			</v-btn>
-			<upload-btn ref="mainUpload" class="hidden-sm-and-down" :elevation="1" :directory="directory"
-						:target="uploadTarget" color="primary" />
-		</v-toolbar>
+      <v-btn
+        v-show="!isFirmwareDirectory"
+        class="hidden-sm-and-down mr-3"
+        :disabled="uiFrozen"
+        :elevation="1"
+        @click="showNewFile = true"
+      >
+        <v-icon class="mr-1">
+          mdi-file-plus
+        </v-icon> {{ $t("button.newFile.caption") }}
+      </v-btn>
+      <v-btn
+        class="hidden-sm-and-down mr-3"
+        :disabled="uiFrozen"
+        :elevation="1"
+        @click="showNewDirectory = true"
+      >
+        <v-icon class="mr-1">
+          mdi-folder-plus
+        </v-icon> {{ $t("button.newDirectory.caption") }}
+      </v-btn>
+      <v-btn
+        class="hidden-sm-and-down mr-3"
+        color="info"
+        :loading="loading"
+        :disabled="uiFrozen"
+        :elevation="1"
+        @click="refresh"
+      >
+        <v-icon class="mr-1">
+          mdi-refresh
+        </v-icon> {{ $t("button.refresh.caption") }}
+      </v-btn>
+      <upload-btn
+        ref="mainUpload"
+        class="hidden-sm-and-down"
+        :elevation="1"
+        :directory="directory"
+        :target="uploadTarget"
+        color="primary"
+      />
+    </v-toolbar>
 
-		<base-file-list ref="filelist" v-model="selection" :directory.sync="directory" :loading.sync="loading"
-						sort-table="sys" @fileClicked="fileClicked" @fileEdited="fileEdited" :noFilesText="noFilesText">
-			<template #context-menu>
-				<v-list-item v-show="isFirmwareFile" @click="installFile">
-					<v-icon class="mr-1">mdi-update</v-icon> {{ $t("list.firmware.installFile") }}
-				</v-list-item>
-			</template>
+    <base-file-list
+      ref="filelist"
+      v-model="selection"
+      :directory.sync="directory"
+      :loading.sync="loading"
+      sort-table="sys"
+      :no-files-text="noFilesText"
+      @fileClicked="fileClicked"
+      @fileEdited="fileEdited"
+    >
+      <template #context-menu>
+        <v-list-item
+          v-show="isFirmwareFile"
+          @click="installFile"
+        >
+          <v-icon class="mr-1">
+            mdi-update
+          </v-icon> {{ $t("list.firmware.installFile") }}
+        </v-list-item>
+      </template>
 
-			<template v-slot:[`file.config.json`] v-if="isSystemRootDirectory">
-				<v-icon class="mr-1">mdi-wrench</v-icon> config.json
-				<v-chip @click.stop="editConfigTemplate" class="pointer-cursor ml-2">
-					<v-icon xs class="mr-1">mdi-open-in-new</v-icon> {{ $t("list.system.configToolNote") }}
-				</v-chip>
-			</template>
-		</base-file-list>
+      <template
+        v-if="isSystemRootDirectory"
+        #[`file.config.json`]
+      >
+        <v-icon class="mr-1">
+          mdi-wrench
+        </v-icon> config.json
+        <v-chip
+          class="pointer-cursor ml-2"
+          @click.stop="editConfigTemplate"
+        >
+          <v-icon
+            xs
+            class="mr-1"
+          >
+            mdi-open-in-new
+          </v-icon> {{ $t("list.system.configToolNote") }}
+        </v-chip>
+      </template>
+    </base-file-list>
 
-		<v-speed-dial v-model="fab" bottom right fixed direction="top" transition="scale-transition"
-					  class="hidden-md-and-up">
-			<template #activator>
-				<v-btn v-model="fab" dark color="primary" fab>
-					<v-icon v-if="fab">mdi-close</v-icon>
-					<v-icon v-else>mdi-dots-vertical</v-icon>
-				</v-btn>
-			</template>
+    <v-speed-dial
+      v-model="fab"
+      bottom
+      right
+      fixed
+      direction="top"
+      transition="scale-transition"
+      class="hidden-md-and-up"
+    >
+      <template #activator>
+        <v-btn
+          v-model="fab"
+          dark
+          color="primary"
+          fab
+        >
+          <v-icon v-if="fab">
+            mdi-close
+          </v-icon>
+          <v-icon v-else>
+            mdi-dots-vertical
+          </v-icon>
+        </v-btn>
+      </template>
 
-			<v-btn v-show="!isFirmwareDirectory" fab :disabled="uiFrozen" @click="showNewFile = true">
-				<v-icon class="mr-1">mdi-file-plus</v-icon>
-			</v-btn>
+      <v-btn
+        v-show="!isFirmwareDirectory"
+        fab
+        :disabled="uiFrozen"
+        @click="showNewFile = true"
+      >
+        <v-icon class="mr-1">
+          mdi-file-plus
+        </v-icon>
+      </v-btn>
 
-			<v-btn fab :disabled="uiFrozen" @click="showNewDirectory = true">
-				<v-icon>mdi-folder-plus</v-icon>
-			</v-btn>
+      <v-btn
+        fab
+        :disabled="uiFrozen"
+        @click="showNewDirectory = true"
+      >
+        <v-icon>mdi-folder-plus</v-icon>
+      </v-btn>
 
-			<v-btn fab color="info" :loading="loading" :disabled="uiFrozen" @click="refresh">
-				<v-icon>mdi-refresh</v-icon>
-			</v-btn>
+      <v-btn
+        fab
+        color="info"
+        :loading="loading"
+        :disabled="uiFrozen"
+        @click="refresh"
+      >
+        <v-icon>mdi-refresh</v-icon>
+      </v-btn>
 
-			<v-btn fab color="primary" @click="clickUpload">
-				<v-icon>mdi-cloud-upload</v-icon>
-			</v-btn>
-		</v-speed-dial>
+      <v-btn
+        fab
+        color="primary"
+        @click="clickUpload"
+      >
+        <v-icon>mdi-cloud-upload</v-icon>
+      </v-btn>
+    </v-speed-dial>
 
-		<new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
-		<new-file-dialog :shown.sync="showNewFile" :directory="directory" />
-		<config-updated-dialog :shown.sync="showResetPrompt" />
-	</div>
+    <new-directory-dialog
+      :shown.sync="showNewDirectory"
+      :directory="directory"
+    />
+    <new-file-dialog
+      :shown.sync="showNewFile"
+      :directory="directory"
+    />
+    <config-updated-dialog :shown.sync="showResetPrompt" />
+  </div>
 </template>
 
 <script lang="ts">
@@ -84,6 +175,17 @@ import { UploadType } from "../buttons/UploadBtn.vue";
 import { BaseFileListItem } from "./BaseFileList.vue";
 
 export default Vue.extend({
+	data() {
+		return {
+			directory: Path.system,
+			loading: false,
+			selection: new Array<BaseFileListItem>,
+			showNewDirectory: false,
+			showNewFile: false,
+			showResetPrompt: false,
+			fab: false
+		}
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		systemDirectory(): string { return store.state.machine.model.directories.system ; },
@@ -128,16 +230,15 @@ export default Vue.extend({
 			return UploadType.menu;
 		}
 	},
-	data() {
-		return {
-			directory: Path.system,
-			loading: false,
-			selection: new Array<BaseFileListItem>,
-			showNewDirectory: false,
-			showNewFile: false,
-			showResetPrompt: false,
-			fab: false
+	watch: {
+		systemDirectory(to: string, from: string) {
+			if (Path.equals(this.directory, from) || Path.getVolume(from) !== Path.getVolume(to)) {
+				this.directory = to;
+			}
 		}
+	},
+	mounted() {
+		this.directory = this.systemDirectory;
 	},
 	methods: {
 		async refresh() {
@@ -205,16 +306,12 @@ export default Vue.extend({
 			form.submit();
 			document.body.removeChild(form);
 		}
-	},
-	mounted() {
-		this.directory = this.systemDirectory;
-	},
-	watch: {
-		systemDirectory(to: string, from: string) {
-			if (Path.equals(this.directory, from) || Path.getVolume(from) !== Path.getVolume(to)) {
-				this.directory = to;
-			}
-		}
 	}
 });
 </script>
+
+<style scoped>
+.pointer-cursor {
+	cursor: pointer;
+}
+</style>

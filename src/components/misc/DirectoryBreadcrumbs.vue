@@ -1,34 +1,63 @@
 <template>
-	<v-breadcrumbs :items="pathItems" divider=">">
-		<template #item="{ item }">
-			<v-menu v-if="item.showDropdown" offset-y>
-				<template #activator="{ on, attrs }">
-					<v-breadcrumbs-item href="javascript:void(0)" v-bind="attrs" v-on="on"
-										@dragover="dragOver(item.href, $event)"
-										@drop.prevent="dragDrop(item.href, $event)">
-						{{ item.text }}
-						<v-icon class="ml-1">mdi-menu-down</v-icon>
-					</v-breadcrumbs-item>
-				</template>
-				<v-list>
-					<v-list-item v-if="firmwareDirectoryDiffers" @click="changeDirectory(directories.firmware)">
-						<v-icon class="mr-3">mdi-update</v-icon> {{ $t("directory.firmware") }}
-					</v-list-item>
-					<v-list-item v-if="hasDirectDisplay" @click="changeDirectory(directories.menu)">
-						<v-icon class="mr-3">mdi-format-list-numbered</v-icon> {{ $t("directory.menu") }}
-					</v-list-item>
-					<v-list-item @click="changeDirectory(directories.system)">
-						<v-icon class="mr-3">mdi-cog</v-icon> {{ $t("directory.system") }}
-					</v-list-item>
-				</v-list>
-			</v-menu>
-			<v-breadcrumbs-item v-else href="javascript:void(0)" :disabled="item.disabled"
-								@click="changeDirectory(item.href)" @dragover="dragOver(item.href, $event)"
-								@drop.prevent="dragDrop(item.href, $event)">
-				{{ item.text }}
-			</v-breadcrumbs-item>
-		</template>
-	</v-breadcrumbs>
+  <v-breadcrumbs
+    :items="pathItems"
+    divider=">"
+  >
+    <template #item="{ item }">
+      <v-menu
+        v-if="item.showDropdown"
+        offset-y
+      >
+        <template #activator="{ on, attrs }">
+          <v-breadcrumbs-item
+            href="javascript:void(0)"
+            v-bind="attrs"
+            v-on="on"
+            @dragover="dragOver(item.href, $event)"
+            @drop.prevent="dragDrop(item.href, $event)"
+          >
+            {{ item.text }}
+            <v-icon class="ml-1">
+              mdi-menu-down
+            </v-icon>
+          </v-breadcrumbs-item>
+        </template>
+        <v-list>
+          <v-list-item
+            v-if="firmwareDirectoryDiffers"
+            @click="changeDirectory(directories.firmware)"
+          >
+            <v-icon class="mr-3">
+              mdi-update
+            </v-icon> {{ $t("directory.firmware") }}
+          </v-list-item>
+          <v-list-item
+            v-if="hasDirectDisplay"
+            @click="changeDirectory(directories.menu)"
+          >
+            <v-icon class="mr-3">
+              mdi-format-list-numbered
+            </v-icon> {{ $t("directory.menu") }}
+          </v-list-item>
+          <v-list-item @click="changeDirectory(directories.system)">
+            <v-icon class="mr-3">
+              mdi-cog
+            </v-icon> {{ $t("directory.system") }}
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-breadcrumbs-item
+        v-else
+        href="javascript:void(0)"
+        :disabled="item.disabled"
+        @click="changeDirectory(item.href)"
+        @dragover="dragOver(item.href, $event)"
+        @drop.prevent="dragDrop(item.href, $event)"
+      >
+        {{ item.text }}
+      </v-breadcrumbs-item>
+    </template>
+  </v-breadcrumbs>
 </template>
 
 <script lang="ts">

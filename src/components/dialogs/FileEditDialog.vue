@@ -1,84 +1,107 @@
-<style>
-.editor-monaco {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-}
-
-.editor-monaco > div {
-	display: flex;
-	flex-grow: 1;
-}
-
-.editor-textarea {
-	align-items: stretch !important;
-}
-
-.editor-textarea > div > div {
-	align-items: stretch;
-	flex-grow: 1;
-	padding-left: 0 !important;
-}
-
-.editor-textarea > div > div > div {
-	align-items: stretch !important;
-}
-
-.editor-textarea textarea {
-	display: flex;
-	flex-grow: 1;
-	font-family: monospace;
-	padding-left: 12px !important;
-	margin-top: 0 !important;
-	resize: none;
-	-moz-tab-size: 4;
-	-o-tab-size: 4;
-	tab-size: 4;
-}
-</style>
-
 <template>
-	<v-dialog :value="shown" @input="$emit('update:shown', $event)" fullscreen hide-overlay persistent no-click-animation
-			  transition="dialog-bottom-transition">
-		<v-card class="d-flex flex-column">
-			<v-app-bar flat dark color="primary" class="flex-grow-0 flex-shrink-1">
-				<v-btn icon dark @click="close(false)">
-					<v-icon>mdi-close</v-icon>
-				</v-btn>
-				<v-toolbar-title>{{ filename }}</v-toolbar-title>
+  <v-dialog
+    :value="shown"
+    fullscreen
+    hide-overlay
+    persistent
+    no-click-animation
+@input="$emit('update:shown', $event)"
+    transition="dialog-bottom-transition"
+  >
+    <v-card class="d-flex flex-column">
+      <v-app-bar
+        flat
+        dark
+        color="primary"
+        class="flex-grow-0 flex-shrink-1"
+      >
+        <v-btn
+          icon
+          dark
+          @click="close(false)"
+        >
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+        <v-toolbar-title>{{ filename }}</v-toolbar-title>
 
-				<v-spacer />
+        <v-spacer />
 
-				<v-btn v-if="isGCode" class="hidden-xs-only" dark text
-					   href="https://docs.duet3d.com/en/User_manual/Reference/Gcodes" target="_blank">
-					<v-icon class="mr-1">mdi-help</v-icon>
-					{{ $t("dialog.fileEdit.gcodeReference") }}
-				</v-btn>
-				<v-btn v-if="isGCode" class="hidden-xs-only" dark text @click="indentComments">
-					<v-icon class="mr-1">mdi-format-indent-increase</v-icon>
-					{{ $t("dialog.fileEdit.indentComments") }}
-				</v-btn>
-				<v-btn v-if="isMenu" class="hidden-xs-only" dark text
-					   href="https://docs.duet3d.com/en/User_manual/Connecting_hardware/Display_12864_menu#menu-files"
-					   target="_blank">
-					<v-icon class="mr-1">mdi-help</v-icon>
-					{{ $t("dialog.fileEdit.menuReference") }}
-				</v-btn>
-				<v-btn dark text @click="save">
-					<v-icon class="mr-1">mdi-floppy</v-icon>
-					{{ $t("dialog.fileEdit.save") }}
-				</v-btn>
-			</v-app-bar>
+        <v-btn
+          v-if="isGCode"
+          class="hidden-xs-only"
+          dark
+          text
+          href="https://docs.duet3d.com/en/User_manual/Reference/Gcodes"
+          target="_blank"
+        >
+          <v-icon class="mr-1">
+            mdi-help
+          </v-icon>
+          {{ $t("dialog.fileEdit.gcodeReference") }}
+        </v-btn>
+        <v-btn
+          v-if="isGCode"
+          class="hidden-xs-only"
+          dark
+          text
+          @click="indentComments"
+        >
+          <v-icon class="mr-1">
+            mdi-format-indent-increase
+          </v-icon>
+          {{ $t("dialog.fileEdit.indentComments") }}
+        </v-btn>
+        <v-btn
+          v-if="isMenu"
+          class="hidden-xs-only"
+          dark
+          text
+          href="https://docs.duet3d.com/en/User_manual/Connecting_hardware/Display_12864_menu#menu-files"
+          target="_blank"
+        >
+          <v-icon class="mr-1">
+            mdi-help
+          </v-icon>
+          {{ $t("dialog.fileEdit.menuReference") }}
+        </v-btn>
+        <v-btn
+          dark
+          text
+          @click="save"
+        >
+          <v-icon class="mr-1">
+            mdi-floppy
+          </v-icon>
+          {{ $t("dialog.fileEdit.save") }}
+        </v-btn>
+      </v-app-bar>
 
-			<div v-if="useMonacoEditor" ref="monacoEditor" class="editor-monaco"></div>
-			<v-textarea v-else ref="textarea" hide-details solo :rows="null" class="editor-textarea"
-						autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" :value="innerValue"
-						@input.passive="valueChanged = true" @blur="innerValue = $event.target.value"
-						@keydown.tab.exact.prevent="onTextareaTab" @keydown.esc.prevent.stop="close(false)" />
+      <div
+        v-if="useMonacoEditor"
+        ref="monacoEditor"
+        class="editor-monaco"
+      />
+      <v-textarea
+        v-else
+        ref="textarea"
+        hide-details
+        solo
+        :rows="null"
+        class="editor-textarea"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        :value="innerValue"
+        @input.passive="valueChanged = true"
+        @blur="innerValue = $event.target.value"
+        @keydown.tab.exact.prevent="onTextareaTab"
+        @keydown.esc.prevent.stop="close(false)"
+      />
 
-			<div :style="`height: ${bottomMargin}px`"></div>
-		</v-card>
-	</v-dialog>
+      <div :style="`height: ${bottomMargin}px`" />
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -108,6 +131,13 @@ export default Vue.extend({
 			required: true
 		},
 		value: String
+	},
+	data() {
+		return {
+			monacoEditor: null as monaco.editor.IStandaloneCodeEditor | null,
+			innerValue: "",
+			valueChanged: false
+		}
 	},
 	computed: {
 		fffMode(): boolean { return store.state.machine.model.state.machineMode === MachineMode.fff; },
@@ -150,11 +180,58 @@ export default Vue.extend({
 			return store.state.bottomMargin;
 		}
 	},
-	data() {
-		return {
-			monacoEditor: null as monaco.editor.IStandaloneCodeEditor | null,
-			innerValue: "",
-			valueChanged: false
+	watch: {
+		shown(to) {
+			// Update textarea
+			this.innerValue = this.value || "";
+			this.$nextTick(() => this.valueChanged = false);
+
+			if (to) {
+				// Create Monaco editor if necessary
+				if (this.useMonacoEditor) {
+					this.$nextTick(() => {
+						this.monacoEditor = monaco.editor.create(this.$refs.monacoEditor as HTMLElement, {
+							automaticLayout: true,
+							matchBrackets: this.isBigFile ? "near" : "always",
+							language: this.language,
+							lineNumbersMinChars: this.isMediumFile ? 10 : 5,
+							occurrencesHighlight: this.isBigFile ? "off" :"singleFile",
+							rulers: [255],
+							scrollBeyondLastLine: false,
+							theme: store.state.settings.darkTheme ? "vs-dark" : "vs",
+							value: this.innerValue,
+							wordBasedSuggestions: "off"
+						});
+						this.monacoEditor.getModel()!.onDidChangeContent(() => this.valueChanged = true);
+					});
+				}
+
+				// Focus text editor
+				setTimeout(() => {
+					this.monacoEditor?.focus();
+					(this.$refs.textarea as HTMLTextAreaElement | undefined)?.focus();
+				}, 500);
+
+				// Add notification for users in case changes have not been saved yet
+				window.addEventListener("beforeunload", this.onBeforeLeave);
+			} else {
+				// ... and turn it off again when the dialog is hidden
+				window.removeEventListener("beforeunload", this.onBeforeLeave);
+
+				// Clean up again
+				if (this.monacoEditor !== null) {
+					this.monacoEditor.dispose();
+					this.monacoEditor = null;
+				} else if (this.$refs.textarea !== null) {
+					(this.$refs.textarea as HTMLTextAreaElement).blur();
+				}
+			}
+		}
+	},
+	beforeDestroy() {
+		if (this.monacoEditor !== null) {
+			this.monacoEditor.dispose();
+			this.monacoEditor = null;
 		}
 	},
 	methods: {
@@ -240,60 +317,45 @@ export default Vue.extend({
 			textArea.value = this.innerValue;
 			textArea.selectionEnd = textArea.selectionStart = originalSelectionStart + spacesInserted;
 		}
-	},
-	beforeDestroy() {
-		if (this.monacoEditor !== null) {
-			this.monacoEditor.dispose();
-			this.monacoEditor = null;
-		}
-	},
-	watch: {
-		shown(to) {
-			// Update textarea
-			this.innerValue = this.value || "";
-			this.$nextTick(() => this.valueChanged = false);
-
-			if (to) {
-				// Create Monaco editor if necessary
-				if (this.useMonacoEditor) {
-					this.$nextTick(() => {
-						this.monacoEditor = monaco.editor.create(this.$refs.monacoEditor as HTMLElement, {
-							automaticLayout: true,
-							matchBrackets: this.isBigFile ? "near" : "always",
-							language: this.language,
-							lineNumbersMinChars: this.isMediumFile ? 10 : 5,
-							occurrencesHighlight: this.isBigFile ? "off" :"singleFile",
-							rulers: [255],
-							scrollBeyondLastLine: false,
-							theme: store.state.settings.darkTheme ? "vs-dark" : "vs",
-							value: this.innerValue,
-							wordBasedSuggestions: "off"
-						});
-						this.monacoEditor.getModel()!.onDidChangeContent(() => this.valueChanged = true);
-					});
-				}
-
-				// Focus text editor
-				setTimeout(() => {
-					this.monacoEditor?.focus();
-					(this.$refs.textarea as HTMLTextAreaElement | undefined)?.focus();
-				}, 500);
-
-				// Add notification for users in case changes have not been saved yet
-				window.addEventListener("beforeunload", this.onBeforeLeave);
-			} else {
-				// ... and turn it off again when the dialog is hidden
-				window.removeEventListener("beforeunload", this.onBeforeLeave);
-
-				// Clean up again
-				if (this.monacoEditor !== null) {
-					this.monacoEditor.dispose();
-					this.monacoEditor = null;
-				} else if (this.$refs.textarea !== null) {
-					(this.$refs.textarea as HTMLTextAreaElement).blur();
-				}
-			}
-		}
 	}
 });
 </script>
+
+<style>
+.editor-monaco {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.editor-monaco > div {
+	display: flex;
+	flex-grow: 1;
+}
+
+.editor-textarea {
+	align-items: stretch !important;
+}
+
+.editor-textarea > div > div {
+	align-items: stretch;
+	flex-grow: 1;
+	padding-left: 0 !important;
+}
+
+.editor-textarea > div > div > div {
+	align-items: stretch !important;
+}
+
+.editor-textarea textarea {
+	display: flex;
+	flex-grow: 1;
+	font-family: monospace;
+	padding-left: 12px !important;
+	margin-top: 0 !important;
+	resize: none;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+}
+</style>

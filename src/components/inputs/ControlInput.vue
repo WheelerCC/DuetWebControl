@@ -1,10 +1,24 @@
 <template>
-	<v-form submit.prevent="apply">
-		<v-combobox ref="input" type="number" min="-273" max="1999" step="any" :label="label"
-					:menu-props="{ maxHeight: '50%' }" :value="inputValue" :search-input="inputValue"
-					@update:search-input="change" @blur="blur" @keydown.enter.prevent="apply" :loading="applying"
-					:disabled="disabled || uiFrozen || !isValid" :items="items" hide-selected />
-	</v-form>
+  <v-form submit.prevent="apply">
+    <v-combobox
+      ref="input"
+      type="number"
+      min="-273"
+      max="1999"
+      step="any"
+      :label="label"
+      :menu-props="{ maxHeight: '50%' }"
+      :value="inputValue"
+      :search-input="inputValue"
+      :loading="applying"
+      :disabled="disabled || uiFrozen || !isValid"
+      :items="items"
+      hide-selected
+      @update:search-input="change"
+      @blur="blur"
+      @keydown.enter.prevent="apply"
+    />
+  </v-form>
 </template>
 
 <script lang="ts">
@@ -35,6 +49,15 @@ export default Vue.extend({
 
 		active: Boolean,
 		standby: Boolean
+	},
+	data() {
+		return {
+			applying: false,
+			blurTimer: null as NodeJS.Timeout | null,
+			inputElement: null as HTMLInputElement | null,
+			actualValue: 0,
+			inputValue: "0"
+		}
 	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
@@ -132,14 +155,20 @@ export default Vue.extend({
 			return 0;
 		}
 	},
-	data() {
-		return {
-			applying: false,
-			blurTimer: null as NodeJS.Timeout | null,
-			inputElement: null as HTMLInputElement | null,
-			actualValue: 0,
-			inputValue: "0"
+	watch: {
+		currentValue(to: number) {
+			if (isFinite(to) && this.actualValue !== to) {
+				this.actualValue = to;
+				if (document.activeElement !== this.inputElement) {
+					this.inputValue = to.toString();
+				}
+			}
 		}
+	},
+	mounted() {
+		this.inputElement = this.$el.querySelector("input");
+		this.actualValue = this.currentValue;
+		this.inputValue = this.currentValue.toString();
 	},
 	methods: {
 		async apply() {
@@ -246,21 +275,6 @@ export default Vue.extend({
 				await this.apply();
 			} else {
 				this.inputValue = value;
-			}
-		}
-	},
-	mounted() {
-		this.inputElement = this.$el.querySelector("input");
-		this.actualValue = this.currentValue;
-		this.inputValue = this.currentValue.toString();
-	},
-	watch: {
-		currentValue(to: number) {
-			if (isFinite(to) && this.actualValue !== to) {
-				this.actualValue = to;
-				if (document.activeElement !== this.inputElement) {
-					this.inputValue = to.toString();
-				}
 			}
 		}
 	}

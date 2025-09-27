@@ -1,38 +1,31 @@
-<style scoped>
-.card {
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-}
-
-.content {
-	position: relative;
-}
-
-.content > canvas {
-	position: absolute;
-}
-</style>
-
 <template>
-	<v-card class="d-flex flex-column flex-grow-1">
-		<v-card-title class="pt-2 pb-0">
-			<v-icon class="mr-1">mdi-chart-timeline-variant</v-icon>
-			{{ $t("chart.temperature.caption") }}
-		</v-card-title>
+  <v-card class="d-flex flex-column flex-grow-1">
+    <v-card-title class="pt-2 pb-0">
+      <v-icon class="mr-1">
+        mdi-chart-timeline-variant
+      </v-icon>
+      {{ $t("chart.temperature.caption") }}
+    </v-card-title>
 
-		<v-card-text v-show="hasTemperaturesToDisplay" class="content flex-grow-1 px-2 py-0">
-			<canvas ref="chart"></canvas>
-		</v-card-text>
-		<template v-if="!hasTemperaturesToDisplay">
-			<v-spacer />
-			<v-card-text class="pa-0">
-				<v-alert :value="true" type="info" class="mb-0">
-					{{ $t("chart.temperature.noData") }}
-				</v-alert>
-			</v-card-text>
-		</template>
-	</v-card>
+    <v-card-text
+      v-show="hasTemperaturesToDisplay"
+      class="content flex-grow-1 px-2 py-0"
+    >
+      <canvas ref="chart" />
+    </v-card-text>
+    <template v-if="!hasTemperaturesToDisplay">
+      <v-spacer />
+      <v-card-text class="pa-0">
+        <v-alert
+          :value="true"
+          type="info"
+          class="mb-0"
+        >
+          {{ $t("chart.temperature.noData") }}
+        </v-alert>
+      </v-card-text>
+    </template>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -188,6 +181,12 @@ function pushSeriesData(machine: string, index: number, extra: boolean, sensor: 
 let storeSubscribed = false, instances: Array<{ update: () => void }> = []
 
 export default Vue.extend({
+	data() {
+		return {
+			chart: {} as Chart,
+			lastUpdate: 0
+		}
+	},
 	computed: {
 		darkTheme(): boolean { return store.state.settings.darkTheme; },
 		selectedMachine(): string { return store.state.selectedMachine; },
@@ -229,44 +228,18 @@ export default Vue.extend({
 		minHeaterTemperature(): number | null { return store.getters["machine/model/minHeaterTemperature"] },
 		maxHeaterTemperature(): number | null { return store.getters["machine/model/maxHeaterTemperature"] },
 	},
-	data() {
-		return {
-			chart: {} as Chart,
-			lastUpdate: 0
-		}
-	},
-	methods: {
-		update() {
-			const now = (new Date()).getTime();
-			if (now - this.lastUpdate >= 1000) {
-
-				// this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
-				// this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
-				// this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
-				// this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
-				this.chart.config.options!.scales!.y!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
-				this.chart.config.options!.scales!.y!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
-				const now = (new Date()).getTime();
-				this.chart.config.options!.scales!.x!.min = now - maxSampleTime;
-				this.chart.config.options!.scales!.x!.max = now;
-
-				this.chart.update();
-				this.lastUpdate = now;
-			}
+	watch: {
+		darkTheme(to: boolean) {
+			this.applyDarkTheme(to);
 		},
-		applyDarkTheme(active: boolean) {
-			const ticksColor = active ? "#FFF" : "#666";
-			this.chart.config.options!.plugins!.legend!.labels!.color = ticksColor;
-
-			this.chart.config.options!.scales!.x!.ticks!.color = ticksColor;
-			this.chart.config.options!.scales!.y!.ticks!.color = ticksColor;
-
-			const gridLineColor = active ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
-			this.chart.config.options!.scales!.x!.grid!.color = gridLineColor;
-			this.chart.config.options!.scales!.y!.grid!.color = gridLineColor;
-			// zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
-
-			this.chart.update();
+		selectedMachine(machine: string) {
+			// Each chart instance is fixed to the currently selected machine
+			// Reassign the corresponding dataset whenever the selected machine changes
+			this.chart.config.data = {
+				labels: tempSamples[machine].times,
+				datasets: tempSamples[machine].temps
+			};
+			this.update();
 		}
 	},
 	mounted() {
@@ -402,19 +375,55 @@ export default Vue.extend({
 		// Don't update this instance any more...
 		instances = instances.filter(instance => instance !== this, this);
 	},
-	watch: {
-		darkTheme(to: boolean) {
-			this.applyDarkTheme(to);
+	methods: {
+		update() {
+			const now = (new Date()).getTime();
+			if (now - this.lastUpdate >= 1000) {
+
+				// this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
+				// this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
+				// this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
+				// this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
+				this.chart.config.options!.scales!.y!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
+				this.chart.config.options!.scales!.y!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
+				const now = (new Date()).getTime();
+				this.chart.config.options!.scales!.x!.min = now - maxSampleTime;
+				this.chart.config.options!.scales!.x!.max = now;
+
+				this.chart.update();
+				this.lastUpdate = now;
+			}
 		},
-		selectedMachine(machine: string) {
-			// Each chart instance is fixed to the currently selected machine
-			// Reassign the corresponding dataset whenever the selected machine changes
-			this.chart.config.data = {
-				labels: tempSamples[machine].times,
-				datasets: tempSamples[machine].temps
-			};
-			this.update();
+		applyDarkTheme(active: boolean) {
+			const ticksColor = active ? "#FFF" : "#666";
+			this.chart.config.options!.plugins!.legend!.labels!.color = ticksColor;
+
+			this.chart.config.options!.scales!.x!.ticks!.color = ticksColor;
+			this.chart.config.options!.scales!.y!.ticks!.color = ticksColor;
+
+			const gridLineColor = active ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+			this.chart.config.options!.scales!.x!.grid!.color = gridLineColor;
+			this.chart.config.options!.scales!.y!.grid!.color = gridLineColor;
+			// zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
+
+			this.chart.update();
 		}
 	}
 });
 </script>
+
+<style scoped>
+.card {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.content {
+	position: relative;
+}
+
+.content > canvas {
+	position: absolute;
+}
+</style>

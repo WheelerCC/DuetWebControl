@@ -1,8 +1,14 @@
 <template>
-	<v-btn v-bind="$props" :disabled="$props.disabled || uiFrozen" :elevation="1" :loading="waitingForCode"
-		   @click="click" @contextmenu="$emit('contextmenu', $event)">
-		<slot></slot>
-	</v-btn>
+  <v-btn
+    v-bind="$props"
+    :disabled="$props.disabled || uiFrozen"
+    :elevation="1"
+    :loading="waitingForCode"
+    @click="click"
+    @contextmenu="$emit('contextmenu', $event)"
+  >
+    <slot />
+  </v-btn>
 </template>
 
 <script lang="ts">

@@ -1,37 +1,74 @@
 <template>
-	<v-dialog :value="shown" :persistent="isPersistent" width="480">
-		<v-card color="primary" dark>
-			<v-card-title class="subtitle-1">
-				{{ message }}
-			</v-card-title>
+  <v-dialog
+    :value="shown"
+    :persistent="isPersistent"
+    width="480"
+  >
+    <v-card
+      color="primary"
+      dark
+    >
+      <v-card-title class="subtitle-1">
+        {{ message }}
+      </v-card-title>
 
-			<v-card-text>
-				<v-progress-linear :indeterminate="connectingProgress < 0" :value="connectingProgress" color="white"
-								   class="mb-0" />
+      <v-card-text>
+        <v-progress-linear
+          :indeterminate="connectingProgress < 0"
+          :value="connectingProgress"
+          color="white"
+          class="mb-0"
+        />
 
-				<div v-if="displayReset && isConnected" class="d-flex">
-					<code-btn class="mx-auto mt-5" code="M999" :log="false"
-							  color="warning" :title="$t('button.reset.title')">
-						<v-icon class="mr-1">mdi-refresh</v-icon> {{ $t("button.reset.caption") }}
-					</code-btn>
-				</div>
+        <div
+          v-if="displayReset && isConnected"
+          class="d-flex"
+        >
+          <code-btn
+            class="mx-auto mt-5"
+            code="M999"
+            :log="false"
+            color="warning"
+            :title="$t('button.reset.title')"
+          >
+            <v-icon class="mr-1">
+              mdi-refresh
+            </v-icon> {{ $t("button.reset.caption") }}
+          </code-btn>
+        </div>
 
-				<div v-else-if="isUpdating && boardsBeingUpdated.length > 0" class="d-flex flex-column mt-3">
-					<span class="mb-1">
-						{{ $tc("dialog.connection.boardUpdateMessage", boardsBeingUpdated.length) }}
-					</span>
-					<span v-for="canAddress in boardsBeingUpdated.filter(item => item > 0)" :key="canAddress" class="ms-3">
-						<v-icon small class="mr-1">{{ getBoardIcon(canAddress) }}</v-icon>
-						{{ getBoardName(canAddress) }}
-					</span>
-					<span v-if="boardsBeingUpdated.includes(0)" class="ms-3">
-						<v-icon small class="mr-1">{{ getBoardIcon(0) }}</v-icon>
-						{{ getBoardName(0) }}
-					</span>
-				</div>
-			</v-card-text>
-		</v-card>
-	</v-dialog>
+        <div
+          v-else-if="isUpdating && boardsBeingUpdated.length > 0"
+          class="d-flex flex-column mt-3"
+        >
+          <span class="mb-1">
+            {{ $tc("dialog.connection.boardUpdateMessage", boardsBeingUpdated.length) }}
+          </span>
+          <span
+            v-for="canAddress in boardsBeingUpdated.filter(item => item > 0)"
+            :key="canAddress"
+            class="ms-3"
+          >
+            <v-icon
+              small
+              class="mr-1"
+            >{{ getBoardIcon(canAddress) }}</v-icon>
+            {{ getBoardName(canAddress) }}
+          </span>
+          <span
+            v-if="boardsBeingUpdated.includes(0)"
+            class="ms-3"
+          >
+            <v-icon
+              small
+              class="mr-1"
+            >{{ getBoardIcon(0) }}</v-icon>
+            {{ getBoardName(0) }}
+          </span>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -41,6 +78,13 @@ import { MachineStatus } from "@duet3d/objectmodel";
 import store from "@/store";
 
 export default Vue.extend({
+	data() {
+		return {
+			displayReset: false,
+			haltedTimer: null as NodeJS.Timeout | null,
+			updatedBoards: new Array<number>(),
+		}
+	},
 	computed: {
 		connectingProgress(): number { return store.state.connectingProgress; },
 		boardBeingUpdated(): number { return store.state.machine.boardBeingUpdated; },
@@ -75,32 +119,6 @@ export default Vue.extend({
 				store.state.machine.model.state.status === MachineStatus.halted || store.state.machine.model.state.status === MachineStatus.updating);
 		}
 	},
-	data() {
-		return {
-			displayReset: false,
-			haltedTimer: null as NodeJS.Timeout | null,
-			updatedBoards: new Array<number>(),
-		}
-	},
-	methods: {
-		getBoardIcon(canAddress: number) {
-			if (this.boardBeingUpdated == canAddress) {
-				return "mdi-arrow-right-bold";
-			}
-			return this.updatedBoards.includes(canAddress) ? "mdi-check" : "mdi-asterisk";
-		},
-		getBoardName(canAddress: number) {
-			const board = store.state.machine.model.boards.find(board => board.canAddress === canAddress);
-			if (board) {
-				return canAddress ? `${board.name ?? "Expansion Board"} (#${canAddress})` : board.name;
-			}
-			return canAddress ? `Board #${canAddress}` : "Mainboard";
-		},
-		showResetButton() {
-			this.haltedTimer = null;
-			this.displayReset = true;
-		}
-	},
 	watch: {
 		boardsBeingUpdated() {
 			this.updatedBoards.splice(0);
@@ -120,6 +138,25 @@ export default Vue.extend({
 				}
 				this.displayReset = false;
 			}
+		}
+	},
+	methods: {
+		getBoardIcon(canAddress: number) {
+			if (this.boardBeingUpdated == canAddress) {
+				return "mdi-arrow-right-bold";
+			}
+			return this.updatedBoards.includes(canAddress) ? "mdi-check" : "mdi-asterisk";
+		},
+		getBoardName(canAddress: number) {
+			const board = store.state.machine.model.boards.find(board => board.canAddress === canAddress);
+			if (board) {
+				return canAddress ? `${board.name ?? "Expansion Board"} (#${canAddress})` : board.name;
+			}
+			return canAddress ? `Board #${canAddress}` : "Mainboard";
+		},
+		showResetButton() {
+			this.haltedTimer = null;
+			this.displayReset = true;
 		}
 	}
 });

@@ -1,22 +1,39 @@
 <template>
-	<v-card>
-		<v-card-title class="pb-0">
-			<v-icon small class="mr-1">mdi-timer</v-icon>
-			{{ $t("panel.speedFactor.caption") }}
+  <v-card>
+    <v-card-title class="pb-0">
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-timer
+      </v-icon>
+      {{ $t("panel.speedFactor.caption") }}
 
-			<v-spacer />
+      <v-spacer />
 
-			<a v-show="speedFactor !== 100 && !uiFrozen" href="javascript:void(0)"
-			   @click.prevent="sendCode('M220 S100')" class="subtitle-2">
-				<v-icon small class="mr-1">mdi-backup-restore</v-icon>
-				{{ $t("generic.reset") }}
-			</a>
-		</v-card-title>
+      <a
+        v-show="speedFactor !== 100 && !uiFrozen"
+        href="javascript:void(0)"
+        class="subtitle-2"
+        @click.prevent="sendCode('M220 S100')"
+      >
+        <v-icon
+          small
+          class="mr-1"
+        >mdi-backup-restore</v-icon>
+        {{ $t("generic.reset") }}
+      </a>
+    </v-card-title>
 
-		<v-card-text class="py-0">
-			<percentage-input v-model="speedFactor" :min="speedFactorMin" :max="speedFactorMax" :disabled="uiFrozen" />
-		</v-card-text>
-	</v-card>
+    <v-card-text class="py-0">
+      <percentage-input
+        v-model="speedFactor"
+        :min="speedFactorMin"
+        :max="speedFactorMax"
+        :disabled="uiFrozen"
+      />
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">

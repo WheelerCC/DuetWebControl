@@ -1,73 +1,101 @@
-<style scoped>
-table {
-	width: 100%;
-}
-
-tr {
-	height: 2em;
-}
-
-th, td {
-	text-align: left;
-	white-space: nowrap;
-}
-td {
-	vertical-align: middle;
-}
-</style>
-
 <template>
-	<v-dialog :value="shown" max-width="720px" persistent scrollable no-click-animation>
-		<v-card>
-			<v-card-title>
-				<span class="headline">
-					{{ title }}
-				</span>
-			</v-card-title>
+  <v-dialog
+    :value="shown"
+    max-width="720px"
+    persistent
+    scrollable
+    no-click-animation
+  >
+    <v-card>
+      <v-card-title>
+        <span class="headline">
+          {{ title }}
+        </span>
+      </v-card-title>
 
-			<v-card-text>
-				<table ref="fileTable" class="mt-3">
-					<thead>
-						<th>{{ $t("dialog.fileTransfer.filename") }}</th>
-						<th class="px-3">{{ $t("dialog.fileTransfer.size") }}</th>
-						<th>{{ $t("dialog.fileTransfer.progress") }}</th>
-					</thead>
-					<tbody>
-						<tr v-for="file in files" :key="file.filename">
-							<td width="50%">
-								<v-icon small class="mr-1">{{ getFileIcon(file) }}</v-icon>
-								{{ file.filename.substring(fileNameOffset) }}
-							</td>
-							<td class="px-3" width="15%">
-								{{ getSize(file) }}
-							</td>
-							<td class="py-1" width="35%">
-								<v-progress-linear v-show="file.startTime !== null || file.progress > 0" :color="getProgressColor(file)" height="1.25em"
-									:value="file.progress * 100" :indeterminate="file.progress < 1 && !file.speed && !file.error" rounded striped>
-									<template #default="{ value }">
-										<span class="white--text">{{ value.toFixed(0) }} %</span>
-									</template>
-								</v-progress-linear>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</v-card-text>
+      <v-card-text>
+        <table
+          ref="fileTable"
+          class="mt-3"
+        >
+          <thead>
+            <th>{{ $t("dialog.fileTransfer.filename") }}</th>
+            <th class="px-3">
+              {{ $t("dialog.fileTransfer.size") }}
+            </th>
+            <th>{{ $t("dialog.fileTransfer.progress") }}</th>
+          </thead>
+          <tbody>
+            <tr
+              v-for="file in files"
+              :key="file.filename"
+            >
+              <td width="50%">
+                <v-icon
+                  small
+                  class="mr-1"
+                >
+                  {{ getFileIcon(file) }}
+                </v-icon>
+                {{ file.filename.substring(fileNameOffset) }}
+              </td>
+              <td
+                class="px-3"
+                width="15%"
+              >
+                {{ getSize(file) }}
+              </td>
+              <td
+                class="py-1"
+                width="35%"
+              >
+                <v-progress-linear
+                  v-show="file.startTime !== null || file.progress > 0"
+                  :color="getProgressColor(file)"
+                  height="1.25em"
+                  :value="file.progress * 100"
+                  :indeterminate="file.progress < 1 && !file.speed && !file.error"
+                  rounded
+                  striped
+                >
+                  <template #default="{ value }">
+                    <span class="white--text">{{ value.toFixed(0) }} %</span>
+                  </template>
+                </v-progress-linear>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </v-card-text>
 
-			<v-card-actions>
-				<span v-show="(currentSpeed !== null) && (currentSpeed > 0)" class="ml-3 text--secondary text-button">
-					{{ $t("dialog.fileTransfer.currentSpeed", [$displayTransferSpeed(currentSpeed)]) }}
-				</span>
-				<v-spacer />
-				<v-btn v-show="canCancel" color="blue darken-1" text @click="cancel">
-					{{ $t(isUploading ? "dialog.fileTransfer.cancelUploads" : "dialog.fileTransfer.cancelDownloads") }}
-				</v-btn>
-				<v-btn v-show="transfersFinished" ref="closeButton" color="blue darken-1" text @click="close">
-					{{ $t("generic.close") }}
-				</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+      <v-card-actions>
+        <span
+          v-show="(currentSpeed !== null) && (currentSpeed > 0)"
+          class="ml-3 text--secondary text-button"
+        >
+          {{ $t("dialog.fileTransfer.currentSpeed", [$displayTransferSpeed(currentSpeed)]) }}
+        </span>
+        <v-spacer />
+        <v-btn
+          v-show="canCancel"
+          color="blue darken-1"
+          text
+          @click="cancel"
+        >
+          {{ $t(isUploading ? "dialog.fileTransfer.cancelUploads" : "dialog.fileTransfer.cancelDownloads") }}
+        </v-btn>
+        <v-btn
+          v-show="transfersFinished"
+          ref="closeButton"
+          color="blue darken-1"
+          text
+          @click="close"
+        >
+          {{ $t("generic.close") }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -79,6 +107,16 @@ import { FileTransferItem } from "@/store/machine";
 import Events from "@/utils/events"
 
 export default Vue.extend({
+	data() {
+		return {
+			isMachineUploading: {} as Record<string, boolean>,
+			cancellationTokens: {} as Record<string, CancellationToken>,
+			closeProgressOnSuccess: {} as Record<string, boolean>,
+			filesBeingTransferred: {} as Record<string, Array<FileTransferItem>>,
+			fileNameOffsets: {} as Record<string, number>,
+			retries: {} as Record<string, number>
+		}
+	},
 	computed: {
 		shown(): boolean {
 			return this.filesBeingTransferred[store.state.selectedMachine] !== undefined;
@@ -131,16 +169,6 @@ export default Vue.extend({
 				return true;
 			}
 			return !this.files.some(file => (file.startTime === null) || (file.progress === null) || (file.progress < 1));
-		}
-	},
-	data() {
-		return {
-			isMachineUploading: {} as Record<string, boolean>,
-			cancellationTokens: {} as Record<string, CancellationToken>,
-			closeProgressOnSuccess: {} as Record<string, boolean>,
-			filesBeingTransferred: {} as Record<string, Array<FileTransferItem>>,
-			fileNameOffsets: {} as Record<string, number>,
-			retries: {} as Record<string, number>
 		}
 	},
 	mounted() {
@@ -251,3 +279,21 @@ export default Vue.extend({
 	}
 });
 </script>
+
+<style scoped>
+table {
+	width: 100%;
+}
+
+tr {
+	height: 2em;
+}
+
+th, td {
+	text-align: left;
+	white-space: nowrap;
+}
+td {
+	vertical-align: middle;
+}
+</style>

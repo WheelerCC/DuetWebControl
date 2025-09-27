@@ -1,16 +1,32 @@
 <template>
-	<v-checkbox :input-value="(value === 'none') ? (shapingType === 'none') : inputValue" :value="(value === 'none') ? true : value" :disabled="uiFrozen" :label="label" hide-details @change="change">
-		<template #append>
-			<slot>
-				<v-chip v-show="current === value" small color="success">
-					configured
-				</v-chip>
-				<v-chip v-show="showApply" small color="gray" @click="apply">
-					apply
-				</v-chip>
-			</slot>
-		</template>
-	</v-checkbox>
+  <v-checkbox
+    :input-value="(value === 'none') ? (shapingType === 'none') : inputValue"
+    :value="(value === 'none') ? true : value"
+    :disabled="uiFrozen"
+    :label="label"
+    hide-details
+    @change="change"
+  >
+    <template #append>
+      <slot>
+        <v-chip
+          v-show="current === value"
+          small
+          color="success"
+        >
+          configured
+        </v-chip>
+        <v-chip
+          v-show="showApply"
+          small
+          color="gray"
+          @click="apply"
+        >
+          apply
+        </v-chip>
+      </slot>
+    </template>
+  </v-checkbox>
 </template>
 
 <script>
@@ -19,6 +35,10 @@
 import { mapActions, mapGetters, mapState } from 'vuex'
 
 export default {
+	model: {
+		prop: 'inputValue',
+		event: 'change'
+	},
 	props: {
 		inputValue: Array,
 		value: {
@@ -30,10 +50,6 @@ export default {
 			default: true,
 			type: Boolean
 		}
-	},
-	model: {
-		prop: 'inputValue',
-		event: 'change'
 	},
 	computed: {
 		...mapGetters(['uiFrozen']),

@@ -1,47 +1,66 @@
-<style scoped>
-.v-btn-toggle {
-	display: flex;
-}
-
-.v-btn-toggle > button {
-	display: flex;
-	flex: 1 1 auto;
-}
-</style>
-
 <template>
-	<v-card>
-		<v-card-title class="pb-0">
-			<v-icon small class="mr-1">mdi-fan</v-icon>
-			{{ $t("panel.fan.caption") }}
-		</v-card-title>
+  <v-card>
+    <v-card-title class="pb-0">
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-fan
+      </v-icon>
+      {{ $t("panel.fan.caption") }}
+    </v-card-title>
 
-		<v-card-text class="py-0">
-			<v-row align="start">
-				<v-col cols="12" sm="auto" order="1" order-sm="0">
-					<p class="mb-1">
-						{{ $t("panel.fan.selection") }}
-					</p>
-					<v-btn-toggle v-model="fan" mandatory>
-						<v-btn v-if="currentTool && currentTool.fans.length > 0" :value="-1">
-							{{ $t("panel.fan.toolFan") }}
-						</v-btn>
+    <v-card-text class="py-0">
+      <v-row align="start">
+        <v-col
+          cols="12"
+          sm="auto"
+          order="1"
+          order-sm="0"
+        >
+          <p class="mb-1">
+            {{ $t("panel.fan.selection") }}
+          </p>
+          <v-btn-toggle
+            v-model="fan"
+            mandatory
+          >
+            <v-btn
+              v-if="currentTool && currentTool.fans.length > 0"
+              :value="-1"
+            >
+              {{ $t("panel.fan.toolFan") }}
+            </v-btn>
 
-						<template v-for="(fan, index) in fans">
-							<v-btn v-if="fan && fan.thermostatic.sensors.length === 0" :key="index" :value="index"
-								   :disabled="uiFrozen">
-								{{ fan.name ? fan.name : $t("panel.fan.fan", [index]) }}
-							</v-btn>
-						</template>
-					</v-btn-toggle>
-				</v-col>
+            <template v-for="(fan, index) in fans">
+              <v-btn
+                v-if="fan && fan.thermostatic.sensors.length === 0"
+                :key="index"
+                :value="index"
+                :disabled="uiFrozen"
+              >
+                {{ fan.name ? fan.name : $t("panel.fan.fan", [index]) }}
+              </v-btn>
+            </template>
+          </v-btn-toggle>
+        </v-col>
 
-				<v-col cols="12" sm="auto" order="0" order-sm="1" class="flex-sm-grow-1">
-					<percentage-input v-model="fanValue" :max="maxFanValue" :disabled="uiFrozen" />
-				</v-col>
-			</v-row>
-		</v-card-text>
-	</v-card>
+        <v-col
+          cols="12"
+          sm="auto"
+          order="0"
+          order-sm="1"
+          class="flex-sm-grow-1"
+        >
+          <percentage-input
+            v-model="fanValue"
+            :max="maxFanValue"
+            :disabled="uiFrozen"
+          />
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -51,6 +70,11 @@ import Vue from "vue";
 import store from "@/store";
 
 export default Vue.extend({
+	data() {
+		return {
+			fan: -1
+		}
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		fans(): Array<Fan | null> { return store.state.machine.model.fans; },
@@ -80,10 +104,19 @@ export default Vue.extend({
 			return (fan >= 0) && (fan < this.fans.length) && (this.fans[fan] !== null) ? Math.round(this.fans[fan]!.max * 100) : 100;
 		}
 	},
-	data() {
-		return {
-			fan: -1
+	watch: {
+		currentTool() {
+			this.updateFanSelection();
+		},
+		fans: {
+			deep: true,
+			handler() {
+				this.updateFanSelection();
+			}
 		}
+	},
+	mounted() {
+		this.updateFanSelection();
 	},
 	methods: {
 		updateFanSelection() {
@@ -104,20 +137,17 @@ export default Vue.extend({
 				}
 			}
 		}
-	},
-	mounted() {
-		this.updateFanSelection();
-	},
-	watch: {
-		currentTool() {
-			this.updateFanSelection();
-		},
-		fans: {
-			deep: true,
-			handler() {
-				this.updateFanSelection();
-			}
-		}
 	}
 });
 </script>
+
+<style scoped>
+.v-btn-toggle {
+	display: flex;
+}
+
+.v-btn-toggle > button {
+	display: flex;
+	flex: 1 1 auto;
+}
+</style>

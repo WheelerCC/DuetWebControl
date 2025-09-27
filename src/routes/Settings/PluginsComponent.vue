@@ -1,91 +1,149 @@
 <template>
-    <div>
-        <v-simple-table v-show="plugins.length > 0">
-			<template #default>
-				<thead>
-					<tr>
-						<th class="text-left">
-							{{ $t("tabs.plugins.headers.name") }}
-						</th>
-						<th class="text-left">
-							{{ $t("tabs.plugins.headers.author") }}
-						</th>
-						<th class="text-left">
-							{{ $t("tabs.plugins.headers.version") }}
-						</th>
-						<th class="text-left">
-							{{ $t("tabs.plugins.headers.license") }}
-						</th>
-						<th class="text-left">
-							{{ $t("tabs.plugins.headers.dependencies") }}
-						</th>
-						<th class="text-left">
-							{{ $t("tabs.plugins.headers.status") }}
-						</th>
-						<th width="1%" class="no-wrap" colspan="2">
-							<upload-btn ref="mainUpload" :elevation="1" color="primary" target="plugin" block />
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="plugin in plugins" :key="plugin.id">
-						<td :title="plugin.id">
-							{{ plugin.name }}
-                            <v-chip v-if="isIntegratedPlugin(plugin)" small class="ml-1">
-                                {{ $t("tabs.plugins.builtIn") }}
-                            </v-chip>
-						</td>
-						<td>
-							{{ plugin.author }}
-						</td>
-						<td>
-							{{ plugin.version }}
-						</td>
-						<td>
-							{{ plugin.license }}
-						</td>
-						<td>
-							{{ getPluginDependencies(plugin) }}
-						</td>
-						<td>
-							{{ getPluginStatus(plugin) }}
-						</td>
-						<td class="no-wrap">
-							<v-btn v-if="!isPluginStarted(plugin)" color="success" @click="startPlugin(plugin)"
-								   :disabled="!canStartPlugin(plugin) || loadingDwcPlugins" :loading="isPluginBusy(plugin)">
-								<v-icon class="mr-1">mdi-play</v-icon>
-								{{ $t("tabs.plugins.start") }}
-							</v-btn>
-							<v-btn v-else color="warning" @click="stopPlugin(plugin)"
-								   :disabled="!canStopPlugin(plugin) || loadingDwcPlugins" :loading="isPluginBusy(plugin)">
-								<v-icon class="mr-1">mdi-stop</v-icon>
-								{{ $t("tabs.plugins.stop") }}
-							</v-btn>
-						</td>
-						<td class="pl-0 no-wrap">
-							<v-btn color="primary" class="px-3" @click="doUninstallPlugin(plugin)"
-								   :disabled="!canUninstallPlugin(plugin)" :loading="isPluginBusy(plugin)">
-								<v-icon class="mr-1">mdi-delete</v-icon>
-								{{ $t("tabs.plugins.uninstall") }}
-							</v-btn>
-						</td>
-					</tr>
-				</tbody>
-			</template>
-		</v-simple-table>
+  <div>
+    <v-simple-table v-show="plugins.length > 0">
+      <template #default>
+        <thead>
+          <tr>
+            <th class="text-left">
+              {{ $t("tabs.plugins.headers.name") }}
+            </th>
+            <th class="text-left">
+              {{ $t("tabs.plugins.headers.author") }}
+            </th>
+            <th class="text-left">
+              {{ $t("tabs.plugins.headers.version") }}
+            </th>
+            <th class="text-left">
+              {{ $t("tabs.plugins.headers.license") }}
+            </th>
+            <th class="text-left">
+              {{ $t("tabs.plugins.headers.dependencies") }}
+            </th>
+            <th class="text-left">
+              {{ $t("tabs.plugins.headers.status") }}
+            </th>
+            <th
+              width="1%"
+              class="no-wrap"
+              colspan="2"
+            >
+              <upload-btn
+                ref="mainUpload"
+                :elevation="1"
+                color="primary"
+                target="plugin"
+                block
+              />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="plugin in plugins"
+            :key="plugin.id"
+          >
+            <td :title="plugin.id">
+              {{ plugin.name }}
+              <v-chip
+                v-if="isIntegratedPlugin(plugin)"
+                small
+                class="ml-1"
+              >
+                {{ $t("tabs.plugins.builtIn") }}
+              </v-chip>
+            </td>
+            <td>
+              {{ plugin.author }}
+            </td>
+            <td>
+              {{ plugin.version }}
+            </td>
+            <td>
+              {{ plugin.license }}
+            </td>
+            <td>
+              {{ getPluginDependencies(plugin) }}
+            </td>
+            <td>
+              {{ getPluginStatus(plugin) }}
+            </td>
+            <td class="no-wrap">
+              <v-btn
+                v-if="!isPluginStarted(plugin)"
+                color="success"
+                :disabled="!canStartPlugin(plugin) || loadingDwcPlugins"
+                :loading="isPluginBusy(plugin)"
+                @click="startPlugin(plugin)"
+              >
+                <v-icon class="mr-1">
+                  mdi-play
+                </v-icon>
+                {{ $t("tabs.plugins.start") }}
+              </v-btn>
+              <v-btn
+                v-else
+                color="warning"
+                :disabled="!canStopPlugin(plugin) || loadingDwcPlugins"
+                :loading="isPluginBusy(plugin)"
+                @click="stopPlugin(plugin)"
+              >
+                <v-icon class="mr-1">
+                  mdi-stop
+                </v-icon>
+                {{ $t("tabs.plugins.stop") }}
+              </v-btn>
+            </td>
+            <td class="pl-0 no-wrap">
+              <v-btn
+                color="primary"
+                class="px-3"
+                :disabled="!canUninstallPlugin(plugin)"
+                :loading="isPluginBusy(plugin)"
+                @click="doUninstallPlugin(plugin)"
+              >
+                <v-icon class="mr-1">
+                  mdi-delete
+                </v-icon>
+                {{ $t("tabs.plugins.uninstall") }}
+              </v-btn>
+            </td>
+          </tr>
+        </tbody>
+      </template>
+    </v-simple-table>
 
-		<v-alert :value="plugins.length === 0" type="info" class="text-left ma-0" @contextmenu.prevent="">
-			{{ $t("tabs.plugins.noPlugins") }}
-		</v-alert>
+    <v-alert
+      :value="plugins.length === 0"
+      type="info"
+      class="text-left ma-0"
+      @contextmenu.prevent=""
+    >
+      {{ $t("tabs.plugins.noPlugins") }}
+    </v-alert>
 
-		<v-alert :value="dwcPluginsUnloaded" type="info" class="text-left ma-0" @contextmenu.prevent="">
-			{{ $t("tabs.plugins.refreshNote") }}
-			<v-btn text small @click="reloadDwc" class="float-right">
-				<v-icon small class="mr-1">mdi-refresh</v-icon>
-				{{ $t("tabs.plugins.refreshNow") }}
-			</v-btn>
-		</v-alert>
-    </div>
+    <v-alert
+      :value="dwcPluginsUnloaded"
+      type="info"
+      class="text-left ma-0"
+      @contextmenu.prevent=""
+    >
+      {{ $t("tabs.plugins.refreshNote") }}
+      <v-btn
+        text
+        small
+        class="float-right"
+        @click="reloadDwc"
+      >
+        <v-icon
+          small
+          class="mr-1"
+        >
+          mdi-refresh
+        </v-icon>
+        {{ $t("tabs.plugins.refreshNow") }}
+      </v-btn>
+    </v-alert>
+  </div>
 </template>
 
 <script lang="ts">
@@ -100,6 +158,12 @@ import { LogType } from "@/utils/logging";
 import { getErrorMessage } from "@/utils/errors";
 
 export default Vue.extend({
+    data() {
+        return {
+            dwcPluginsUnloaded: false,
+			busyPlugins: new Array<string>
+        }
+    },
     computed: {
 		plugins: () => {
 			const plugins: PluginManifest[] = [...Plugins];
@@ -111,12 +175,6 @@ export default Vue.extend({
 			return plugins;
 		},
         loadingDwcPlugins(): boolean { return store.state.loadingDwcPlugins; }
-    },
-    data() {
-        return {
-            dwcPluginsUnloaded: false,
-			busyPlugins: new Array<string>
-        }
     },
 	methods: {
 		isDwcPlugin(plugin: PluginManifest) {

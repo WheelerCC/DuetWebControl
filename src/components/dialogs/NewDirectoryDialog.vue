@@ -1,6 +1,10 @@
 <template>
-	<input-dialog :shown.sync="innerShown" :title="title || $t('dialog.newDirectory.title')"
-				  :prompt="prompt || $t('dialog.newDirectory.prompt')" @confirmed="createDirectory" />
+  <input-dialog
+    :shown.sync="innerShown"
+    :title="title || $t('dialog.newDirectory.title')"
+    :prompt="prompt || $t('dialog.newDirectory.prompt')"
+    @confirmed="createDirectory"
+  />
 </template>
 
 <script lang="ts">
@@ -32,12 +36,29 @@ export default Vue.extend({
 			default: true
 		}
 	},
-	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; }
-	},
 	data() {
 		return {
 			innerShown: this.shown
+		}
+	},
+	computed: {
+		isConnected(): boolean { return store.getters["isConnected"]; }
+	},
+	watch: {
+		isConnected(to: boolean) {
+			if (!to) {
+				this.innerShown = false;
+			}
+		},
+		innerShown(to: boolean) {
+			if (this.shown !== to) {
+				this.$emit("update:shown", to);
+			}
+		},
+		shown(to: boolean) {
+			if (this.innerShown !== to) {
+				this.innerShown = to;
+			}
 		}
 	},
 	methods: {
@@ -59,23 +80,6 @@ export default Vue.extend({
 						this.$makeNotification(LogType.error, this.$t("notification.newDirectory.errorTitle"), getErrorMessage(e));
 					}
 				}
-			}
-		}
-	},
-	watch: {
-		isConnected(to: boolean) {
-			if (!to) {
-				this.innerShown = false;
-			}
-		},
-		innerShown(to: boolean) {
-			if (this.shown !== to) {
-				this.$emit("update:shown", to);
-			}
-		},
-		shown(to: boolean) {
-			if (this.innerShown !== to) {
-				this.innerShown = to;
 			}
 		}
 	}

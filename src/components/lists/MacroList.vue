@@ -1,47 +1,87 @@
 <template>
-	<v-card>
-		<v-card-title>
-			<v-icon small class="mr-1">mdi-polymer</v-icon> {{ $t("list.macro.caption") }}
-			<v-spacer />
-			<span v-show="isConnected" class="subtitle-2">{{ currentDirectory }}</span>
-		</v-card-title>
+  <v-card>
+    <v-card-title>
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-polymer
+      </v-icon> {{ $t("list.macro.caption") }}
+      <v-spacer />
+      <span
+        v-show="isConnected"
+        class="subtitle-2"
+      >{{ currentDirectory }}</span>
+    </v-card-title>
 
-		<v-card-text class="pa-0" v-show="loading || filelist.length || !isRootDirectory">
-			<v-progress-linear v-show="loading" :indeterminate="true" class="my-0"></v-progress-linear>
+    <v-card-text
+      v-show="loading || filelist.length || !isRootDirectory"
+      class="pa-0"
+    >
+      <v-progress-linear
+        v-show="loading"
+        :indeterminate="true"
+        class="my-0"
+      />
 
-			<v-list class="pt-0" dense>
-				<v-list-item v-if="!isRootDirectory" @click="goUp">
-					<v-list-item-avatar :size="32">
-						<v-icon small class="list-icon grey lighten-1 white--text">mdi-arrow-up</v-icon>
-					</v-list-item-avatar>
+      <v-list
+        class="pt-0"
+        dense
+      >
+        <v-list-item
+          v-if="!isRootDirectory"
+          @click="goUp"
+        >
+          <v-list-item-avatar :size="32">
+            <v-icon
+              small
+              class="list-icon grey lighten-1 white--text"
+            >
+              mdi-arrow-up
+            </v-icon>
+          </v-list-item-avatar>
 
-					<v-list-item-content>
-						<v-list-item-title>{{ $t("list.baseFileList.goUp") }}</v-list-item-title>
-					</v-list-item-content>
-				</v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>{{ $t("list.baseFileList.goUp") }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
 
-				<v-list-item v-for="item in filelist" :key="item.name" @click="itemClick(item)">
-					<v-list-item-avatar :size="32">
-						<v-icon small :class="item.isDirectory ? 'grey lighten-1 white--text' : 'blue white--text'">
-							{{ item.isDirectory ? "mdi-folder" : "mdi-file" }}
-						</v-icon>
-					</v-list-item-avatar>
+        <v-list-item
+          v-for="item in filelist"
+          :key="item.name"
+          @click="itemClick(item)"
+        >
+          <v-list-item-avatar :size="32">
+            <v-icon
+              small
+              :class="item.isDirectory ? 'grey lighten-1 white--text' : 'blue white--text'"
+            >
+              {{ item.isDirectory ? "mdi-folder" : "mdi-file" }}
+            </v-icon>
+          </v-list-item-avatar>
 
-					<v-list-item-content>
-						<v-list-item-title>{{ item.displayName }}</v-list-item-title>
-					</v-list-item-content>
+          <v-list-item-content>
+            <v-list-item-title>{{ item.displayName }}</v-list-item-title>
+          </v-list-item-content>
 
-					<v-list-item-action v-if="!item.isDirectory && item.executing">
-						<v-progress-circular class="list-icon" indeterminate color="blue"></v-progress-circular>
-					</v-list-item-action>
-				</v-list-item>
-			</v-list>
-		</v-card-text>
+          <v-list-item-action v-if="!item.isDirectory && item.executing">
+            <v-progress-circular
+              class="list-icon"
+              indeterminate
+              color="blue"
+            />
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
 
-		<v-alert :value="!filelist.length" type="info">
-			{{ $t("list.macro.noMacros") }}
-		</v-alert>
-	</v-card>
+    <v-alert
+      :value="!filelist.length"
+      type="info"
+    >
+      {{ $t("list.macro.noMacros") }}
+    </v-alert>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -63,6 +103,14 @@ interface MacroItemProperties {
 type MacroItem = FileListItem & MacroItemProperties;
 
 export default Vue.extend({
+	data() {
+		return {
+			loading: false,
+			wasMounted: false,
+			directory: Path.macros,
+			filelist: new Array<MacroItem>
+		}
+	},
 	computed: {
 		isConnected(): boolean { return store.getters["isConnected"]; },
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
@@ -81,13 +129,64 @@ export default Vue.extend({
 		},
 		isRootDirectory(): boolean { return Path.equals(this.directory, this.macrosDirectory); }
 	},
-	data() {
-		return {
-			loading: false,
-			wasMounted: false,
-			directory: Path.macros,
-			filelist: new Array<MacroItem>
+	watch: {
+		macrosDirectory(to: string, from: string) {
+			if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
+				this.directory = to;
+			}
+		},
+		isConnected(to: boolean) {
+			if (to) {
+				this.wasMounted = (this.volumes.length > 0) && this.volumes[0].mounted;
+				this.refresh();
+			} else {
+				this.directory = Path.macros;
+				this.filelist = [];
+			}
+		},
+		selectedMachine() {
+			// TODO store current directory per selected machine
+			if (this.isConnected) {
+				this.wasMounted = (this.volumes.length > 0) && this.volumes[0].mounted;
+				this.refresh();
+			} else {
+				this.directory = Path.macros;
+				this.filelist = [];
+			}
+		},
+		volumes: {
+			deep: true,
+			handler() {
+				if (this.isConnected) {
+					const volume = Path.getVolume(this.directory);
+					if (volume >= 0 && volume < this.volumes.length) {
+						const mounted = this.volumes[volume].mounted;
+						if (this.wasMounted !== mounted) {
+							this.wasMounted = mounted;
+							this.refresh();
+						}
+					} else {
+						this.wasMounted = false;
+						this.refresh();
+					}
+				}
+			}
 		}
+	},
+	mounted() {
+		// Perform initial load
+		this.directory = this.macrosDirectory;
+		if (this.isConnected) {
+			this.wasMounted = (this.volumes.length > 0) && this.volumes[0].mounted;
+			this.refresh();
+		}
+
+		// Keep track of file changes
+		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
+	},
+	beforeDestroy() {
+		// No longer keep track of file changes
+		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
 	},
 	methods: {
 		async loadDirectory(directory: string) {
@@ -146,65 +245,6 @@ export default Vue.extend({
 			if (machine === store.state.selectedMachine && ((files !== undefined && Path.filesAffectDirectory(files, this.directory)) || (volume === Path.getVolume(this.directory)))) {
 				// File or directory has been changed in the current directory
 				this.refresh();
-			}
-		}
-	},
-	mounted() {
-		// Perform initial load
-		this.directory = this.macrosDirectory;
-		if (this.isConnected) {
-			this.wasMounted = (this.volumes.length > 0) && this.volumes[0].mounted;
-			this.refresh();
-		}
-
-		// Keep track of file changes
-		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-	},
-	beforeDestroy() {
-		// No longer keep track of file changes
-		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-	},
-	watch: {
-		macrosDirectory(to: string, from: string) {
-			if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
-				this.directory = to;
-			}
-		},
-		isConnected(to: boolean) {
-			if (to) {
-				this.wasMounted = (this.volumes.length > 0) && this.volumes[0].mounted;
-				this.refresh();
-			} else {
-				this.directory = Path.macros;
-				this.filelist = [];
-			}
-		},
-		selectedMachine() {
-			// TODO store current directory per selected machine
-			if (this.isConnected) {
-				this.wasMounted = (this.volumes.length > 0) && this.volumes[0].mounted;
-				this.refresh();
-			} else {
-				this.directory = Path.macros;
-				this.filelist = [];
-			}
-		},
-		volumes: {
-			deep: true,
-			handler() {
-				if (this.isConnected) {
-					const volume = Path.getVolume(this.directory);
-					if (volume >= 0 && volume < this.volumes.length) {
-						const mounted = this.volumes[volume].mounted;
-						if (this.wasMounted !== mounted) {
-							this.wasMounted = mounted;
-							this.refresh();
-						}
-					} else {
-						this.wasMounted = false;
-						this.refresh();
-					}
-				}
 			}
 		}
 	}

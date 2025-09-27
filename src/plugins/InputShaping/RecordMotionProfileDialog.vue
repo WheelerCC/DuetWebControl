@@ -1,216 +1,375 @@
-<style>
-.centered-alert > div {
-	align-items: center;
-}
-.centered-alert > div > div {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-</style>
-
 <template>
-	<v-dialog v-model="shownInternal" max-width="640px" no-click-animation>
-		<v-card>
-			<v-card-title>
-				<span class="headline">
-					Record Motion Profile
-				</span>
-			</v-card-title>
+  <v-dialog
+    v-model="shownInternal"
+    max-width="640px"
+    no-click-animation
+  >
+    <v-card>
+      <v-card-title>
+        <span class="headline">
+          Record Motion Profile
+        </span>
+      </v-card-title>
 
-			<v-card-text class="pb-0">
-				<v-window v-model="currentPage">
-					<!-- Start -->
-					<v-window-item value="start">
-						This wizard lets you to collect motion profiles using an accelerometer to tune input shaping.<br>
+      <v-card-text class="pb-0">
+        <v-window v-model="currentPage">
+          <!-- Start -->
+          <v-window-item value="start">
+            This wizard lets you to collect motion profiles using an accelerometer to tune input shaping.<br>
 
-						<ul class="mt-3 mb-4">
-							<li>Motion Profile #{{ this.run }}</li>
-							<li>Input Shaper: {{ this.shaper }}</li>
-							<li v-show="frequency !== null">Shaper Frequency: {{ frequency }}</li>
-							<li v-show="damping !== null">Damping Factor: {{ damping }}</li>
-							<li v-show="amplitudes !== null">Amplitudes: {{ amplitudes }}</li>
-							<li v-show="delays !== null">Delays: {{ delays }}</li>
-						</ul>
+            <ul class="mt-3 mb-4">
+              <li>Motion Profile #{{ run }}</li>
+              <li>Input Shaper: {{ shaper }}</li>
+              <li v-show="frequency !== null">
+                Shaper Frequency: {{ frequency }}
+              </li>
+              <li v-show="damping !== null">
+                Damping Factor: {{ damping }}
+              </li>
+              <li v-show="amplitudes !== null">
+                Amplitudes: {{ amplitudes }}
+              </li>
+              <li v-show="delays !== null">
+                Delays: {{ delays }}
+              </li>
+            </ul>
 
-						<v-alert :value="accelerometers.length === 0" dense text type="error" class="my-3">
-							No accelerometer found!
-							<a href="https://docs.duet3d.com/User_manual/Connecting_hardware/Sensors_Accelerometer" target="_blank" class="float-right">
-								Help
-							</a>
-						</v-alert>
-						<v-alert :value="!allAxesHomed" border="left" dense text type="warning" class="centered-alert my-3">
-							Machine is not homed
-							<code-btn code="G28" color="warning" small class="float-right">
-								Home All
-							</code-btn>
-						</v-alert>
-						<v-alert :value="(accelerometers.length > 0) && allAxesHomed" dense text type="success" class="my-3">
-							Ready to record data
-						</v-alert>
+            <v-alert
+              :value="accelerometers.length === 0"
+              dense
+              text
+              type="error"
+              class="my-3"
+            >
+              No accelerometer found!
+              <a
+                href="https://docs.duet3d.com/User_manual/Connecting_hardware/Sensors_Accelerometer"
+                target="_blank"
+                class="float-right"
+              >
+                Help
+              </a>
+            </v-alert>
+            <v-alert
+              :value="!allAxesHomed"
+              border="left"
+              dense
+              text
+              type="warning"
+              class="centered-alert my-3"
+            >
+              Machine is not homed
+              <code-btn
+                code="G28"
+                color="warning"
+                small
+                class="float-right"
+              >
+                Home All
+              </code-btn>
+            </v-alert>
+            <v-alert
+              :value="(accelerometers.length > 0) && allAxesHomed"
+              dense
+              text
+              type="success"
+              class="my-3"
+            >
+              Ready to record data
+            </v-alert>
 
-						<span v-show="(accelerometers.length > 0) && allAxesHomed">
-							Press Next to continue.
-						</span>
-					</v-window-item>
+            <span v-show="(accelerometers.length > 0) && allAxesHomed">
+              Press Next to continue.
+            </span>
+          </v-window-item>
 
-					<!-- Configuration -->
-					<v-window-item value="config">
-						<div class="d-flex flex-column">
-							Here you can define different moves for the data collection.
+          <!-- Configuration -->
+          <v-window-item value="config">
+            <div class="d-flex flex-column">
+              Here you can define different moves for the data collection.
 
-							<v-simple-table class="mt-1">
-								<thead>
-								<tr>
-									<th class="px-0">
-										Tool
-									</th>
-									<th>
-										Accelerometer
-									</th>
-									<th class="px-0">
-										Axis
-									</th>
-									<th class="pr-0">
-										Start Position
-									</th>
-									<th>
-										End Position
-									</th>
-									<th></th>
-								</tr>
-								</thead>
-								<tbody>
-								<tr v-for="(move, index) in moves" :key="index">
-									<td class="px-0">
-										<v-select :value="move.tool" @change="setMoveTool(move, $event)" :items="toolList" class="pt-0" hide-details/>
-									</td>
-									<td>
-										<v-select v-model="move.accelerometer" :items="accelerometers" :rules="[val => !!val]" class="pt-0" hide-details/>
-									</td>
-									<td class="px-0">
-										<v-select :value="move.axis" @change="setMoveAxis(move, $event)" :items="['X', 'Y', 'X+Y']" class="pt-0" hide-details/>
-									</td>
-									<td class="pr-0">
-										<v-text-field v-model.number="move.start" type="number" :min="getMin(move, true)" :max="getMax(move, true)" :rules="getRules(move, true)" class="pt-0" hide-details/>
-									</td>
-									<td>
-										<v-text-field v-model.number="move.end" type="number" :min="getMin(move, false)" :max="getMax(move, false)" :rules="getRules(move, false)" class="pt-0" hide-details/>
-									</td>
-									<td class="px-0">
-										<v-btn color="warning" outlined :disabled="moves.length <= 1" @click="removeMove(index)">
-											<v-icon>mdi-delete</v-icon>
-										</v-btn>
-									</td>
-								</tr>
-								</tbody>
-							</v-simple-table>
-							<v-divider class="mb-3"/>
+              <v-simple-table class="mt-1">
+                <thead>
+                  <tr>
+                    <th class="px-0">
+                      Tool
+                    </th>
+                    <th>
+                      Accelerometer
+                    </th>
+                    <th class="px-0">
+                      Axis
+                    </th>
+                    <th class="pr-0">
+                      Start Position
+                    </th>
+                    <th>
+                      End Position
+                    </th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(move, index) in moves"
+                    :key="index"
+                  >
+                    <td class="px-0">
+                      <v-select
+                        :value="move.tool"
+                        :items="toolList"
+                        class="pt-0"
+                        hide-details
+                        @change="setMoveTool(move, $event)"
+                      />
+                    </td>
+                    <td>
+                      <v-select
+                        v-model="move.accelerometer"
+                        :items="accelerometers"
+                        :rules="[val => !!val]"
+                        class="pt-0"
+                        hide-details
+                      />
+                    </td>
+                    <td class="px-0">
+                      <v-select
+                        :value="move.axis"
+                        :items="['X', 'Y', 'X+Y']"
+                        class="pt-0"
+                        hide-details
+                        @change="setMoveAxis(move, $event)"
+                      />
+                    </td>
+                    <td class="pr-0">
+                      <v-text-field
+                        v-model.number="move.start"
+                        type="number"
+                        :min="getMin(move, true)"
+                        :max="getMax(move, true)"
+                        :rules="getRules(move, true)"
+                        class="pt-0"
+                        hide-details
+                      />
+                    </td>
+                    <td>
+                      <v-text-field
+                        v-model.number="move.end"
+                        type="number"
+                        :min="getMin(move, false)"
+                        :max="getMax(move, false)"
+                        :rules="getRules(move, false)"
+                        class="pt-0"
+                        hide-details
+                      />
+                    </td>
+                    <td class="px-0">
+                      <v-btn
+                        color="warning"
+                        outlined
+                        :disabled="moves.length <= 1"
+                        @click="removeMove(index)"
+                      >
+                        <v-icon>mdi-delete</v-icon>
+                      </v-btn>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-simple-table>
+              <v-divider class="mb-3" />
 
-							<v-btn color="blue darken-1" class="mx-auto" outlined text @click="addMove">
-								<v-icon class="mr-1">mdi-plus</v-icon>
-								Add Move
-							</v-btn>
+              <v-btn
+                color="blue darken-1"
+                class="mx-auto"
+                outlined
+                text
+                @click="addMove"
+              >
+                <v-icon class="mr-1">
+                  mdi-plus
+                </v-icon>
+                Add Move
+              </v-btn>
 
-							<v-alert :value="hasExternalAccelerometers" type="info" dense class="mt-3">
-								This machine appears to have expansion boards with embedded accelerometers. If you are operating a tool changer, it is recommended to set the corresponding tool for each accelerometer.
-							</v-alert>
+              <v-alert
+                :value="hasExternalAccelerometers"
+                type="info"
+                dense
+                class="mt-3"
+              >
+                This machine appears to have expansion boards with embedded accelerometers. If you are operating a tool changer, it is recommended to set the corresponding tool for each accelerometer.
+              </v-alert>
 
-							<v-checkbox class="my-2" v-model="centerAxes" label="Centre unused axes before each move" :ripple="false" hide-details/>
-							<div v-show="centerAxes" class="mx-9">
-								<div class="d-inline-flex">
-									<v-text-field type="number" v-model.number="xAxisCenter" label="X axis centre position" :min="xAxis.min" :max="xAxis.max" step="1" :rules="[(val) => !isNaN(val) && val >= xAxis.min && val <= xAxis.max]"/>
-									<v-text-field type="number" class="ml-5" v-model.number="yAxisCenter" label="Y axis centre position" :min="xAxis.min" :max="xAxis.max" step="1" :rules="[(val) => !isNaN(val) && val >= yAxis.min && val <= yAxis.max]"/>
-									<v-text-field v-show="showZCenter" type="number" class="ml-5" v-model.number="zAxisCenter" label="Z axis centre position" :rules="[(val) => !isNaN(val) && val >= zAxis.min && val <= zAxis.max]"/>
-								</div>
-							</div>
-							<v-checkbox class="my-2" v-model="recordWholeMove" label="Capture data during the whole length of the move" :ripple="false" hide-details/>
+              <v-checkbox
+                v-model="centerAxes"
+                class="my-2"
+                label="Centre unused axes before each move"
+                :ripple="false"
+                hide-details
+              />
+              <div
+                v-show="centerAxes"
+                class="mx-9"
+              >
+                <div class="d-inline-flex">
+                  <v-text-field
+                    v-model.number="xAxisCenter"
+                    type="number"
+                    label="X axis centre position"
+                    :min="xAxis.min"
+                    :max="xAxis.max"
+                    step="1"
+                    :rules="[(val) => !isNaN(val) && val >= xAxis.min && val <= xAxis.max]"
+                  />
+                  <v-text-field
+                    v-model.number="yAxisCenter"
+                    type="number"
+                    class="ml-5"
+                    label="Y axis centre position"
+                    :min="xAxis.min"
+                    :max="xAxis.max"
+                    step="1"
+                    :rules="[(val) => !isNaN(val) && val >= yAxis.min && val <= yAxis.max]"
+                  />
+                  <v-text-field
+                    v-show="showZCenter"
+                    v-model.number="zAxisCenter"
+                    type="number"
+                    class="ml-5"
+                    label="Z axis centre position"
+                    :rules="[(val) => !isNaN(val) && val >= zAxis.min && val <= zAxis.max]"
+                  />
+                </div>
+              </div>
+              <v-checkbox
+                v-model="recordWholeMove"
+                class="my-2"
+                label="Capture data during the whole length of the move"
+                :ripple="false"
+                hide-details
+              />
 
-							The machine will record a new Motion Profile as soon as Next is clicked.
-						</div>
-					</v-window-item>
+              The machine will record a new Motion Profile as soon as Next is clicked.
+            </div>
+          </v-window-item>
 
-					<!-- Data Collection -->
-					<v-window-item value="collection">
-						<span v-show="!finished">
-							Please stand by while Motion Profiles are being recorded...
-						</span>
+          <!-- Data Collection -->
+          <v-window-item value="collection">
+            <span v-show="!finished">
+              Please stand by while Motion Profiles are being recorded...
+            </span>
 
-						<v-simple-table class="mt-1">
-							<thead>
-							<tr>
-								<th class="px-0"></th>
-								<th>
-									Tool
-								</th>
-								<th class="px-0">
-									Accelerometer
-								</th>
-								<th>
-									Axis
-								</th>
-								<th class="px-0">
-									Start Position
-								</th>
-								<th>
-									End Position
-								</th>
-							</tr>
-							</thead>
-							<tbody>
-							<tr v-for="(move, index) in moves" :key="index">
-								<td class="px-0">
-									<v-icon>
-										{{ getMoveIcon(move) }}
-									</v-icon>
-								</td>
-								<td>
-									{{ move.tool ? (move.tool.name || `T${move.tool.number}`) : 'None' }}
-								</td>
-								<td class="px-0">
-									{{ move.accelerometer }}
-								</td>
-								<td>
-									{{ move.axis }}
-								</td>
-								<td class="px-0">
-									{{ move.start }}
-								</td>
-								<td>
-									{{ move.end }}
-								</td>
-							</tr>
-							</tbody>
-						</v-simple-table>
-						<v-divider/>
+            <v-simple-table class="mt-1">
+              <thead>
+                <tr>
+                  <th class="px-0" />
+                  <th>
+                    Tool
+                  </th>
+                  <th class="px-0">
+                    Accelerometer
+                  </th>
+                  <th>
+                    Axis
+                  </th>
+                  <th class="px-0">
+                    Start Position
+                  </th>
+                  <th>
+                    End Position
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(move, index) in moves"
+                  :key="index"
+                >
+                  <td class="px-0">
+                    <v-icon>
+                      {{ getMoveIcon(move) }}
+                    </v-icon>
+                  </td>
+                  <td>
+                    {{ move.tool ? (move.tool.name || `T${move.tool.number}`) : 'None' }}
+                  </td>
+                  <td class="px-0">
+                    {{ move.accelerometer }}
+                  </td>
+                  <td>
+                    {{ move.axis }}
+                  </td>
+                  <td class="px-0">
+                    {{ move.start }}
+                  </td>
+                  <td>
+                    {{ move.end }}
+                  </td>
+                </tr>
+              </tbody>
+            </v-simple-table>
+            <v-divider />
 
-						<v-alert :value="cancelled" dense text type="error" class="mt-3">
-							Data collection cancelled!
-						</v-alert>
-						<v-alert :value="finished" dense text type="success" class="mt-3">
-							Recording of Motion Profile #{{ this.run }} is complete!
-						</v-alert>
-					</v-window-item>
-				</v-window>
-			</v-card-text>
+            <v-alert
+              :value="cancelled"
+              dense
+              text
+              type="error"
+              class="mt-3"
+            >
+              Data collection cancelled!
+            </v-alert>
+            <v-alert
+              :value="finished"
+              dense
+              text
+              type="success"
+              class="mt-3"
+            >
+              Recording of Motion Profile #{{ run }} is complete!
+            </v-alert>
+          </v-window-item>
+        </v-window>
+      </v-card-text>
 
-			<v-card-actions>
-				<v-btn v-show="!cancelled && !finished" color="blue darken-1" text @click="cancel">
-					Cancel
-				</v-btn>
-				<v-spacer/>
-				<v-btn v-show="canGoBack" color="blue darken-1" text @click="goBack">
-					Back
-				</v-btn>
-				<v-btn v-show="currentPage !== 'collection'" color="blue darken-1" text :disabled="!canGoNext" @click="goNext">
-					Next
-				</v-btn>
-				<v-btn v-show="cancelled || finished" color="blue darken-1" text @click="shownInternal = false">
-					Finish
-				</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+      <v-card-actions>
+        <v-btn
+          v-show="!cancelled && !finished"
+          color="blue darken-1"
+          text
+          @click="cancel"
+        >
+          Cancel
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          v-show="canGoBack"
+          color="blue darken-1"
+          text
+          @click="goBack"
+        >
+          Back
+        </v-btn>
+        <v-btn
+          v-show="currentPage !== 'collection'"
+          color="blue darken-1"
+          text
+          :disabled="!canGoNext"
+          @click="goNext"
+        >
+          Next
+        </v-btn>
+        <v-btn
+          v-show="cancelled || finished"
+          color="blue darken-1"
+          text
+          @click="shownInternal = false"
+        >
+          Finish
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -613,11 +772,6 @@ export default {
 			}
 		}
 	},
-	mounted() {
-		this.run = this.lastRun + 1;
-		this.refreshCenters();
-		this.makeMoves();
-	},
 	watch: {
 		accelerometers() { this.makeMoves(); },
 		'xAxis.min'() { this.makeMoves(); this.refreshCenters(); },
@@ -643,6 +797,22 @@ export default {
 				this.cancelled = true;
 			}
 		}
+	},
+	mounted() {
+		this.run = this.lastRun + 1;
+		this.refreshCenters();
+		this.makeMoves();
 	}
 }
 </script>
+
+<style>
+.centered-alert > div {
+	align-items: center;
+}
+.centered-alert > div > div {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+</style>

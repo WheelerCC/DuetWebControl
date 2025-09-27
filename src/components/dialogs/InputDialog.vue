@@ -1,31 +1,52 @@
 <template>
-	<v-dialog v-model="innerShown" persistent no-click-animation width="360">
-		<v-card>
-			<v-form ref="form" @submit.prevent="submit">
-				<v-card-title>
-					<span class="headline">
-						{{ title }}
-					</span>
-				</v-card-title>
+  <v-dialog
+    v-model="innerShown"
+    persistent
+    no-click-animation
+    width="360"
+  >
+    <v-card>
+      <v-form
+        ref="form"
+        @submit.prevent="submit"
+      >
+        <v-card-title>
+          <span class="headline">
+            {{ title }}
+          </span>
+        </v-card-title>
 
-				<v-card-text>
-					{{ prompt }}
+        <v-card-text>
+          {{ prompt }}
 
-					<v-text-field v-model="input" :rules="inputRules" required autofocus />
-				</v-card-text>
+          <v-text-field
+            v-model="input"
+            :rules="inputRules"
+            required
+            autofocus
+          />
+        </v-card-text>
 
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="blue darken-1" text @click="hide">
-						{{ $t("generic.cancel") }}
-					</v-btn>
-					<v-btn color="blue darken-1" text type="submit">
-						{{ $t("generic.ok") }}
-					</v-btn>
-				</v-card-actions>
-			</v-form>
-		</v-card>
-	</v-dialog>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="hide"
+          >
+            {{ $t("generic.cancel") }}
+          </v-btn>
+          <v-btn
+            color="blue darken-1"
+            text
+            type="submit"
+          >
+            {{ $t("generic.ok") }}
+          </v-btn>
+        </v-card-actions>
+      </v-form>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -59,18 +80,6 @@ export default Vue.extend({
 			]
 		}
 	},
-	methods: {
-		async submit() {
-			if ((this.$refs.form as HTMLFormElement).validate()) {
-				this.innerShown = false;
-				this.$emit("confirmed", this.isNumericValue ? parseFloat(this.input) : this.input);
-			}
-		},
-		hide() {
-			this.innerShown = false;
-			this.$emit("cancelled");
-		}
-	},
 	watch: {
 		shown(to: boolean) {
 			if (this.innerShown !== to) {
@@ -86,6 +95,18 @@ export default Vue.extend({
 				this.$emit("update:shown", to);
 			}
 		},
+	},
+	methods: {
+		async submit() {
+			if ((this.$refs.form as HTMLFormElement).validate()) {
+				this.innerShown = false;
+				this.$emit("confirmed", this.isNumericValue ? parseFloat(this.input) : this.input);
+			}
+		},
+		hide() {
+			this.innerShown = false;
+			this.$emit("cancelled");
+		}
 	}
 });
 </script>

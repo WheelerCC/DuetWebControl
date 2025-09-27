@@ -1,23 +1,40 @@
 <template>
-	<v-dialog v-model="internalShown" @keydown.escape="dismissed" persistent width="480">
-		<v-card>
-			<v-card-title>
-				<span class="headline">
-					{{ title }}
-				</span>
-			</v-card-title>
+  <v-dialog
+    v-model="internalShown"
+    persistent
+    width="480"
+    @keydown.escape="dismissed"
+  >
+    <v-card>
+      <v-card-title>
+        <span class="headline">
+          {{ title }}
+        </span>
+      </v-card-title>
 
-			<v-card-text>
-				{{ prompt }}
-			</v-card-text>
+      <v-card-text>
+        {{ prompt }}
+      </v-card-text>
 
-			<v-card-actions>
-				<v-spacer />
-				<v-btn color="blue darken-1" text @click="dismissed">{{ $t('generic.no') }}</v-btn>
-				<v-btn color="blue darken-1" text @click="confirmed">{{ $t('generic.yes') }}</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          color="blue darken-1"
+          text
+          @click="dismissed"
+        >
+          {{ $t('generic.no') }}
+        </v-btn>
+        <v-btn
+          color="blue darken-1"
+          text
+          @click="confirmed"
+        >
+          {{ $t('generic.yes') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">

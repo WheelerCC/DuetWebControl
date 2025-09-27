@@ -1,64 +1,113 @@
 <template>
-	<v-row v-scroll="onScroll">
-		<v-col ref="leftContainer" :cols="(active.length === 0) ? 12 : 6">
-			<v-treeview :items="modelTree" open-on-click activatable :active.sync="active">
-				<template #label="{ item }">
-					{{ item.getLabel() }}
-				</template>
-				<template #append="{ item }">
-					<v-chip v-if="item.type">
-						{{ item.type }}
-					</v-chip>
-				</template>
-			</v-treeview>
+  <v-row v-scroll="onScroll">
+    <v-col
+      ref="leftContainer"
+      :cols="(active.length === 0) ? 12 : 6"
+    >
+      <v-treeview
+        :items="modelTree"
+        open-on-click
+        activatable
+        :active.sync="active"
+      >
+        <template #label="{ item }">
+          {{ item.getLabel() }}
+        </template>
+        <template #append="{ item }">
+          <v-chip v-if="item.type">
+            {{ item.type }}
+          </v-chip>
+        </template>
+      </v-treeview>
 
-			<div class="d-flex justify-center">
-				<v-btn v-show="active.length === 0" color="info" class="mt-3" :disabled="uiFrozen" :elevation="1"
-					   @click="refresh">
-					<v-icon class="mr-1">mdi-refresh</v-icon>
-					{{ $t("button.refresh.caption") }}
-				</v-btn>
-			</div>
-		</v-col>
+      <div class="d-flex justify-center">
+        <v-btn
+          v-show="active.length === 0"
+          color="info"
+          class="mt-3"
+          :disabled="uiFrozen"
+          :elevation="1"
+          @click="refresh"
+        >
+          <v-icon class="mr-1">
+            mdi-refresh
+          </v-icon>
+          {{ $t("button.refresh.caption") }}
+        </v-btn>
+      </div>
+    </v-col>
 
-		<v-col ref="rightContainer" v-show="active.length !== 0" cols="6">
-			<v-row class="my-1">
-				<v-col class="pt-4">
-					{{ $t("plugins.objectModelBrowser.selectedNode" )}}
-					<template v-if="active.length > 0">
-						<input ref="activeInput" type="text" :value="active[0]" class="text-center" :class="darkTheme ? 'white--text' : ''" readonly @click="selectInput">
-						<v-icon small class="ml-1" @click="copy">mdi-content-copy</v-icon>
-					</template>
-					<template v-else>
-						{{ $t("plugins.objectModelBrowser.none") }}
-					</template>
-				</v-col>
-				<v-col cols="auto">
-					<v-btn color="info" :disabled="uiFrozen" :elevation="1" @click="refresh">
-						<v-icon class="mr-1">mdi-refresh</v-icon>
-						{{ $t("button.refresh.caption") }}
-					</v-btn>
-				</v-col>
-			</v-row>
+    <v-col
+      v-show="active.length !== 0"
+      ref="rightContainer"
+      cols="6"
+    >
+      <v-row class="my-1">
+        <v-col class="pt-4">
+          {{ $t("plugins.objectModelBrowser.selectedNode" ) }}
+          <template v-if="active.length > 0">
+            <input
+              ref="activeInput"
+              type="text"
+              :value="active[0]"
+              class="text-center"
+              :class="darkTheme ? 'white--text' : ''"
+              readonly
+              @click="selectInput"
+            >
+            <v-icon
+              small
+              class="ml-1"
+              @click="copy"
+            >
+              mdi-content-copy
+            </v-icon>
+          </template>
+          <template v-else>
+            {{ $t("plugins.objectModelBrowser.none") }}
+          </template>
+        </v-col>
+        <v-col cols="auto">
+          <v-btn
+            color="info"
+            :disabled="uiFrozen"
+            :elevation="1"
+            @click="refresh"
+          >
+            <v-icon class="mr-1">
+              mdi-refresh
+            </v-icon>
+            {{ $t("button.refresh.caption") }}
+          </v-btn>
+        </v-col>
+      </v-row>
 
-			<v-alert :value="apiFileError !== null" outlined type="warning">
-				{{ $t("plugins.objectModelBrowser.documentationNotAvailable") }}
-			</v-alert>
+      <v-alert
+        :value="apiFileError !== null"
+        outlined
+        type="warning"
+      >
+        {{ $t("plugins.objectModelBrowser.documentationNotAvailable") }}
+      </v-alert>
 
-			<v-card v-show="apiDocumentation !== null" outlined class="pa-3">
-				<template v-if="apiDocumentationSummary !== null">
-					<h4>{{ $t("plugins.objectModelBrowser.summary") }}</h4>
-					<span v-html="apiDocumentationSummary"></span>
-				</template>
+      <v-card
+        v-show="apiDocumentation !== null"
+        outlined
+        class="pa-3"
+      >
+        <template v-if="apiDocumentationSummary !== null">
+          <h4>{{ $t("plugins.objectModelBrowser.summary") }}</h4>
+          <span v-html="apiDocumentationSummary" />
+        </template>
 
-				<template v-if="apiDocumentationRemarks !== null">
-					<br v-if="apiDocumentationSummary !== null">
-					<h4>{{ $t("plugins.objectModelBrowser.remarks") }}</h4>
-					<span v-html="apiDocumentationRemarks"></span>
-				</template>
-			</v-card>
-		</v-col>
-	</v-row>
+        <template v-if="apiDocumentationRemarks !== null">
+          <br v-if="apiDocumentationSummary !== null">
+          <h4>{{ $t("plugins.objectModelBrowser.remarks") }}</h4>
+          <span v-html="apiDocumentationRemarks" />
+        </template>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">
@@ -98,6 +147,15 @@ interface ModelTreeItem {
 }
 
 export default Vue.extend({
+	data() {
+		return {
+			active: new Array<string>(),
+			modelTree: new Array<ModelTreeItem>,
+			apiFile: null as Document | null,
+			apiFileError: null,
+			documentationFloating: false
+		}
+	},
 	computed: {
 		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
 		model(): ObjectModel { return store.state.machine.model; },
@@ -153,13 +211,21 @@ export default Vue.extend({
 			return null;
 		}
 	},
-	data() {
-		return {
-			active: new Array<string>(),
-			modelTree: new Array<ModelTreeItem>,
-			apiFile: null as Document | null,
-			apiFileError: null,
-			documentationFloating: false
+	watch: {
+		active(to) {
+			if (to.length > 0) {
+				this.$nextTick(() => {
+					this.onScroll();
+
+					const activeInput = this.$refs.activeInput as HTMLInputElement | undefined;
+					if (activeInput) {
+						activeInput.style.width = "0px";
+						this.$nextTick(() => {
+							activeInput.style.width = `${activeInput.scrollWidth + 8}px`;
+						});
+                    }
+				});
+			}
 		}
 	},
 	async activated() {
@@ -284,23 +350,6 @@ export default Vue.extend({
 				rightContainer.style.paddingTop = `${-documentationTop + 60}px`;
 			} else {
 				rightContainer.style.paddingTop = "0px";
-			}
-		}
-	},
-	watch: {
-		active(to) {
-			if (to.length > 0) {
-				this.$nextTick(() => {
-					this.onScroll();
-
-					const activeInput = this.$refs.activeInput as HTMLInputElement | undefined;
-					if (activeInput) {
-						activeInput.style.width = "0px";
-						this.$nextTick(() => {
-							activeInput.style.width = `${activeInput.scrollWidth + 8}px`;
-						});
-                    }
-				});
 			}
 		}
 	}

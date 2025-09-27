@@ -1,61 +1,96 @@
 <template>
-	<v-card>
-		<v-card-title class="pb-0">
-			<v-icon small class="mr-1">mdi-fan</v-icon>
-			{{ $t("panel.fans.caption") }}
+  <v-card>
+    <v-card-title class="pb-0">
+      <v-icon
+        small
+        class="mr-1"
+      >
+        mdi-fan
+      </v-icon>
+      {{ $t("panel.fans.caption") }}
 
-			<v-spacer />
+      <v-spacer />
 
-			<v-menu offset-y right auto>
-				<template #activator="{ on }">
-					<a v-show="!uiFrozen && fans.some(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0))"
-					   v-on="on" href="javascript:void(0)" class="subtitle-2">
-						{{ $t("panel.fans.changeVisibility") }}
-					</a>
-				</template>
+      <v-menu
+        offset-y
+        right
+        auto
+      >
+        <template #activator="{ on }">
+          <a
+            v-show="!uiFrozen && fans.some(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0))"
+            href="javascript:void(0)"
+            class="subtitle-2"
+            v-on="on"
+          >
+            {{ $t("panel.fans.changeVisibility") }}
+          </a>
+        </template>
 
-				<v-list>
-					<v-list-item @click="toggleFanVisibility(-1)">
-						<v-icon class="mr-1">
-							{{ displayedFans.includes(-1) ? "mdi-checkbox-marked" : "mdi-checkbox-blank" }}
-						</v-icon>
-						{{ $t("panel.fans.toolFan") }}
-					</v-list-item>
+        <v-list>
+          <v-list-item @click="toggleFanVisibility(-1)">
+            <v-icon class="mr-1">
+              {{ displayedFans.includes(-1) ? "mdi-checkbox-marked" : "mdi-checkbox-blank" }}
+            </v-icon>
+            {{ $t("panel.fans.toolFan") }}
+          </v-list-item>
 
-					<template v-for="(fan, index) in fans">
-						<v-list-item v-if="(fan !== null) && (fan.thermostatic.sensors.length === 0)" :key="index"
-									 @click="toggleFanVisibility(index)">
-							<v-icon class="mr-1">
-								{{ displayedFans.includes(index) ? "mdi-checkbox-marked" : "mdi-checkbox-blank" }}
-							</v-icon>
-							{{ fan.name ? fan.name : $t("panel.fans.fan", [index]) }}
-						</v-list-item>
-					</template>
-				</v-list>
-			</v-menu>
-		</v-card-title>
+          <template v-for="(fan, index) in fans">
+            <v-list-item
+              v-if="(fan !== null) && (fan.thermostatic.sensors.length === 0)"
+              :key="index"
+              @click="toggleFanVisibility(index)"
+            >
+              <v-icon class="mr-1">
+                {{ displayedFans.includes(index) ? "mdi-checkbox-marked" : "mdi-checkbox-blank" }}
+              </v-icon>
+              {{ fan.name ? fan.name : $t("panel.fans.fan", [index]) }}
+            </v-list-item>
+          </template>
+        </v-list>
+      </v-menu>
+    </v-card-title>
 
-		<v-card-text v-if="hasVisibleFans" class="d-flex flex-column pb-0">
-			<div v-if="displayedFans.includes(-1) && (toolFanValue >= 0)"
-				 class="d-flex flex-column pt-2">
-				{{ $t("panel.fans.toolFan") }}
-				<percentage-input :value="toolFanValue" @input="setFanValue(-1, $event)" :disabled="uiFrozen" />
-			</div>
+    <v-card-text
+      v-if="hasVisibleFans"
+      class="d-flex flex-column pb-0"
+    >
+      <div
+        v-if="displayedFans.includes(-1) && (toolFanValue >= 0)"
+        class="d-flex flex-column pt-2"
+      >
+        {{ $t("panel.fans.toolFan") }}
+        <percentage-input
+          :value="toolFanValue"
+          :disabled="uiFrozen"
+          @input="setFanValue(-1, $event)"
+        />
+      </div>
 
-			<template v-for="(fan, index) in fans">
-				<div v-if="displayedFans.includes(index) && (fan !== null) && (fan.thermostatic.sensors.length === 0)"
-					 :key="index" class="d-flex flex-column pt-2">
-					{{ (fan.name ? fan.name : $t("panel.fans.fan", [index])) }}
-					<percentage-input :value="fan.requestedValue * 100" @input="setFanValue(index, $event)"
-									  :disabled="uiFrozen" />
-				</div>
-			</template>
-		</v-card-text>
+      <template v-for="(fan, index) in fans">
+        <div
+          v-if="displayedFans.includes(index) && (fan !== null) && (fan.thermostatic.sensors.length === 0)"
+          :key="index"
+          class="d-flex flex-column pt-2"
+        >
+          {{ (fan.name ? fan.name : $t("panel.fans.fan", [index])) }}
+          <percentage-input
+            :value="fan.requestedValue * 100"
+            :disabled="uiFrozen"
+            @input="setFanValue(index, $event)"
+          />
+        </div>
+      </template>
+    </v-card-text>
 
-		<v-alert type="info" :value="!hasVisibleFans" class="mb-0">
-			{{ $t("panel.fans.noFans") }}
-		</v-alert>
-	</v-card>
+    <v-alert
+      type="info"
+      :value="!hasVisibleFans"
+      class="mb-0"
+    >
+      {{ $t("panel.fans.noFans") }}
+    </v-alert>
+  </v-card>
 </template>
 
 <script lang="ts">

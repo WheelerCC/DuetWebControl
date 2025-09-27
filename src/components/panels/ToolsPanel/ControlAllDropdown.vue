@@ -1,38 +1,82 @@
 <template>
-    <v-menu v-model="dropdownShown" left offset-y :close-on-content-click="false">
-        <template #activator="{ on }">
-            <a v-on="on" href="javascript:void(0)">
-                <v-icon small>mdi-menu-down</v-icon>
-                {{ $t("panel.tools.controlHeaters") }}
-            </a>
-        </template>
+  <v-menu
+    v-model="dropdownShown"
+    left
+    offset-y
+    :close-on-content-click="false"
+  >
+    <template #activator="{ on }">
+      <a
+        href="javascript:void(0)"
+        v-on="on"
+      >
+        <v-icon small>mdi-menu-down</v-icon>
+        {{ $t("panel.tools.controlHeaters") }}
+      </a>
+    </template>
 
-        <v-card>
-            <v-layout justify-center column class="pt-2 pb-3 px-2">
-                <v-btn block color="primary" class="mb-3 pa-2" :disabled="!canTurnEverythingOff"
-                       @click="turnEverythingOff">
-                    <v-icon class="mr-1">mdi-power-standby</v-icon>
-                    {{ $t("panel.tools.turnEverythingOff") }}
-                </v-btn>
+    <v-card>
+      <v-layout
+        justify-center
+        column
+        class="pt-2 pb-3 px-2"
+      >
+        <v-btn
+          block
+          color="primary"
+          class="mb-3 pa-2"
+          :disabled="!canTurnEverythingOff"
+          @click="turnEverythingOff"
+        >
+          <v-icon class="mr-1">
+            mdi-power-standby
+          </v-icon>
+          {{ $t("panel.tools.turnEverythingOff") }}
+        </v-btn>
 
-                <v-divider class="mb-2" />
+        <v-divider class="mb-2" />
 
-                <control-input :label="$t('panel.tools.setActiveTemperatures')" type="all"
-                               :control-tools="controlTools" :control-beds="controlBeds"
-                               :control-chambers="controlChambers" active />
-                <control-input :label="$t('panel.tools.setStandbyTemperatures')" type="all"
-                               :control-tools="controlTools" :control-beds="controlBeds"
-                               :control-chambers="controlChambers" standby />
+        <control-input
+          :label="$t('panel.tools.setActiveTemperatures')"
+          type="all"
+          :control-tools="controlTools"
+          :control-beds="controlBeds"
+          :control-chambers="controlChambers"
+          active
+        />
+        <control-input
+          :label="$t('panel.tools.setStandbyTemperatures')"
+          type="all"
+          :control-tools="controlTools"
+          :control-beds="controlBeds"
+          :control-chambers="controlChambers"
+          standby
+        />
 
-                <v-switch v-show="hasTools" v-model="controlTools" hide-details class="mx-1 mt-0"
-                          :label="$t('panel.tools.setToolTemperatures')" />
-                <v-switch v-show="hasBeds" v-model="controlBeds" hide-details class="mx-1"
-                          :label="$t('panel.tools.setBedTemperatures')" />
-                <v-switch v-show="hasChambers" v-model="controlChambers" hide-details class="mx-1"
-                          :label="$t('panel.tools.setChamberTemperatures')" />
-            </v-layout>
-        </v-card>
-    </v-menu>
+        <v-switch
+          v-show="hasTools"
+          v-model="controlTools"
+          hide-details
+          class="mx-1 mt-0"
+          :label="$t('panel.tools.setToolTemperatures')"
+        />
+        <v-switch
+          v-show="hasBeds"
+          v-model="controlBeds"
+          hide-details
+          class="mx-1"
+          :label="$t('panel.tools.setBedTemperatures')"
+        />
+        <v-switch
+          v-show="hasChambers"
+          v-model="controlChambers"
+          hide-details
+          class="mx-1"
+          :label="$t('panel.tools.setChamberTemperatures')"
+        />
+      </v-layout>
+    </v-card>
+  </v-menu>
 </template>
 
 <script setup lang="ts">

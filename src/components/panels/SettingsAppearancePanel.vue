@@ -1,41 +1,89 @@
 <template>
-	<v-card outlined>
-		<v-card-title>
-			{{ $t("panel.settingsAppearance.caption") }}
-		</v-card-title>
+  <v-card outlined>
+    <v-card-title>
+      {{ $t("panel.settingsAppearance.caption") }}
+    </v-card-title>
 
-		<v-card-text class="d-flex flex-column">
-			<v-switch :label="$t('panel.settingsAppearance.darkTheme')" class="mt-0 mb-3" hide-details
-					  v-model="darkTheme" />
-			<v-select :items="languages" :label="$t('panel.settingsAppearance.language')" :return-object="false"
-					  hide-details item-text="language" item-value="code" v-model="language" />
-			<v-tooltip bottom>
-				<template #activator="{ on }">
-					<v-switch :label="$t('panel.settingsAppearance.binaryFileSizes')" hide-details
-							  v-model="useBinaryPrefix" v-on="on" />
-				</template>
-				{{ $t("panel.settingsAppearance.binaryFileSizesTitle") }}
-			</v-tooltip>
-			<v-tooltip bottom>
-				<template #activator="{ on }">
-					<v-switch :label="$t('panel.settingsAppearance.disableAutoComplete')" hide-details
-							  v-model="disableAutoComplete" v-on="on" />
-				</template>
-				{{ $t("panel.settingsAppearance.disableAutoCompleteTitle") }}
-			</v-tooltip>
-			<v-select :items="dashboardModes" :label="$t('panel.settingsAppearance.dashboardModeTitle')" class="mt-3"
-					  hide-details item-text="value" item-value="value" v-model="dashboardMode" />
-			<v-switch :label="$t('panel.settingsAppearance.bottomNavigation')" hide-details
-					  v-model="bottomNavigation" />
-			<v-switch :label="$t('panel.settingsAppearance.numericInputs')" hide-details v-model="numericInputs" />
-			<v-switch :label="$t('panel.settingsAppearance.iconMenu')" hide-details v-model="iconMenu" />
-			<v-select :items="[0, 1, 2, 3]" v-model.number="decimalPlaces"
-					  :label="$t('panel.settingsAppearance.decimalPlaces')" hide-details class="mt-3" />
-			<v-select :items="unitsOfMeasure" v-model="displayUnits"
-					  :label="$t('panel.settingsAppearance.displayUnitsTitle')" class="mt-3" hide-details
-					  item-text="value" item-value="value" />
-		</v-card-text>
-	</v-card>
+    <v-card-text class="d-flex flex-column">
+      <v-switch
+        v-model="darkTheme"
+        :label="$t('panel.settingsAppearance.darkTheme')"
+        class="mt-0 mb-3"
+        hide-details
+      />
+      <v-select
+        v-model="language"
+        :items="languages"
+        :label="$t('panel.settingsAppearance.language')"
+        :return-object="false"
+        hide-details
+        item-text="language"
+        item-value="code"
+      />
+      <v-tooltip bottom>
+        <template #activator="{ on }">
+          <v-switch
+            v-model="useBinaryPrefix"
+            :label="$t('panel.settingsAppearance.binaryFileSizes')"
+            hide-details
+            v-on="on"
+          />
+        </template>
+        {{ $t("panel.settingsAppearance.binaryFileSizesTitle") }}
+      </v-tooltip>
+      <v-tooltip bottom>
+        <template #activator="{ on }">
+          <v-switch
+            v-model="disableAutoComplete"
+            :label="$t('panel.settingsAppearance.disableAutoComplete')"
+            hide-details
+            v-on="on"
+          />
+        </template>
+        {{ $t("panel.settingsAppearance.disableAutoCompleteTitle") }}
+      </v-tooltip>
+      <v-select
+        v-model="dashboardMode"
+        :items="dashboardModes"
+        :label="$t('panel.settingsAppearance.dashboardModeTitle')"
+        class="mt-3"
+        hide-details
+        item-text="value"
+        item-value="value"
+      />
+      <v-switch
+        v-model="bottomNavigation"
+        :label="$t('panel.settingsAppearance.bottomNavigation')"
+        hide-details
+      />
+      <v-switch
+        v-model="numericInputs"
+        :label="$t('panel.settingsAppearance.numericInputs')"
+        hide-details
+      />
+      <v-switch
+        v-model="iconMenu"
+        :label="$t('panel.settingsAppearance.iconMenu')"
+        hide-details
+      />
+      <v-select
+        v-model.number="decimalPlaces"
+        :items="[0, 1, 2, 3]"
+        :label="$t('panel.settingsAppearance.decimalPlaces')"
+        hide-details
+        class="mt-3"
+      />
+      <v-select
+        v-model="displayUnits"
+        :items="unitsOfMeasure"
+        :label="$t('panel.settingsAppearance.displayUnitsTitle')"
+        class="mt-3"
+        hide-details
+        item-text="value"
+        item-value="value"
+      />
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">

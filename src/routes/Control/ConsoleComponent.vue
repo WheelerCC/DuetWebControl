@@ -1,12 +1,15 @@
 <template>
-	<v-row :dense="$vuetify.breakpoint.mobile">
-		<v-col cols="12" class="pt-1">
-			<code-input solo />
-		</v-col>
-		<v-col cols="12">
-			<event-list />
-		</v-col>
-	</v-row>
+  <v-row :dense="$vuetify.breakpoint.mobile">
+    <v-col
+      cols="12"
+      class="pt-1"
+    >
+      <code-input solo />
+    </v-col>
+    <v-col cols="12">
+      <event-list />
+    </v-col>
+  </v-row>
 </template>
 
 <script lang="ts">

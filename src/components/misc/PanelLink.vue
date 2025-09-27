@@ -1,16 +1,14 @@
-<style scoped>
-span {
-	cursor: default;
-}
-</style>
-
 <template>
-	<a v-if="!active" href="javascript:void(0)" @click="$emit('click', $event)">
-		<slot></slot>
-	</a>
-	<span v-else>
-		<slot></slot>
-	</span>
+  <a
+    v-if="!active"
+    href="javascript:void(0)"
+    @click="$emit('click', $event)"
+  >
+    <slot />
+  </a>
+  <span v-else>
+    <slot />
+  </span>
 </template>
 
 <script lang="ts">
@@ -22,3 +20,9 @@ export default Vue.extend({
 	}
 });
 </script>
+
+<style scoped>
+span {
+	cursor: default;
+}
+</style>

@@ -1,9 +1,17 @@
 <template>
-	<div>
-		<input-dialog :shown.sync="showFilenameDialog" :title="$t('dialog.newFile.title')"
-					  :prompt="$t('dialog.newFile.prompt')" @cancelled="cancelled" @confirmed="showEditor" />
-		<file-edit-dialog :shown.sync="showEditorDialog" :filename="filename" />
-	</div>
+  <div>
+    <input-dialog
+      :shown.sync="showFilenameDialog"
+      :title="$t('dialog.newFile.title')"
+      :prompt="$t('dialog.newFile.prompt')"
+      @cancelled="cancelled"
+      @confirmed="showEditor"
+    />
+    <file-edit-dialog
+      :shown.sync="showEditorDialog"
+      :filename="filename"
+    />
+  </div>
 </template>
 
 <script lang="ts">
@@ -23,9 +31,6 @@ export default Vue.extend({
 			required: true
 		}
 	},
-	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; }
-	},
 	data() {
 		return {
 			showFilenameDialog: this.shown,
@@ -35,15 +40,8 @@ export default Vue.extend({
 			showEditorDialog: false
 		}
 	},
-	methods: {
-		cancelled() {
-			this.$emit("update:shown", false);
-		},
-		showEditor(filename: string) {
-			this.filename = Path.combine(this.directory, filename);
-			this.content = "";
-			this.showEditorDialog = true;
-		}
+	computed: {
+		isConnected(): boolean { return store.getters["isConnected"]; }
 	},
 	watch: {
 		isConnected(to: boolean) {
@@ -65,6 +63,16 @@ export default Vue.extend({
 				this.showFilenameDialog = false;
 				this.showEditorDialog = false;
 			}
+		}
+	},
+	methods: {
+		cancelled() {
+			this.$emit("update:shown", false);
+		},
+		showEditor(filename: string) {
+			this.filename = Path.combine(this.directory, filename);
+			this.content = "";
+			this.showEditorDialog = true;
 		}
 	}
 });

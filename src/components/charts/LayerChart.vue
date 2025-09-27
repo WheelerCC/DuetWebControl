@@ -1,31 +1,27 @@
-<style scoped>
-.content {
-	position: relative;
-	min-height: 180px;
-}
-
-.content > canvas {
-	position: absolute;
-}
-</style>
-
 <template>
-	<v-card class="d-flex flex-column flex-grow-1">
-		<v-card-title>
-			<span>
-				<v-icon small class="mr-1">mdi-vector-polyline</v-icon>
-				{{ $t("chart.layer.caption") }}
-			</span>
-			<v-spacer />
-			<a v-show="layers.length > 2" href="javascript:void(0)" @click.prevent="showAllLayers = !showAllLayers">
-				{{ showAllLayers ? $t("chart.layer.showLastLayers", [Math.min(layers.length, 30)]) : $t("chart.layer.showAllLayers") }}
-			</a>
-		</v-card-title>
+  <v-card class="d-flex flex-column flex-grow-1">
+    <v-card-title>
+      <span>
+        <v-icon
+          small
+          class="mr-1"
+        >mdi-vector-polyline</v-icon>
+        {{ $t("chart.layer.caption") }}
+      </span>
+      <v-spacer />
+      <a
+        v-show="layers.length > 2"
+        href="javascript:void(0)"
+        @click.prevent="showAllLayers = !showAllLayers"
+      >
+        {{ showAllLayers ? $t("chart.layer.showLastLayers", [Math.min(layers.length, 30)]) : $t("chart.layer.showAllLayers") }}
+      </a>
+    </v-card-title>
 
-		<v-card-text class="content flex-grow-1 px-2 py-0">
-			<canvas ref="chart"></canvas>
-		</v-card-text>
-	</v-card>
+    <v-card-text class="content flex-grow-1 px-2 py-0">
+      <canvas ref="chart" />
+    </v-card-text>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -37,41 +33,29 @@ import store from "@/store";
 import { display, displayZ, displayTime } from "@/utils/display";
 
 export default Vue.extend({
-	computed: {
-		darkTheme(): boolean { return store.state.settings.darkTheme; },
-		language(): string { return store.state.settings.language; },
-		layers(): ModelCollection<Layer> { return store.state.machine.model.job.layers; }
-	},
 	data() {
 		return {
 			chart: {} as Chart,
 			showAllLayers: false
 		}
 	},
-	methods: {
-		updateChart() {
-			this.chart.data.labels = this.layers.map((_, index) => index + 1);
-			this.chart.data.datasets![0].data = this.layers.map(layer => layer.duration);
-
-			if (this.showAllLayers) {
-				this.chart.config.options!.scales!.x!.min = 1;
-				this.chart.config.options!.scales!.x!.max = this.layers.length;
-			} else {
-				this.chart.config.options!.scales!.x!.min = Math.max((this.layers.length > 2) ? 2 : 1, this.layers.length - 30);
-				this.chart.config.options!.scales!.x!.max = Math.max(30, this.layers.length);
-			}
-			this.chart.update();
+	computed: {
+		darkTheme(): boolean { return store.state.settings.darkTheme; },
+		language(): string { return store.state.settings.language; },
+		layers(): ModelCollection<Layer> { return store.state.machine.model.job.layers; }
+	},
+	watch: {
+		darkTheme(to: boolean) {
+			this.applyDarkTheme(to);
 		},
-		applyDarkTheme(active: boolean) {
-			const ticksColor = active ? "#FFF" : "#666";
-			this.chart.config.options!.scales!.x!.ticks!.color = ticksColor;
-			this.chart.config.options!.scales!.y!.ticks!.color = ticksColor;
-
-			const gridLineColor = active ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
-			this.chart.config.options!.scales!.x!.grid!.color = gridLineColor;
-			this.chart.config.options!.scales!.y!.grid!.color = gridLineColor;
-
-			this.chart.update();
+		language() {
+			this.chart!.data.datasets![0].label = this.$t("chart.layer.layerTime");
+		},
+		layers() {
+			this.updateChart();
+		},
+		showAllLayers() {
+			this.updateChart();
 		}
 	},
 	mounted() {
@@ -156,19 +140,42 @@ export default Vue.extend({
 		this.applyDarkTheme(this.darkTheme);
 		this.updateChart();
 	},
-	watch: {
-		darkTheme(to: boolean) {
-			this.applyDarkTheme(to);
+	methods: {
+		updateChart() {
+			this.chart.data.labels = this.layers.map((_, index) => index + 1);
+			this.chart.data.datasets![0].data = this.layers.map(layer => layer.duration);
+
+			if (this.showAllLayers) {
+				this.chart.config.options!.scales!.x!.min = 1;
+				this.chart.config.options!.scales!.x!.max = this.layers.length;
+			} else {
+				this.chart.config.options!.scales!.x!.min = Math.max((this.layers.length > 2) ? 2 : 1, this.layers.length - 30);
+				this.chart.config.options!.scales!.x!.max = Math.max(30, this.layers.length);
+			}
+			this.chart.update();
 		},
-		language() {
-			this.chart!.data.datasets![0].label = this.$t("chart.layer.layerTime");
-		},
-		layers() {
-			this.updateChart();
-		},
-		showAllLayers() {
-			this.updateChart();
+		applyDarkTheme(active: boolean) {
+			const ticksColor = active ? "#FFF" : "#666";
+			this.chart.config.options!.scales!.x!.ticks!.color = ticksColor;
+			this.chart.config.options!.scales!.y!.ticks!.color = ticksColor;
+
+			const gridLineColor = active ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+			this.chart.config.options!.scales!.x!.grid!.color = gridLineColor;
+			this.chart.config.options!.scales!.y!.grid!.color = gridLineColor;
+
+			this.chart.update();
 		}
 	}
 });
 </script>
+
+<style scoped>
+.content {
+	position: relative;
+	min-height: 180px;
+}
+
+.content > canvas {
+	position: absolute;
+}
+</style>

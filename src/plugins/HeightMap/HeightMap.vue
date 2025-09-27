@@ -1,142 +1,225 @@
-<style scoped>
-.heightmap-container {
-	background-color: #000;
-	color: #fff;
-	border-radius: 8px;
-	display: flex;
-}
-
-h1 {
-	width: 100%;
-	align-self: center;
-}
-
-.canvas-container {
-	position: relative;
-	height: 100%;
-	width: 100%;
-	overflow: hidden;
-}
-
-.canvas-container > :first-child {
-	border-radius: 4px 0 0 4px;
-}
-
-.canvas-container > :last-child {
-	border-radius: 0 4px 4px 0;
-}
-
-.canvas-container > canvas {
-	position: absolute;
-
-}
-
-.no-cursor {
-	pointer-events: none;
-}
-</style>
-
 <template>
-	<v-row>
-		<v-col cols="12" lg="auto" order="1" order-lg="0" sm="6">
-			<v-card tile>
-				<v-card-title class="pt-2 pb-1">
-					<v-icon class="mr-2">mdi-format-list-bulleted</v-icon>
-					{{ $t('plugins.heightmap.listTitle') }}
-					<v-spacer></v-spacer>
-					<v-icon @click="refresh" class="ml-2">mdi-refresh</v-icon>
-				</v-card-title>
-				<v-card-text class="pa-0" v-show="files.length === 0">
-					<v-alert :value="true" class="mb-0" type="info">
-						{{ $t('plugins.heightmap.none') }}
-					</v-alert>
-				</v-card-text>
-				<v-list :disabled="uiFrozen || !ready || loading" class="py-0">
-					<v-list-item-group mandatory :value="files.indexOf(selectedFile)" color="primary">
-						<v-list-item v-for="file in files" :key="file" @click="selectedFile = file">
-							{{ file }}
-						</v-list-item>
-					</v-list-item-group>
-				</v-list>
-			</v-card>
-		</v-col>
+  <v-row>
+    <v-col
+      cols="12"
+      lg="auto"
+      order="1"
+      order-lg="0"
+      sm="6"
+    >
+      <v-card tile>
+        <v-card-title class="pt-2 pb-1">
+          <v-icon class="mr-2">
+            mdi-format-list-bulleted
+          </v-icon>
+          {{ $t('plugins.heightmap.listTitle') }}
+          <v-spacer />
+          <v-icon
+            class="ml-2"
+            @click="refresh"
+          >
+            mdi-refresh
+          </v-icon>
+        </v-card-title>
+        <v-card-text
+          v-show="files.length === 0"
+          class="pa-0"
+        >
+          <v-alert
+            :value="true"
+            class="mb-0"
+            type="info"
+          >
+            {{ $t('plugins.heightmap.none') }}
+          </v-alert>
+        </v-card-text>
+        <v-list
+          :disabled="uiFrozen || !ready || loading"
+          class="py-0"
+        >
+          <v-list-item-group
+            mandatory
+            :value="files.indexOf(selectedFile)"
+            color="primary"
+          >
+            <v-list-item
+              v-for="file in files"
+              :key="file"
+              @click="selectedFile = file"
+            >
+              {{ file }}
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-card>
+    </v-col>
 
-		<v-col :class="{ 'pa-1': $vuetify.breakpoint.xs }" class="flex-grow-1" cols="12" lg="auto" order="0" order-lg="0">
-			<div class="heightmap-container" ref="container" v-resize="resize">
-				<!-- h1 v-show="!ready" class="text-center">
+    <v-col
+      :class="{ 'pa-1': $vuetify.breakpoint.xs }"
+      class="flex-grow-1"
+      cols="12"
+      lg="auto"
+      order="0"
+      order-lg="0"
+    >
+      <div
+        ref="container"
+        v-resize="resize"
+        class="heightmap-container"
+      >
+        <!-- h1 v-show="!ready" class="text-center">
 					{{ loading ? $t('generic.loading') : (errorMessage ? errorMessage : $t('plugins.heightmap.notAvailable')) }}
 				</h1-->
 
-				<div class="canvas-container">
-					<!-- v-show="ready" -->
-					<canvas @mousemove="canvasMouseMove" ref="canvas"></canvas>
-					<canvas class="legend" ref="legend" width="80"></canvas>
-				</div>
-			</div>
-		</v-col>
+        <div class="canvas-container">
+          <!-- v-show="ready" -->
+          <canvas
+            ref="canvas"
+            @mousemove="canvasMouseMove"
+          />
+          <canvas
+            ref="legend"
+            class="legend"
+            width="80"
+          />
+        </div>
+      </div>
+    </v-col>
 
-		<v-col class="d-flex flex-column" cols="12" lg="auto" order="2" sm="6">
-			<v-card class="d-flex flex-column flex-grow-0" tile>
-				<v-card-title class="pt-2 pb-1">
-					<v-icon class="mr-2">mdi-information</v-icon>
-					{{ $t('plugins.heightmap.statistics') }}
-				</v-card-title>
-				<v-card-text class="d-flex flex-column flex-grow-0 justify-space-between pt-2">
-					<span>{{ $t('plugins.heightmap.numPoints', [$display(numPoints, 0)]) }}</span>
-					<span v-if="radius > 0">{{ $t('plugins.heightmap.radius', [$display(radius, 0, 'mm')]) }}</span>
-					<span>{{ $t('plugins.heightmap.area', [$display(area / 100, 1, 'cm²')]) }}</span>
-					<span>{{ $t('plugins.heightmap.maxDeviations', [$display(minDiff, 3), $display(maxDiff, 3, 'mm')]) }}</span>
-					<span>{{ $t('plugins.heightmap.meanError', [$display(meanError, 3, 'mm')]) }}</span>
-					<span>{{ $t('plugins.heightmap.rmsError', [$display(rmsError, 3, 'mm')]) }}</span>
-				</v-card-text>
-			</v-card>
+    <v-col
+      class="d-flex flex-column"
+      cols="12"
+      lg="auto"
+      order="2"
+      sm="6"
+    >
+      <v-card
+        class="d-flex flex-column flex-grow-0"
+        tile
+      >
+        <v-card-title class="pt-2 pb-1">
+          <v-icon class="mr-2">
+            mdi-information
+          </v-icon>
+          {{ $t('plugins.heightmap.statistics') }}
+        </v-card-title>
+        <v-card-text class="d-flex flex-column flex-grow-0 justify-space-between pt-2">
+          <span>{{ $t('plugins.heightmap.numPoints', [$display(numPoints, 0)]) }}</span>
+          <span v-if="radius > 0">{{ $t('plugins.heightmap.radius', [$display(radius, 0, 'mm')]) }}</span>
+          <span>{{ $t('plugins.heightmap.area', [$display(area / 100, 1, 'cm²')]) }}</span>
+          <span>{{ $t('plugins.heightmap.maxDeviations', [$display(minDiff, 3), $display(maxDiff, 3, 'mm')]) }}</span>
+          <span>{{ $t('plugins.heightmap.meanError', [$display(meanError, 3, 'mm')]) }}</span>
+          <span>{{ $t('plugins.heightmap.rmsError', [$display(rmsError, 3, 'mm')]) }}</span>
+        </v-card-text>
+      </v-card>
 
-			<v-card class="d-flex flex-column mt-5" tile>
-				<v-card-title class="pt-2 pb-1">
-					<v-icon class="mr-2">mdi-eye</v-icon>
-					{{ $t('plugins.heightmap.display') }}
-				</v-card-title>
-				<v-card-text class="d-flex flex-column">
-					<div class="d-flex flex-column mt-1">
-						{{ $t('plugins.heightmap.colorScheme') }}
-						<v-btn-toggle class="mt-1" v-model="colorScheme">
-							<v-btn class="flex-grow-1" value="terrain">{{ $t('plugins.heightmap.terrain') }}</v-btn>
-							<v-btn class="flex-grow-1" value="heat">{{ $t('plugins.heightmap.heat') }}</v-btn>
-						</v-btn-toggle>
-					</div>
+      <v-card
+        class="d-flex flex-column mt-5"
+        tile
+      >
+        <v-card-title class="pt-2 pb-1">
+          <v-icon class="mr-2">
+            mdi-eye
+          </v-icon>
+          {{ $t('plugins.heightmap.display') }}
+        </v-card-title>
+        <v-card-text class="d-flex flex-column">
+          <div class="d-flex flex-column mt-1">
+            {{ $t('plugins.heightmap.colorScheme') }}
+            <v-btn-toggle
+              v-model="colorScheme"
+              class="mt-1"
+            >
+              <v-btn
+                class="flex-grow-1"
+                value="terrain"
+              >
+                {{ $t('plugins.heightmap.terrain') }}
+              </v-btn>
+              <v-btn
+                class="flex-grow-1"
+                value="heat"
+              >
+                {{ $t('plugins.heightmap.heat') }}
+              </v-btn>
+            </v-btn-toggle>
+          </div>
 
-					<!-- deviation coloring -->
-					<div class="d-flex flex-column mt-1">
-						{{ $t('plugins.heightmap.range') }}
-						<v-btn-toggle class="mt-1" v-model="deviationColoring">
-							<v-btn class="flex-grow-1" value="fixed">{{ $t('plugins.heightmap.fixed') }}</v-btn>
-							<v-btn class="flex-grow-1" value="deviation">{{ $t('plugins.heightmap.deviation') }}</v-btn>
-						</v-btn-toggle>
-					</div>
-					<v-switch :disabled="uiFrozen || loading || !ready" :label="$t('plugins.heightmap.invertZ')" v-model="invertZ"></v-switch>
+          <!-- deviation coloring -->
+          <div class="d-flex flex-column mt-1">
+            {{ $t('plugins.heightmap.range') }}
+            <v-btn-toggle
+              v-model="deviationColoring"
+              class="mt-1"
+            >
+              <v-btn
+                class="flex-grow-1"
+                value="fixed"
+              >
+                {{ $t('plugins.heightmap.fixed') }}
+              </v-btn>
+              <v-btn
+                class="flex-grow-1"
+                value="deviation"
+              >
+                {{ $t('plugins.heightmap.deviation') }}
+              </v-btn>
+            </v-btn-toggle>
+          </div>
+          <v-switch
+            v-model="invertZ"
+            :disabled="uiFrozen || loading || !ready"
+            :label="$t('plugins.heightmap.invertZ')"
+          />
 
-					<v-btn :disabled="uiFrozen || loading || !ready" :elevation="1" @click="topView" class="ml-0 mt-3">
-						<v-icon class="mr-1" small>mdi-format-vertical-align-bottom</v-icon>
-						{{ $t('plugins.heightmap.topView') }}
-					</v-btn>
-					<v-btn :disabled="uiFrozen || loading || !ready" :elevation="1" @click="resetView" class="ml-0 mt-3">
-						<v-icon class="mr-1" small>mdi-camera</v-icon>
-						{{ $t('plugins.heightmap.resetView') }}
-					</v-btn>
-				</v-card-text>
-			</v-card>
-		</v-col>
+          <v-btn
+            :disabled="uiFrozen || loading || !ready"
+            :elevation="1"
+            class="ml-0 mt-3"
+            @click="topView"
+          >
+            <v-icon
+              class="mr-1"
+              small
+            >
+              mdi-format-vertical-align-bottom
+            </v-icon>
+            {{ $t('plugins.heightmap.topView') }}
+          </v-btn>
+          <v-btn
+            :disabled="uiFrozen || loading || !ready"
+            :elevation="1"
+            class="ml-0 mt-3"
+            @click="resetView"
+          >
+            <v-icon
+              class="mr-1"
+              small
+            >
+              mdi-camera
+            </v-icon>
+            {{ $t('plugins.heightmap.resetView') }}
+          </v-btn>
+        </v-card-text>
+      </v-card>
+    </v-col>
 
-		<v-tooltip :position-x="tooltip.x" :position-y="tooltip.y" absolute top v-model="tooltip.shown">
-			<span class="no-cursor">
-				{{ xLabel }}: {{ $display(tooltip.coord.x, 1, 'mm') }}
-				<br />
-				{{ yLabel }}: {{ $display(tooltip.coord.y, 1, 'mm') }}
-				<br />
-				Z: {{ $display(tooltip.coord.z, 3, 'mm') }}
-			</span>
-		</v-tooltip>
-	</v-row>
+    <v-tooltip
+      v-model="tooltip.shown"
+      :position-x="tooltip.x"
+      :position-y="tooltip.y"
+      absolute
+      top
+    >
+      <span class="no-cursor">
+        {{ xLabel }}: {{ $display(tooltip.coord.x, 1, 'mm') }}
+        <br>
+        {{ yLabel }}: {{ $display(tooltip.coord.y, 1, 'mm') }}
+        <br>
+        Z: {{ $display(tooltip.coord.z, 3, 'mm') }}
+      </span>
+    </v-tooltip>
+  </v-row>
 </template>
 
 <script>
@@ -523,59 +606,6 @@ export default {
 			}
 		},
 	},
-	activated() {
-		this.isActive = true;
-		this.resize();
-	},
-	deactivate() {
-		this.isActive = false;
-	},
-	async mounted() {
-		const size = this.resize();
-		if (size.height <= 0) {
-			size.height = 1;
-		}
-
-		heightMapViewer = new HeightMapViewer(this.$refs.canvas);
-
-		if (this.isDelta) {
-			heightMapViewer.isDelta = this.isDelta;
-		}
-		await heightMapViewer.init();
-		this.buildBed();
-
-		heightMapViewer.labelCallback = (metadata) => {
-			if (metadata) {
-				this.tooltip.coord.x = metadata.x;
-				this.tooltip.coord.y = metadata.y;
-				this.tooltip.coord.z = metadata.z;
-				this.tooltip.shown = true;
-			} else {
-				this.tooltip.shown = false;
-			}
-		};
-
-		// Set current heightmap
-		if (this.isConnected) {
-			this.refresh();
-		}
-
-		// Keep track of file changes
-		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-
-		// Kill the wheel on the canvas
-		this.$refs.canvas.addEventListener('wheel', evt => evt.preventDefault());
-
-		// Trigger resize event once more to avoid rendering glitches
-		setTimeout(this.resize.bind(this), 1000);
-		this.ready = true;
-
-	},
-	beforeDestroy() {
-		// No longer keep track of file changes
-		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-		heightMapViewer.destroy();
-	},
 	watch: {
 		colorScheme() {
 			if (this.heightmapPoints) {
@@ -637,5 +667,96 @@ export default {
 			}
 		},
 	},
+	activated() {
+		this.isActive = true;
+		this.resize();
+	},
+	deactivate() {
+		this.isActive = false;
+	},
+	async mounted() {
+		const size = this.resize();
+		if (size.height <= 0) {
+			size.height = 1;
+		}
+
+		heightMapViewer = new HeightMapViewer(this.$refs.canvas);
+
+		if (this.isDelta) {
+			heightMapViewer.isDelta = this.isDelta;
+		}
+		await heightMapViewer.init();
+		this.buildBed();
+
+		heightMapViewer.labelCallback = (metadata) => {
+			if (metadata) {
+				this.tooltip.coord.x = metadata.x;
+				this.tooltip.coord.y = metadata.y;
+				this.tooltip.coord.z = metadata.z;
+				this.tooltip.shown = true;
+			} else {
+				this.tooltip.shown = false;
+			}
+		};
+
+		// Set current heightmap
+		if (this.isConnected) {
+			this.refresh();
+		}
+
+		// Keep track of file changes
+		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
+
+		// Kill the wheel on the canvas
+		this.$refs.canvas.addEventListener('wheel', evt => evt.preventDefault());
+
+		// Trigger resize event once more to avoid rendering glitches
+		setTimeout(this.resize.bind(this), 1000);
+		this.ready = true;
+
+	},
+	beforeDestroy() {
+		// No longer keep track of file changes
+		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
+		heightMapViewer.destroy();
+	},
 };
 </script>
+
+<style scoped>
+.heightmap-container {
+	background-color: #000;
+	color: #fff;
+	border-radius: 8px;
+	display: flex;
+}
+
+h1 {
+	width: 100%;
+	align-self: center;
+}
+
+.canvas-container {
+	position: relative;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+
+.canvas-container > :first-child {
+	border-radius: 4px 0 0 4px;
+}
+
+.canvas-container > :last-child {
+	border-radius: 0 4px 4px 0;
+}
+
+.canvas-container > canvas {
+	position: absolute;
+
+}
+
+.no-cursor {
+	pointer-events: none;
+}
+</style>

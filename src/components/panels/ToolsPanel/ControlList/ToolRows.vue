@@ -1,182 +1,257 @@
-<style scoped>
-.disabled {
-    color: inherit;
-    cursor: default;
-}
-
-.disabled-heater {
-    cursor: default;
-}
-
-.disabled:hover,
-.disabled-heater {
-    text-decoration: none;
-}
-</style>
-
 <template>
-    <tbody>
-        <template v-if="toolsToDisplay.length > 0">
-            <template v-for="(tool, toolIndex) in toolsToDisplay">
-                <!-- Tool -->
-                <tr v-for="(toolHeater, toolHeaterIndex) in getToolHeaters(tool)"
-                    :key="`tool-${tool.number}-${toolHeaterIndex}`"
-                    :class="(tool.number === currentTool) ? selectedToolClass : ''">
-                    <!-- Tool Name -->
-                    <th v-if="toolHeaterIndex === 0" :rowspan="Math.max(1, tool.heaters.length)" class="pl-2"
-                        :class="{ 'pt-2 pb-2': !tool.heaters.length && !toolHeater }">
+  <tbody>
+    <template v-if="toolsToDisplay.length > 0">
+      <template v-for="(tool, toolIndex) in toolsToDisplay">
+        <!-- Tool -->
+        <tr
+          v-for="(toolHeater, toolHeaterIndex) in getToolHeaters(tool)"
+          :key="`tool-${tool.number}-${toolHeaterIndex}`"
+          :class="(tool.number === currentTool) ? selectedToolClass : ''"
+        >
+          <!-- Tool Name -->
+          <th
+            v-if="toolHeaterIndex === 0"
+            :rowspan="Math.max(1, tool.heaters.length)"
+            class="pl-2"
+            :class="{ 'pt-2 pb-2': !tool.heaters.length && !toolHeater }"
+          >
+            <!-- Tool Name or Dropdown -->
+            <a
+              v-if="!isToolCollapsed(tool)"
+              href="javascript:void(0)"
+              :class="{ disabled: disabled }"
+              @click="toolClick(tool)"
+            >
+              <v-progress-circular
+                v-if="tool === busyTool"
+                indeterminate
+                color="primary"
+                :size="14"
+              />
+              <v-icon
+                v-if="getToolIcon(tool)"
+                small
+              >{{ getToolIcon(tool) }}</v-icon>
+              {{ tool.name || $t("panel.tools.tool", [tool.number]) }}
+            </a>
+            <v-menu
+              v-else
+              offset-y
+              auto
+            >
+              <template #activator="{ on }">
+                <a
+                  href="javascript:void(0)"
+                  v-on="on"
+                >
+                  <v-progress-circular
+                    v-if="isCollapsedToolBusy(tool)"
+                    indeterminate
+                    color="primary"
+                    :size="14"
+                  />
+                  <v-icon
+                    v-if="getToolIcon(tool)"
+                    small
+                  >{{ getToolIcon(tool) }}</v-icon>
+                  {{ tool.name || $t("panel.tools.tool", [tool.number]) }}
+                  <v-icon small>mdi-menu-down</v-icon>
+                </a>
+              </template>
 
-                        <!-- Tool Name or Dropdown -->
-                        <a v-if="!isToolCollapsed(tool)" href="javascript:void(0)" :class="{ disabled: disabled }" @click="toolClick(tool)">
-                            <v-progress-circular v-if="tool === busyTool" indeterminate color="primary" :size="14" />
-                            <v-icon v-if="getToolIcon(tool)" small>{{ getToolIcon(tool) }}</v-icon>
-                            {{ tool.name || $t("panel.tools.tool", [tool.number]) }}
-                        </a>
-                        <v-menu v-else offset-y auto>
-                            <template #activator="{ on }">
-                                <a v-on="on" href="javascript:void(0)">
-                                    <v-progress-circular v-if="isCollapsedToolBusy(tool)" indeterminate color="primary"
-                                                         :size="14" />
-                                    <v-icon v-if="getToolIcon(tool)" small>{{ getToolIcon(tool) }}</v-icon>
-                                    {{ tool.name || $t("panel.tools.tool", [tool.number]) }}
-                                    <v-icon small>mdi-menu-down</v-icon>
-                                </a>
-                            </template>
+              <v-list>
+                <v-list-item
+                  v-for="otherTool in getCollapsedTools(tool)"
+                  :key="otherTool.number"
+                  @click="toolClick(otherTool)"
+                >
+                  <v-icon
+                    v-if="getToolIcon(tool)"
+                    class="mr-1"
+                  >
+                    {{ getToolIcon(tool) }}
+                  </v-icon>
+                  {{ `${otherTool.name} (T${otherTool.number})` || $t("panel.tools.tool", [otherTool.number]) }}
+                </v-list-item>
+              </v-list>
+            </v-menu>
 
-                            <v-list>
-                                <v-list-item v-for="otherTool in getCollapsedTools(tool)" @click="toolClick(otherTool)"
-                                             :key="otherTool.number">
-                                    <v-icon v-if="getToolIcon(tool)" class="mr-1">{{ getToolIcon(tool) }}</v-icon>
-                                    {{ `${otherTool.name} (T${otherTool.number})` || $t("panel.tools.tool", [otherTool.number]) }}
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
+            <br>
+            <span class="font-weight-regular caption">
+              T{{ tool.number }}
 
-                        <br>
-                        <span class="font-weight-regular caption">
-                            T{{ tool.number }}
+              <template v-if="canLoadFilament(tool)">
+                -
+                <v-menu
+                  v-if="getFilament(tool)"
+                  offset-y
+                  auto
+                  :disabled="disabled"
+                >
+                  <template #activator="{ on }">
+                    <a
+                      href="javascript:void(0)"
+                      class="font-weight-regular"
+                      :class="{ disabled: disabled }"
+                      v-on="on"
+                    >
+                      {{ getFilament(tool) }}
+                    </a>
+                  </template>
 
-                            <template v-if="canLoadFilament(tool)">
-                                -
-                                <v-menu v-if="getFilament(tool)" offset-y auto :disabled="disabled">
-                                    <template #activator="{ on }">
-                                        <a v-on="on" href="javascript:void(0)" class="font-weight-regular" :class="{ disabled: disabled }">
-                                            {{ getFilament(tool) }}
-                                        </a>
-                                    </template>
+                  <v-list>
+                    <v-list-item @click="showFilamentDialog(tool, true)">
+                      <v-icon class="mr-1">mdi-swap-vertical</v-icon>
+                      {{ $t("panel.tools.changeFilament") }}
+                    </v-list-item>
+                    <v-list-item @click="showFilamentDialog(tool, false)">
+                      <v-icon class="mr-1">mdi-pencil</v-icon>
+                      {{ $t("panel.tools.reassignFilament") }}
+                    </v-list-item>
+                    <v-list-item @click="unloadFilament(tool)">
+                      <v-icon class="mr-1">mdi-arrow-up</v-icon>
+                      {{ $t("panel.tools.unloadFilament") }}
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <a
+                  v-else
+                  href="javascript:void(0)"
+                  :class="{ disabled: disabled }"
+                  @click="showFilamentDialog(tool, true)"
+                >
+                  {{ $t("panel.tools.loadFilament") }}
+                </a>
+              </template>
+            </span>
+          </th>
 
-                                    <v-list>
-                                        <v-list-item @click="showFilamentDialog(tool, true)">
-                                            <v-icon class="mr-1">mdi-swap-vertical</v-icon>
-                                            {{ $t("panel.tools.changeFilament") }}
-                                        </v-list-item>
-                                        <v-list-item @click="showFilamentDialog(tool, false)">
-                                            <v-icon class="mr-1">mdi-pencil</v-icon>
-                                            {{ $t("panel.tools.reassignFilament") }}
-                                        </v-list-item>
-                                        <v-list-item @click="unloadFilament(tool)">
-                                            <v-icon class="mr-1">mdi-arrow-up</v-icon>
-                                            {{ $t("panel.tools.unloadFilament") }}
-                                        </v-list-item>
-                                    </v-list>
-                                </v-menu>
-                                <a v-else href="javascript:void(0)" @click="showFilamentDialog(tool, true)" :class="{ disabled: disabled }">
-                                    {{ $t("panel.tools.loadFilament") }}
-                                </a>
-                            </template>
-                        </span>
-                    </th>
+          <template v-if="!toolHeater && getSpindle(tool)">
+            <!-- Spindle Name -->
+            <td>
+              <template v-if="tool.number === currentTool">
+                <v-row dense>
+                  <v-col>
+                    <code-btn
+                      code="M4"
+                      no-wait
+                      small
+                    >
+                      <v-icon>mdi-rotate-left</v-icon>
+                    </code-btn>
+                    <code-btn
+                      code="M3"
+                      no-wait
+                      small
+                    >
+                      <v-icon>mdi-rotate-right</v-icon>
+                    </code-btn>
+                  </v-col>
+                </v-row>
+                <v-row dense>
+                  <v-col>
+                    <code-btn
+                      code="M5"
+                      no-wait
+                      small
+                    >
+                      <v-icon>mdi-stop</v-icon>
+                    </code-btn>
+                  </v-col>
+                </v-row>
+              </template>
+            </td>
 
-                    <template v-if="!toolHeater && getSpindle(tool)">
-                        <!-- Spindle Name -->
-                        <td>
-                            <template v-if="tool.number === currentTool">
-                                <v-row dense>
-                                    <v-col>
-                                        <code-btn code="M4" no-wait small>
-                                            <v-icon>mdi-rotate-left</v-icon>
-                                        </code-btn>
-                                        <code-btn code="M3" no-wait small>
-                                            <v-icon>mdi-rotate-right</v-icon>
-                                        </code-btn>
-                                    </v-col>
-                                </v-row>
-                                <v-row dense>
-                                    <v-col>
-                                        <code-btn code="M5" no-wait small>
-                                            <v-icon>mdi-stop</v-icon>
-                                        </code-btn>
-                                    </v-col>
-                                </v-row>
-                            </template>
-                        </td>
+            <!-- Current RPM -->
+            <td class="text-center">
+              {{ $display(getSpindleSpeed(tool), 0, $t("generic.rpm")) }}
+            </td>
 
-                        <!-- Current RPM -->
-                        <td class="text-center">
-                            {{ $display(getSpindleSpeed(tool), 0, $t("generic.rpm")) }}
-                        </td>
+            <!-- Active RPM -->
+            <td>
+              <control-input
+                type="spindle"
+                :index="tool.number"
+                active
+              />
+            </td>
 
-                        <!-- Active RPM -->
-                        <td>
-                            <control-input type="spindle" :index="tool.number" active />
-                        </td>
+            <!-- Standby RPM -->
+            <td>
+              <!-- unused -->
+            </td>
+          </template>
+          <template v-else>
+            <!-- Heater Name -->
+            <th>
+              <template v-if="toolHeater">
+                <a
+                  href="javascript:void(0)"
+                  :class="getHeaterClasses(tool.heaters[toolHeaterIndex])"
+                  @click="toolHeaterClick(tool, toolHeater)"
+                >
+                  {{ getHeaterName(toolHeater, tool.heaters[toolHeaterIndex]) }}
+                </a>
+                <template v-if="toolHeater.state !== null">
+                  <br>
+                  <span class="font-weight-regular caption">
+                    {{ $t(`generic.heaterStates.${toolHeater.state}`) }}
+                  </span>
+                </template>
+              </template>
+              <span v-else>
+                {{ $t("generic.noValue") }}
+              </span>
+            </th>
 
-                        <!-- Standby RPM -->
-                        <td>
-                            <!-- unused -->
-                        </td>
-                    </template>
-                    <template v-else>
-                        <!-- Heater Name -->
-                        <th>
-                            <template v-if="toolHeater">
-                                <a href="javascript:void(0)" @click="toolHeaterClick(tool, toolHeater)"
-                                   :class="getHeaterClasses(tool.heaters[toolHeaterIndex])">
-                                    {{ getHeaterName(toolHeater, tool.heaters[toolHeaterIndex]) }}
-                                </a>
-                                <template v-if="toolHeater.state !== null">
-                                    <br>
-                                    <span class="font-weight-regular caption">
-                                        {{ $t(`generic.heaterStates.${toolHeater.state}`) }}
-                                    </span>
-                                </template>
-                            </template>
-                            <span v-else>
-                                {{ $t("generic.noValue") }}
-                            </span>
-                        </th>
+            <!-- Heater value -->
+            <td>
+              {{ getHeaterValue(toolHeater) }}
+            </td>
 
-                        <!-- Heater value -->
-                        <td>
-                            {{ getHeaterValue(toolHeater) }}
-                        </td>
+            <!-- Heater active -->
+            <td class="pl-2 pr-1">
+              <control-input
+                :disabled="isToolBusy(tool)"
+                type="tool"
+                :index="tool.number"
+                :tool-heater-index="toolHeaterIndex"
+                active
+              />
+            </td>
 
-                        <!-- Heater active -->
-                        <td class="pl-2 pr-1">
-                            <control-input :disabled="isToolBusy(tool)" type="tool" :index="tool.number"
-                                           :tool-heater-index="toolHeaterIndex" active />
-                        </td>
+            <!-- Heater standby -->
+            <td class="pl-1 pr-2">
+              <control-input
+                :disabled="isToolBusy(tool)"
+                type="tool"
+                :index="tool.number"
+                :tool-heater-index="toolHeaterIndex"
+                standby
+              />
+            </td>
+          </template>
 
-                        <!-- Heater standby -->
-                        <td class="pl-1 pr-2">
-                            <control-input :disabled="isToolBusy(tool)" type="tool" :index="tool.number"
-                                           :tool-heater-index="toolHeaterIndex" standby />
-                        </td>
-                    </template>
+          <filament-dialog
+            v-if="toolIndex === 0"
+            :shown.sync="filamentDialogShown"
+            :run-macros="filamentRunMacros"
+            :tool="filamentDialogTool"
+          />
+        </tr>
 
-                    <filament-dialog v-if="toolIndex === 0" :shown.sync="filamentDialogShown"
-                                     :runMacros="filamentRunMacros" :tool="filamentDialogTool" />
-                </tr>
-
-                <!-- Divider -->
-                <tr v-if="toolIndex < toolsToDisplay.length - 1" :key="`div - tool - ${ toolIndex } `">
-                    <td colspan="5">
-                        <v-divider />
-                    </td>
-                </tr>
-            </template>
-        </template>
-    </tbody>
+        <!-- Divider -->
+        <tr
+          v-if="toolIndex < toolsToDisplay.length - 1"
+          :key="`div - tool - ${ toolIndex } `"
+        >
+          <td colspan="5">
+            <v-divider />
+          </td>
+        </tr>
+      </template>
+    </template>
+  </tbody>
 </template>
 
 <script setup lang="ts">
@@ -436,3 +511,19 @@ function getSpindleSpeed(tool: Tool) {
     return (spindle !== null && spindle.current !== null) ? ((spindle.state === SpindleState.reverse) ? -spindle.current : spindle.current) : 0;
 }
 </script>
+
+<style scoped>
+.disabled {
+    color: inherit;
+    cursor: default;
+}
+
+.disabled-heater {
+    cursor: default;
+}
+
+.disabled:hover,
+.disabled-heater {
+    text-decoration: none;
+}
+</style>
