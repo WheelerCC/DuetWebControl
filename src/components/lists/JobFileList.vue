@@ -30,8 +30,10 @@
 		<base-file-list ref="filelist" v-model="selection" :headers="headers" :directory.sync="directory"
 						:filelist.sync="filelist" :loading.sync="loading" sort-table="jobs"
 						@directoryLoaded="directoryLoaded" @fileClicked="fileClicked" no-files-text="list.jobs.noJobs">
-			<v-progress-linear slot="progress" :indeterminate="fileinfoProgress === -1"
-							   :value="(fileinfoProgress / filelist.length) * 100" />
+			<template v-slot:progress>
+				<v-progress-linear  :indeterminate="fileinfoProgress === -1"
+									:value="(fileinfoProgress / filelist.length) * 100" />
+			</template>
 
 			<template #folder="{ item }">
 				<div :class="{ 'list-icon mr-2': hasThumbnails, 'mr-1': !hasThumbnails }">

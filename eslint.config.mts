@@ -26,7 +26,7 @@ export default defineConfig([
   //     // "vue/no-deprecated-slot-scope-attribute": "error"
   //   }
   // }
-    {
+  {
     files: ["**/*.vue"],
     languageOptions: {
       parser: vueParser,
@@ -38,9 +38,18 @@ export default defineConfig([
       }
     },
     plugins: { vue: pluginVue },
-    extends: pluginVue.configs["flat/vue2-essential"],
+    extends: [
+      pluginVue.configs["flat/vue2-essential"],
+    ],
     rules: {
-      
+      "vue/no-deprecated-data-object-declaration": "error",
+      "vue/no-deprecated-filter": "error",
+      "vue/no-deprecated-functional-template": "error",
+      "vue/no-deprecated-inline-template": "error",
+      "vue/no-deprecated-props-default-this": "error",
+      "vue/no-deprecated-scope-attribute": "error",
+      "vue/no-deprecated-slot-attribute": "error",
+      "vue/no-deprecated-slot-scope-attribute": "error"
     }
   }
 ]);
