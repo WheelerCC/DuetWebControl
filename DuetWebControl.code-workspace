@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "node_modules/typescript/lib",
+		"eslint.validate": [
+			"javascript",
+			"typescript",
+			"vue"
+		],
+		"eslint.run": "onType"
+	}
+}
