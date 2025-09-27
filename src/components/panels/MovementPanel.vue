@@ -31,14 +31,14 @@
 
 				<v-card>
 					<v-list>
-						<template v-show="isCompensationEnabled">
-							<v-list-item>
+						<template>
+							<v-list-item v-if="isCompensationEnabled">
 								<v-spacer />
 								{{ $t("panel.movement.compensationInUse", [$t(`panel.movement.compensationType.${compensationType}`)]) }}
 								<v-spacer />
 							</v-list-item>
 
-							<v-divider />
+							<v-divider v-if="isCompensationEnabled" />
 						</template>
 
 						<v-list-item :disabled="!canHome" @click="sendCode('G32')">

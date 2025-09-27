@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="shown" max-width="360">
+	<v-dialog v-model="innerShown" max-width="360">
 		<v-card>
 			<v-card-title class="headline">
 				<v-icon class="mr-1">mdi-alert</v-icon> {{ $t("dialog.resetHeaterFault.title") }}
@@ -49,7 +49,8 @@ export default Vue.extend({
 		return {
 			counter: countdownSeconds,
 			resetHeaters: new Array<number>(),
-			timer: null as NodeJS.Timeout | null
+			timer: null as NodeJS.Timeout | null,
+			innerShown: this.shown
 		}
 	},
 	methods: {
@@ -62,7 +63,7 @@ export default Vue.extend({
 			}
 		},
 		hide() {
-			this.$emit("update:shown", false);
+			this.innerShown = false;
 		},
 		countDown() {
 			this.counter--;
@@ -71,6 +72,9 @@ export default Vue.extend({
 	},
 	watch: {
 		shown(to: boolean) {
+			if (this.innerShown !== to) {
+				this.innerShown = to;
+			}
 			if (to) {
 				if (!this.timer && !this.resetHeaters.includes(this.heater)) {
 					this.counter = countdownSeconds;
@@ -80,7 +84,12 @@ export default Vue.extend({
 				clearTimeout(this.timer);
 				this.timer = null;
 			}
-		}
+		},
+		innerShown(to: boolean) {
+			if (this.shown !== to) {
+				this.$emit("update:shown", to);
+			}
+		},
 	}
 });
 </script>

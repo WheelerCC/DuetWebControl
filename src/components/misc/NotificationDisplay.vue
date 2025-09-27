@@ -90,7 +90,7 @@
 							   :indeterminate="notification.progress === 0" :value="notification.progress" class="progress-bar" />
 
 			<div class="d-flex" :class="{ 'mt-1' : (notification.timeout !== null) && (notification.timeout > 0)}">
-				<v-icon v-if="notification.icon !== null" class="mr-4" v-text="notification.icon" />
+				<v-icon v-if="notification.icon !== null" class="mr-4">{{ notification.icon }}</v-icon>
 
 				<div class="d-block">
 					<strong v-if="notification.title !== null" v-html="notificationTitle"></strong>

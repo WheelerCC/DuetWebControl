@@ -22,7 +22,7 @@
 					<v-list-item v-for="(page, pageIndex) in getPages(category)" :key="`${index}-${pageIndex}`" v-ripple
 								 :to="page.path" @click.prevent="">
 						<v-list-item-icon>
-							<v-icon v-text="page.icon"></v-icon>
+							<v-icon>{{ page.icon }}</v-icon>
 						</v-list-item-icon>
 						<v-list-item-title>
 							{{ page.translated ? page.caption : $t(page.caption) }}
@@ -75,13 +75,13 @@
 				<template #activator="{ on }">
 					<v-btn v-on="on">
 						{{ category.translated ? category.caption : $t(category.caption) }}
-						<v-icon v-text="category.icon" class="mb-1" />
+						<v-icon class="mb-1">{{ category.icon }}</v-icon>
 					</v-btn>
 				</template>
 
 				<v-list-item v-for="(page, pageIndex) in getPages(category)" :key="`${index}-${pageIndex}`"
 							 :to="page.path" @click.prevent="" class="global-control">
-					<v-icon v-text="page.icon" class="mr-2" />
+					<v-icon class="mr-2">{{ page.icon }}</v-icon>
 					{{ page.translated ? page.caption : $t(page.caption) }}
 				</v-list-item>
 			</v-menu>

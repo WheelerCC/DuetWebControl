@@ -7,6 +7,7 @@ const EventHooksPlugin = require("event-hooks-webpack-plugin");
 const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = {
+	lintOnSave: true,
 	configureWebpack: {
 		devtool: "source-map",
 		optimization: {

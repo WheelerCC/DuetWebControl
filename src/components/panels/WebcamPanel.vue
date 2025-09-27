@@ -216,7 +216,7 @@ watch(() => webcam.value, () => {
 
 // Styling
 const classList = computed(() => {
-	const result = [];
+	const result: string[] = [];
 
 	if (webcam.value.flip === WebcamFlip.X || webcam.value.flip === WebcamFlip.Both) {
 		result.push("flip-x");

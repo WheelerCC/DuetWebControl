@@ -29,7 +29,7 @@
                         <!-- Tool Name or Dropdown -->
                         <a v-if="!isToolCollapsed(tool)" href="javascript:void(0)" :class="{ disabled: disabled }" @click="toolClick(tool)">
                             <v-progress-circular v-if="tool === busyTool" indeterminate color="primary" :size="14" />
-                            <v-icon v-if="getToolIcon(tool)" small v-text="getToolIcon(tool)" />
+                            <v-icon v-if="getToolIcon(tool)" small>{{ getToolIcon(tool) }}</v-icon>
                             {{ tool.name || $t("panel.tools.tool", [tool.number]) }}
                         </a>
                         <v-menu v-else offset-y auto>
@@ -37,7 +37,7 @@
                                 <a v-on="on" href="javascript:void(0)">
                                     <v-progress-circular v-if="isCollapsedToolBusy(tool)" indeterminate color="primary"
                                                          :size="14" />
-                                    <v-icon v-if="getToolIcon(tool)" small v-text="getToolIcon(tool)" />
+                                    <v-icon v-if="getToolIcon(tool)" small>{{ getToolIcon(tool) }}</v-icon>
                                     {{ tool.name || $t("panel.tools.tool", [tool.number]) }}
                                     <v-icon small>mdi-menu-down</v-icon>
                                 </a>
@@ -46,7 +46,7 @@
                             <v-list>
                                 <v-list-item v-for="otherTool in getCollapsedTools(tool)" @click="toolClick(otherTool)"
                                              :key="otherTool.number">
-                                    <v-icon v-if="getToolIcon(tool)" class="mr-1" v-text="getToolIcon(tool)" />
+                                    <v-icon v-if="getToolIcon(tool)" class="mr-1">{{ getToolIcon(tool) }}</v-icon>
                                     {{ `${otherTool.name} (T${otherTool.number})` || $t("panel.tools.tool", [otherTool.number]) }}
                                 </v-list-item>
                             </v-list>
@@ -333,7 +333,7 @@ function canLoadFilament(tool: Tool) {
     return (tool.filamentExtruder >= 0) && (tool.filamentExtruder < store.state.machine.model.move.extruders.length);
 }
 
-async function showFilamentDialog(tool: Tool, runMacros: bool) {
+async function showFilamentDialog(tool: Tool, runMacros: boolean) {
     if (busyTool.value !== null || disabled.value) {
         return;
     }

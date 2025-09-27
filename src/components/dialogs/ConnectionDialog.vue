@@ -21,11 +21,11 @@
 						{{ $tc("dialog.connection.boardUpdateMessage", boardsBeingUpdated.length) }}
 					</span>
 					<span v-for="canAddress in boardsBeingUpdated.filter(item => item > 0)" :key="canAddress" class="ms-3">
-						<v-icon small class="mr-1" v-text="getBoardIcon(canAddress)" />
+						<v-icon small class="mr-1">{{ getBoardIcon(canAddress) }}</v-icon>
 						{{ getBoardName(canAddress) }}
 					</span>
 					<span v-if="boardsBeingUpdated.includes(0)" class="ms-3">
-						<v-icon small class="mr-1" v-text="getBoardIcon(0)" />
+						<v-icon small class="mr-1">{{ getBoardIcon(0) }}</v-icon>
 						{{ getBoardName(0) }}
 					</span>
 				</div>

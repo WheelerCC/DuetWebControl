@@ -20,7 +20,7 @@ try {
 	}
 } catch {
 	error(`Invalid plugin id or directory "${lastParam}"`);
-	return 1;
+	process.exit(1);
 }
 
 // Check if the DWC plugin directory is valid
@@ -30,7 +30,7 @@ try {
 	fs.accessSync(dwcPluginDir, fs.constants.R_OK | fs.constants.W_OK);
 } catch {
 	error("Missing src/plugins directory");
-	return 1;
+	process.exit(1);
 }
 
 // Read DWC package info
@@ -39,7 +39,7 @@ try {
 	dwcManifest = JSON.parse(fs.readFileSync("package.json"));
 } catch {
 	error("Failed to read package.json");
-	return 1;
+	process.exit(1);
 }
 
 
@@ -49,36 +49,36 @@ try {
 	pluginManifest = JSON.parse(fs.readFileSync(pluginDir + "/plugin.json"));
 } catch {
 	error(`Failed to read ${pluginDir}/plugin.json`);
-	return 1;
+	process.exit(1);
 }
 
 // Verify it
 if (!pluginManifest.id) {
 	error("Missing plugin id in plugin.json");
-	return 1;
+	process.exit(1);
 }
 if (!pluginManifest.name) {
 	error("Missing plugin name in plugin.json");
-	return 1;
+	process.exit(1);
 }
 if (!pluginManifest.author) {
 	error("Missing plugin author in plugin.json");
-	return 1;
+	process.exit(1);
 }
 if (!pluginManifest.version) {
 	error("Missing plugin version in plugin.json");
-	return 1;
+	process.exit(1);
 }
 if (!pluginManifest.dwcVersion) {
 	error("Missing DWC version dependency (dwcVersion) in plugin.json");
-	return 1;
+	process.exit(1);
 }
 
 if (pluginDir.startsWith(dwcPluginDir)) {
 	// Check whether the plugin IDs match
 	if (pluginManifest.id !== param) {
 		error("Plugin id must match the parameter");
-		return 1;
+		process.exit(1);
 	}
 } else {
 	// Make sure there is a dwc-src or dwc directory
@@ -87,7 +87,7 @@ if (pluginDir.startsWith(dwcPluginDir)) {
 		fs.accessSync(srcDirectory + "/", fs.constants.R_OK);
 	} catch {
 		error(`Missing src directory "${srcDirectory}"`);
-		return 1;
+		process.exit(1);
 	}
 
 	// Delete old files
@@ -95,7 +95,7 @@ if (pluginDir.startsWith(dwcPluginDir)) {
 		fs.rmSync(dwcPluginDir + "/" + pluginManifest.id, { recursive: true, force: true });
 	} catch {
 		error(`Failed to delete directory "src/plugins/${pluginManifest.id}"`);
-		return 1;
+		process.exit(1);
 	}
 
 	// Copy manifest and src files into DWC
@@ -104,7 +104,7 @@ if (pluginDir.startsWith(dwcPluginDir)) {
 		fs.cpSync(srcDirectory, dwcPluginDir + "/" + pluginManifest.id, { recursive: true });
 	} catch {
 		error("Failed to copy src files");
-		return 1;
+		process.exit(1);
 	}
 }
 

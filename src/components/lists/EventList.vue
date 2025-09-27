@@ -33,7 +33,7 @@ th:last-child {
 				</v-alert>
 			</template>
 
-			<template #header.btn>
+			<template v-slot:[`header.btn`]>
 				<v-menu offset-y>
 					<template #activator="{ on }">
 						<v-btn v-on="on" icon>

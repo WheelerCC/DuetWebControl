@@ -591,9 +591,6 @@ export default {
 			}
 		},
 		viewerClass() {
-			this.$nextTick(() => {
-				this.resize();
-			});
 			return this.viewGCode ? 'babylon-canvas-codeview' : 'babylon-canvas';
 		},
 		scrubberClass() {
@@ -1046,7 +1043,7 @@ export default {
 			viewer.setCursorVisiblity(newValue);
 			localStorage.setItem('showCursor', newValue);
 		},
-		'showTravelLines': (newVal) => {
+		'showTravelLines': function (newVal) {
 			viewer.toggleTravels(newVal);
 		},
 		'persistTravels': function(newVal) { 
@@ -1207,7 +1204,12 @@ export default {
 		},
 		async progressMode() {
 			await this.reloadviewer()
-		}
+		},
+		viewGCode() {
+			this.$nextTick(() => {
+				this.resize();
+			});
+		},
 	},
 };
 </script>

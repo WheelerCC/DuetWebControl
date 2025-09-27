@@ -34,7 +34,7 @@
 				</v-list-item>
 			</template>
 
-			<template #file.config.json v-if="isSystemRootDirectory">
+			<template v-slot:[`file.config.json`] v-if="isSystemRootDirectory">
 				<v-icon class="mr-1">mdi-wrench</v-icon> config.json
 				<v-chip @click.stop="editConfigTemplate" class="pointer-cursor ml-2">
 					<v-icon xs class="mr-1">mdi-open-in-new</v-icon> {{ $t("list.system.configToolNote") }}

@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="shown" max-width="600px" persistent no-click-animation>
+	<v-dialog v-model="innerShown" max-width="600px" persistent no-click-animation>
 		<v-card>
 			<v-form ref="form" @submit.prevent="apply">
 				<v-card-title>
@@ -76,7 +76,8 @@ export default Vue.extend({
 			minY: 0,
 			radius: 150,
 			spacingX: 20,
-			spacingY: 20
+			spacingY: 20,
+			innerShown: this.shown
 		}
 	},
 	props: {
@@ -98,11 +99,14 @@ export default Vue.extend({
 			}
 		},
 		hide() {
-			this.$emit("update:shown", false);
+			this.innerShown = false;
 		}
 	},
 	watch: {
 		shown(to: boolean) {
+			if (this.innerShown !== to) {
+				this.innerShown = to;
+			}
 			if (to) {
 				this.xAxis = (this.probeGrid.axes.length > 0) ? this.probeGrid.axes[0] : "X";
 				this.yAxis = (this.probeGrid.axes.length > 1) ? this.probeGrid.axes[1] : "Y";
@@ -114,7 +118,12 @@ export default Vue.extend({
 				this.spacingX = (this.probeGrid.spacings.length > 0) ? this.probeGrid.spacings[0] : 0;
 				this.spacingY = (this.probeGrid.spacings.length > 1) ? this.probeGrid.spacings[1] : 0;
 			}
-		}
+		},
+		innerShown(to: boolean) {
+			if (this.shown !== to) {
+				this.$emit("update:shown", to);
+			}
+		},
 	}
 });
 </script>

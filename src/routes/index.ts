@@ -4,23 +4,23 @@ import VueRouter, { RouteConfig } from "vue-router";
 
 import store from "@/store";
 
-import Status from "./Control/Status.vue";
-import Dashboard from "./Control/Dashboard.vue";
-import Console from "./Control/Console.vue";
+import Status from "./Control/StatusComponent.vue";
+import Dashboard from "./Control/DashboardComponent.vue";
+import Console from "./Control/ConsoleComponent.vue";
 
-import Filaments from "./Files/Filaments.vue";
-import Jobs from "./Files/Jobs.vue";
-import Macros from "./Files/Macros.vue";
-import System from "./Files/System.vue";
+import Filaments from "./Files/FilamentsComponent.vue";
+import Jobs from "./Files/JobsComponent.vue";
+import Macros from "./Files/MacrosComponent.vue";
+import System from "./Files/SystemComponent.vue";
 
-import JobStatus from "./Job/Status.vue";
-import Webcam from "./Job/Webcam.vue";
+import JobStatus from "./Job/StatusComponent.vue";
+import Webcam from "./Job/WebcamComponent.vue";
 
-import General from "./Settings/General.vue";
-import Machine from "./Settings/Machine.vue";
-import Plugins from "./Settings/Plugins.vue";
+import General from "./Settings/GeneralComponent.vue";
+import Machine from "./Settings/MachineComponent.vue";
+import Plugins from "./Settings/PluginsComponent.vue";
 
-import Page404 from "./Page404.vue";
+import Page404 from "./Page404Component.vue";
 
 Vue.use(VueRouter);
 

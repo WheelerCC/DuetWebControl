@@ -307,7 +307,8 @@ export default {
 		},
 		setShowSamples(value) {
 			if (!value) {
-				this.sampleStartIndex = this.sampleEndIndex = null;
+				this.$emit('update:sampleStartIndex', null);
+				this.$emit('update:sampleEndIndex', null);
 			}
 			this.showSamples = value;
 		},

@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="shown" persistent no-click-animation width="360">
+	<v-dialog v-model="innerShown" persistent no-click-animation width="360">
 		<v-card>
 			<v-form ref="form" @submit.prevent="submit">
 				<v-card-title>
@@ -51,6 +51,8 @@ export default Vue.extend({
 	data() {
 		return {
 			input: "",
+			// Not sure 
+			innerShown: this.shown,
 			inputRules: [
 				(v: string) => !v ? this.$t("dialog.inputRequired") : true,
 				(v: string) => !this.isNumericValue || isFinite(parseFloat(v)) || this.$t("dialog.numberRequired")
@@ -60,22 +62,30 @@ export default Vue.extend({
 	methods: {
 		async submit() {
 			if ((this.$refs.form as HTMLFormElement).validate()) {
-				this.$emit("update:shown", false);
+				this.innerShown = false;
 				this.$emit("confirmed", this.isNumericValue ? parseFloat(this.input) : this.input);
 			}
 		},
 		hide() {
-			this.$emit("update:shown", false);
+			this.innerShown = false;
 			this.$emit("cancelled");
 		}
 	},
 	watch: {
 		shown(to: boolean) {
+			if (this.innerShown !== to) {
+				this.innerShown = to;
+			}
 			if (to) {
 				// Apply preset
 				this.input = this.preset ? this.preset.toString() : "";
 			}
-		}
+		},
+		innerShown(to: boolean) {
+			if (this.shown !== to) {
+				this.$emit("update:shown", to);
+			}
+		},
 	}
 });
 </script>

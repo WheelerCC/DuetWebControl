@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="shown" persistent width="360" @keydown.escape="hide">
+	<v-dialog v-model="innerShown" persistent width="360" @keydown.escape="hide">
 		<v-card>
 			<v-card-title class="headline">
 				{{ $t(tool ? (tool.filament ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }}
@@ -55,6 +55,7 @@ export default Vue.extend({
 	data() {
 		return {
 			filaments: new Array<string>(),
+			innerShown: this.shown,
 			loading: false
 		}
 	},
@@ -104,16 +105,25 @@ export default Vue.extend({
 			await store.dispatch("machine/sendCode", code);
 		},
 		hide() {
-			this.$emit("update:shown", false);
+			this.innerShown = false;
 		}
 	},
 	watch: {
 		shown(to: boolean) {
+			if (this.innerShown !== to) {
+				this.innerShown = to;
+			}
 			if (to) {
 				// Load filaments when this dialog is shown
 				this.loadFilaments();
 			}
-		}
+		},
+		
+		innerShown(to: boolean) {
+			if (this.shown !== to) {
+				this.$emit("update:shown", to);
+			}
+		},
 	}
 });
 </script>

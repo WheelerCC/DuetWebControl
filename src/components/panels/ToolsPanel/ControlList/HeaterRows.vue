@@ -31,8 +31,9 @@
                         <v-list>
                             <v-list-item @click="selectHeater(-1, null, -1)">
                                 <v-list-item-title>
-                                    <v-icon small
-                                            v-text="(props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline'" />
+                                    <v-icon small>
+                                        {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                                    </v-icon>
                                     {{ (props.type === "bed") ? $t("panel.tools.allBeds") : $t("panel.tools.allChambers") }}
                                 </v-list-item-title>
                             </v-list-item>
@@ -41,8 +42,9 @@
                                 <v-list-item v-if="heater !== null" :key="index"
                                              @click="selectHeater(index, heater, heaterIndex)">
                                     <v-list-item-title>
-                                        <v-icon class="mr-1"
-                                                v-text="(props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline'" />
+                                        <v-icon class="mr-1">
+                                            {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                                        </v-icon>
                                         {{ (props.type === "bed") ? $t("panel.tools.bed", [index]) : $t("panel.tools.chamber", [index]) }}
                                     </v-list-item-title>
                                 </v-list-item>
@@ -98,7 +100,9 @@
                         <!-- Heater item name -->
                         <th class="pl-2">
                             <a href="javascript:void(0)" :class="{ disabled: disabled }" @click="heaterClick(index, heater)">
-                                <v-icon small v-text="(props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline'" />
+                                <v-icon small>
+                                    {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                                </v-icon>
                                 {{ (props.type === "bed") ? $t("panel.tools.bed", [(heaterItems.length === 1) ? "" : index]) : $t("panel.tools.chamber", [(heaterItems.length === 1) ? "" : index]) }}
                             </a>
                         </th>
@@ -188,7 +192,7 @@ function selectHeater(index: number, heater: Heater | null, heaterIndex: number)
 }
 
 const singleHeaterCaption = computed(() => {
-    if (selectedHeater === null) {
+    if (selectedHeater.value === null) {
         return (props.type === "bed") ? i18n.t("panel.tools.beds") : i18n.t("panel.tools.chambers");
     }
     return (props.type === "bed") ? i18n.t("panel.tools.bed", [""]) : i18n.t("panel.tools.chamber", [""]);

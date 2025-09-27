@@ -7,7 +7,7 @@ import { registerPluginContextMenuItem, ContextMenuType } from '@/plugins';
 import { registerRoute } from '@/routes';
 import { registerPluginData, PluginDataType } from '@/store';
 
-import Gauge from './Gauge/gauge.vue';
+import Gauge from './Gauge/GaugeComponent.vue';
 import ColorPicker from './ColorPicker.vue';
 import FSOverlay from './FSOverlay.vue'
 import GCodeViewer from './GCodeViewer.vue';
