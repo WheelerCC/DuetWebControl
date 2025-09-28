@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import { Chart, ChartDataset, TickOptions } from "chart.js";
+import { Chart, ChartDataset, Legend, LinearScale, LineController, LineElement, PointElement, TickOptions, TimeScale, Tooltip } from "chart.js";
 import dateFnsLocale from "date-fns/locale/en-US";
 import { AnalogSensor } from "@duet3d/objectmodel";
 import Vue from "vue";
@@ -40,6 +40,15 @@ import { defaultMachine } from "@/store/machine";
 import { getRealHeaterColor } from "@/utils/colors";
 import Events from "@/utils/events";
 
+// Register required components and scales
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  TimeScale,
+  Legend
+);
 /**
  * Specifies the interval at which temperature samples are recorded
  */

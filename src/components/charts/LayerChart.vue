@@ -25,12 +25,23 @@
 </template>
 
 <script lang="ts">
-import { Chart, ChartDataset, TickOptions } from "chart.js";
+import { CategoryScale, Chart, ChartDataset, Legend, LinearScale, LineController, LineElement, PointElement, TickOptions, TimeScale } from "chart.js";
 import { Layer, ModelCollection } from "@duet3d/objectmodel";
 import Vue from "vue";
 
 import store from "@/store";
 import { display, displayZ, displayTime } from "@/utils/display";
+
+// Register required components and scales
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  TimeScale,
+  Legend,
+  CategoryScale
+);
 
 export default Vue.extend({
 	data() {
