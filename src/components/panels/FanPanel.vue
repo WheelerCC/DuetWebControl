@@ -32,14 +32,14 @@
               {{ $t("panel.fan.toolFan") }}
             </v-btn>
 
-            <template v-for="(fan, index) in fans">
+            <template v-for="(_fan, index) in fans">
               <v-btn
-                v-if="fan && fan.thermostatic.sensors.length === 0"
+                v-if="_fan && _fan.thermostatic.sensors.length === 0"
                 :key="index"
                 :value="index"
                 :disabled="uiFrozen"
               >
-                {{ fan.name ? fan.name : $t("panel.fan.fan", [index]) }}
+                {{ _fan.name ? _fan.name : $t("panel.fan.fan", [index]) }}
               </v-btn>
             </template>
           </v-btn-toggle>

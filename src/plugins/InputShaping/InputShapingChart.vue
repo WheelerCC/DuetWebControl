@@ -21,25 +21,63 @@ import './VLinePlugin'
 
 export default {
 	props: {
-		frequencies: Array,                 // array of the frequencies used (omit this if samples shall be displayed)
-		ringingFrequency: Number,           // frequency to highlight (requires frequencies)
-		value: Object,                      // object map of the Y axis label vs. displayed value (e.g. { X: [ ... ] })
+		frequencies: {
+			type: Array,
+			default: null
+		},                 // array of the frequencies used (omit this if samples shall be displayed)
+		ringingFrequency: {
+			type: Number,
+			default: null
+		},           // frequency to highlight (requires frequencies)
+		value: {
+			type: Object,
+			default: null
+		},                      // object map of the Y axis label vs. displayed value (e.g. { X: [ ... ] })
 		showValues: {                       // whether the values are supposed to be shown as datasets
 			default: true,
 			type: Boolean
 		},
-		sampleStartIndex: Number,           // start sample index to show
-		sampleEndIndex: Number,             // end sample index to show
+		sampleStartIndex: {
+			type: Number,
+			default: null
+		},           // start sample index to show
+		sampleEndIndex: {
+			type: Number,
+			default: null
+		},             // end sample index to show
 
-		inputShapers: Array,                // compute damping curves for these input shapers (requires frequencies)
-		inputShaperFrequency: Number,       // frequency to use when computing input shaper damping curves
-		inputShaperDamping: Number,         // damping factor to use when computing input shaper damping curves
+		inputShapers: {
+			type: Array,
+			default: null
+		},                // compute damping curves for these input shapers (requires frequencies)
+		inputShaperFrequency: {
+			type: Number,
+			default: null
+		},       // frequency to use when computing input shaper damping curves
+		inputShaperDamping: {
+			type: Number,
+			default: null
+		},         // damping factor to use when computing input shaper damping curves
 
-		customAmplitudes: Array,            // amplitudes for the computation of the custom input shaper
-		customDelays: Array,             	// delays for the computation of the custom input shaper
+		customAmplitudes: {
+			type: Array,
+			default: null
+		},            // amplitudes for the computation of the custom input shaper
+		customDelays: {
+			type: Array,
+			default: null
+		},             	// delays for the computation of the custom input shaper
 
 		estimateShaperEffect: Boolean,      // show estimated shaper effect
 		wideBand: Boolean					// show more frequencies
+	},
+	data() {
+		return {
+			chart: null,
+			options: {},
+			dragStart: null,
+			isUpdating: false
+		}
 	},
 	computed: {
 		...mapState('settings', ['darkTheme']),
@@ -65,14 +103,7 @@ export default {
 			return point;
 		}
 	},
-	data() {
-		return {
-			chart: null,
-			options: {},
-			dragStart: null,
-			isUpdating: false
-		}
-	},
+	
 	watch: {
 		frequencies(to, from) { if (this.arraysDiffer(to, from)) { this.update(); } },
 		ringingFrequency() { this.update(); },

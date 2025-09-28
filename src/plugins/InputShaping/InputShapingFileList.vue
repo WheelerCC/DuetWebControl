@@ -241,17 +241,33 @@ export default {
 
 		estimateShaperEffect: Boolean,
 		showOriginalValues: Boolean,
-		sampleStartIndex: Number,
-		sampleEndIndex: Number,
+		sampleStartIndex: {
+			type: Number,
+			default: null
+		},
+		sampleEndIndex: {
+			type: Number,
+			default: null
+		},
 
 		canDelete: Boolean,
 		canShowSamples: Boolean,
 
-		selectedFiles: Array,
-		frequencies: Array,
-		value: Object,
+		selectedFiles: { type: Array, default: null},
+		frequencies: { type: Array, default: null},
+		value: { type: Object, default: null},
 		hadOverflow: Boolean,
 		wideBand: Boolean
+	},
+	data() {
+		return {
+			selection: [],
+			progress: 0,
+			progressMax: 0,
+			estimateEffect: false,
+			individualFiles: false,
+			showSamples: false
+		}
 	},
 	computed: {
 		...mapGetters(['uiFrozen']),
@@ -354,14 +370,34 @@ export default {
 			return profiles;
 		}
 	},
-	data() {
-		return {
-			selection: [],
-			progress: 0,
-			progressMax: 0,
-			estimateEffect: false,
-			individualFiles: false,
-			showSamples: false
+	watch: {
+		selectedFiles(to) {
+			this.selection = to || [];
+		},
+		estimateEffect(to) {
+			this.$emit('update:showOriginalValues', !to);
+			this.$emit('update:estimateShaperEffect', to);
+		},
+		individualFiles(to) {
+			this.selection = [];
+			if (!to) {
+				this.$emit('update:showOriginalValues', true);
+			}
+			this.$emit('update:useIndividualFiles', to);
+		},
+		selection() {
+			this.update();
+			this.$emit('update:sampleStartIndex', null);
+			this.$emit('update:sampleEndIndex', null);
+		},
+		showSamples(to) {
+			this.update();
+			if (!to) {
+				this.$emit('update:showOriginalValues', true);
+			}
+		},
+		wideBand() {
+			this.update();
 		}
 	},
 	methods: {
@@ -538,36 +574,7 @@ export default {
 			}
 		}
 	},
-	watch: {
-		selectedFiles(to) {
-			this.selection = to || [];
-		},
-		estimateEffect(to) {
-			this.$emit('update:showOriginalValues', !to);
-			this.$emit('update:estimateShaperEffect', to);
-		},
-		individualFiles(to) {
-			this.selection = [];
-			if (!to) {
-				this.$emit('update:showOriginalValues', true);
-			}
-			this.$emit('update:useIndividualFiles', to);
-		},
-		selection() {
-			this.update();
-			this.$emit('update:sampleStartIndex', null);
-			this.$emit('update:sampleEndIndex', null);
-		},
-		showSamples(to) {
-			this.update();
-			if (!to) {
-				this.$emit('update:showOriginalValues', true);
-			}
-		},
-		wideBand() {
-			this.update();
-		}
-	}
+	
 }
 </script>
 

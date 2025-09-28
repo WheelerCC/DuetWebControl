@@ -869,6 +869,189 @@ export default {
 			}
 		}
 	},
+	watch: {
+		'move': {
+			handler(newValue) {
+				var newPosition = newValue.axes.map((item) => ({
+					axes: item.letter,
+					position: item.userPosition + item.workplaceOffsets[this.currentWorkplace],
+				}));
+				viewer.updateToolPosition(newPosition);
+			},
+			deep: true,
+		},
+		'showCursor': function (newValue) {
+			viewer.setCursorVisiblity(newValue);
+			localStorage.setItem('showCursor', newValue);
+		},
+		'showTravelLines': function (newVal) {
+			viewer.toggleTravels(newVal);
+		},
+		'persistTravels': function(newVal) { 
+			this.showTravelLines = true
+			viewer.gcodeProcessor.setTravelPersistence(newVal);
+			viewer.gcodeProcessor.forceRedraw();
+			
+		},
+		'visualizingCurrentJob': function (newValue) {
+			if (newValue == false) {
+				viewer.gcodeProcessor.doFinalPass();
+			}
+		},
+		'filePosition': function (newValue) {
+			if (this.visualizingCurrentJob) {
+				this.scrubPosition = newValue;
+				viewer.gcodeProcessor.updateFilePosition(newValue + 1);
+			}
+		},
+		scrubSpeed(to) {
+			viewer.simulationMultiplier = to;
+		},
+		'nthRow': function (newValue) {
+			viewer.gcodeProcessor.everyNthRow = newValue;
+		},
+		'renderQuality': function (newValue) {
+			if (viewer.renderQuality !== newValue) {
+				viewer.updateRenderQuality(newValue);
+				if (!this.loading) {
+					this.reloadviewer();
+				}
+			}
+		},
+		'sliderHeight': function (newValue) {
+			if (this.sliderBottomHeight > newValue) this.sliderBottomHeight = newValue - 1;
+			if(!this.g1AsExtrusion){
+				viewer.setZClipPlane(newValue + 1, this.sliderBottomHeight);
+			}
+		},
+		'sliderBottomHeight': function (newValue) {
+			if (this.sliderHeight < newValue) this.sliderHeight = newValue + 1;
+			if(!this.g1AsExtrusion){
+				viewer.setZClipPlane(this.sliderHeight, newValue - 1);
+			}
+		},
+		'vertexAlpha': function (newValue) {
+			viewer.gcodeProcessor.setAlpha(newValue);
+			this.reloadviewer();
+		},
+		'job.build.objects': {
+			deep: true,
+			handler(newValue) {
+				if (viewer && viewer.buildObjects) {
+					viewer.buildObjects.loadObjectBoundaries(newValue);
+				}
+			},
+		},
+		'showObjectSelection': function (newValue) {
+			if (this.canCancelObject) {
+				viewer.buildObjects.loadObjectBoundaries(this.job.build.objects);
+				viewer.buildObjects.showObjectSelection(newValue);
+			} else {
+				this.showObjectSelection = false;
+				this.hoverLabel = '';
+			}
+		},
+		'isJobRunning': function (newValue) {
+			//Need to add a check for paused...
+			viewer.gcodeProcessor.setLiveTracking(newValue);
+			if (!newValue) {
+				viewer.gcodeProcessor.doFinalPass();
+			}
+		},
+		'selectedFile': function () {
+			this.showObjectSelection = false;
+			viewer.gcodeProcessor.updateFilePosition(0);
+		},
+		'bedRenderMode': function (newValue) {
+			viewer.bed.setRenderMode(newValue);
+		},
+		'isDelta': function (newValue) {
+			viewer.bed.setDelta(newValue);
+			viewer.resetCamera();
+		},
+		'showAxes': function (newValue) {
+			viewer.axes.show(newValue);
+		},
+		'showObjectLabels': function (newValue) {
+			viewer.buildObjects.showLabels(newValue);
+		},
+		'forceWireMode': function (newValue) {
+			viewer.gcodeProcessor.updateForceWireMode(newValue);
+			this.reloadviewer();
+		},
+		'useHQRendering': function (to) {
+			viewer.gcodeProcessor.useHighQualityExtrusion(to);
+		},
+		'colorMode': async function (to) {
+			viewer.gcodeProcessor.setColorMode(to);
+			await this.reloadviewer();
+		},
+		'minColorRate': function (to) {
+			viewer.gcodeProcessor.updateColorRate(to * 60, this.maxColorRate * 60);
+		},
+		'maxColorRate': function (to) {
+			viewer.gcodeProcessor.updateColorRate(this.minColorRate * 60, to * 60);
+		},
+		'cameraInertia': function (to) {
+			viewer.setCameraInertia(to);
+		},
+		'$route': function () {
+			this.resize();
+		},
+		'loading': function (to) {
+			if (!to) {
+				this.loadingProgress = 0;
+			}
+		},
+		'specular': function(to){
+			viewer.gcodeProcessor.useSpecularColor(to);
+		},
+		'g1AsExtrusion': async function(to){
+			viewer.gcodeProcessor.g1AsExtrusion = to;
+			await this.reloadviewer();		
+		},
+		'zBelt': function (to) { 
+			viewer.setZBelt(to, this.zBeltAngle);
+			//viewer.gcodeProcessor.forceRedraw();	
+		},
+		'zBeltAngle': function (to) { 
+			if (to < 0 || to > 90) {
+				this.zBeltAngle = 45;
+			}
+			viewer.setZBelt(this.zBelt, to);
+			//viewer.gcodeProcessor.forceRedraw();
+		},
+		'workplaceOffsets': {
+			handler() { 
+				this.updateWorkplaces();
+			},
+			deep: true
+		},
+		'currentWorkplace': function (to) {
+			viewer.gcodeProcessor.currentWorkplace = to;
+		},
+		showWorkplace() {
+			this.updateWorkplaces();
+		},
+		'toolColors': {
+			handler() {
+				this.updateTools();
+			},
+			deep: true
+		},
+		transparencyPercent(to) {
+			viewer.gcodeProcessor.setTransparencyValue(to / 100);
+			viewer.gcodeProcessor.forceRedraw();
+		},
+		async progressMode() {
+			await this.reloadviewer()
+		},
+		viewGCode() {
+			this.$nextTick(() => {
+				this.resize();
+			});
+		},
+	},
 	async mounted() {
 		viewer = new gcodeViewer(this.$refs.viewerCanvas);
 		viewer.fileData = "";
@@ -983,6 +1166,13 @@ export default {
 	},
 	beforeDestroy() {
 		this.$root.$off('view-3d-model', this.viewModelEvent);
+	},
+	activated() {
+		viewer.pause = false;
+		this.resize();
+	},
+	deactivated() {
+		viewer.pause = true;
 	},
 	methods: {
 		...mapActions('machine', {
@@ -1253,197 +1443,7 @@ export default {
 				viewer.gcodeProcessor.addTool(this.toolColors[idx], 0.4); //hard code the nozzle size for now.
 			}
 		},		
-	},
-	watch: {
-		'move': {
-			handler(newValue) {
-				var newPosition = newValue.axes.map((item) => ({
-					axes: item.letter,
-					position: item.userPosition + item.workplaceOffsets[this.currentWorkplace],
-				}));
-				viewer.updateToolPosition(newPosition);
-			},
-			deep: true,
-		},
-		'showCursor': function (newValue) {
-			viewer.setCursorVisiblity(newValue);
-			localStorage.setItem('showCursor', newValue);
-		},
-		'showTravelLines': function (newVal) {
-			viewer.toggleTravels(newVal);
-		},
-		'persistTravels': function(newVal) { 
-			this.showTravelLines = true
-			viewer.gcodeProcessor.setTravelPersistence(newVal);
-			viewer.gcodeProcessor.forceRedraw();
-			
-		},
-		'visualizingCurrentJob': function (newValue) {
-			if (newValue == false) {
-				viewer.gcodeProcessor.doFinalPass();
-			}
-		},
-		'filePosition': function (newValue) {
-			if (this.visualizingCurrentJob) {
-				this.scrubPosition = newValue;
-				viewer.gcodeProcessor.updateFilePosition(newValue + 1);
-			}
-		},
-		scrubSpeed(to) {
-			viewer.simulationMultiplier = to;
-		},
-		'nthRow': function (newValue) {
-			viewer.gcodeProcessor.everyNthRow = newValue;
-		},
-		'renderQuality': function (newValue) {
-			if (viewer.renderQuality !== newValue) {
-				viewer.updateRenderQuality(newValue);
-				if (!this.loading) {
-					this.reloadviewer();
-				}
-			}
-		},
-		'sliderHeight': function (newValue) {
-			if (this.sliderBottomHeight > newValue) this.sliderBottomHeight = newValue - 1;
-			if(!this.g1AsExtrusion){
-				viewer.setZClipPlane(newValue + 1, this.sliderBottomHeight);
-			}
-		},
-		'sliderBottomHeight': function (newValue) {
-			if (this.sliderHeight < newValue) this.sliderHeight = newValue + 1;
-			if(!this.g1AsExtrusion){
-				viewer.setZClipPlane(this.sliderHeight, newValue - 1);
-			}
-		},
-		'vertexAlpha': function (newValue) {
-			viewer.gcodeProcessor.setAlpha(newValue);
-			this.reloadviewer();
-		},
-		'job.build.objects': {
-			deep: true,
-			handler(newValue) {
-				if (viewer && viewer.buildObjects) {
-					viewer.buildObjects.loadObjectBoundaries(newValue);
-				}
-			},
-		},
-		'showObjectSelection': function (newValue) {
-			if (this.canCancelObject) {
-				viewer.buildObjects.loadObjectBoundaries(this.job.build.objects);
-				viewer.buildObjects.showObjectSelection(newValue);
-			} else {
-				this.showObjectSelection = false;
-				this.hoverLabel = '';
-			}
-		},
-		'isJobRunning': function (newValue) {
-			//Need to add a check for paused...
-			viewer.gcodeProcessor.setLiveTracking(newValue);
-			if (!newValue) {
-				viewer.gcodeProcessor.doFinalPass();
-			}
-		},
-		'selectedFile': function () {
-			this.showObjectSelection = false;
-			viewer.gcodeProcessor.updateFilePosition(0);
-		},
-		'bedRenderMode': function (newValue) {
-			viewer.bed.setRenderMode(newValue);
-		},
-		'isDelta': function (newValue) {
-			viewer.bed.setDelta(newValue);
-			viewer.resetCamera();
-		},
-		'showAxes': function (newValue) {
-			viewer.axes.show(newValue);
-		},
-		'showObjectLabels': function (newValue) {
-			viewer.buildObjects.showLabels(newValue);
-		},
-		'forceWireMode': function (newValue) {
-			viewer.gcodeProcessor.updateForceWireMode(newValue);
-			this.reloadviewer();
-		},
-		'useHQRendering': function (to) {
-			viewer.gcodeProcessor.useHighQualityExtrusion(to);
-		},
-		'colorMode': async function (to) {
-			viewer.gcodeProcessor.setColorMode(to);
-			await this.reloadviewer();
-		},
-		'minColorRate': function (to) {
-			viewer.gcodeProcessor.updateColorRate(to * 60, this.maxColorRate * 60);
-		},
-		'maxColorRate': function (to) {
-			viewer.gcodeProcessor.updateColorRate(this.minColorRate * 60, to * 60);
-		},
-		'cameraInertia': function (to) {
-			viewer.setCameraInertia(to);
-		},
-		'$route': function () {
-			this.resize();
-		},
-		'loading': function (to) {
-			if (!to) {
-				this.loadingProgress = 0;
-			}
-		},
-		'specular': function(to){
-			viewer.gcodeProcessor.useSpecularColor(to);
-		},
-		'g1AsExtrusion': async function(to){
-			viewer.gcodeProcessor.g1AsExtrusion = to;
-			await this.reloadviewer();		
-		},
-		'zBelt': function (to) { 
-			viewer.setZBelt(to, this.zBeltAngle);
-			//viewer.gcodeProcessor.forceRedraw();	
-		},
-		'zBeltAngle': function (to) { 
-			if (to < 0 || to > 90) {
-				this.zBeltAngle = 45;
-			}
-			viewer.setZBelt(this.zBelt, to);
-			//viewer.gcodeProcessor.forceRedraw();
-		},
-		'workplaceOffsets': {
-			handler() { 
-				this.updateWorkplaces();
-			},
-			deep: true
-		},
-		'currentWorkplace': function (to) {
-			viewer.gcodeProcessor.currentWorkplace = to;
-		},
-		showWorkplace() {
-			this.updateWorkplaces();
-		},
-		'toolColors': {
-			handler() {
-				this.updateTools();
-			},
-			deep: true
-		},
-		transparencyPercent(to) {
-			viewer.gcodeProcessor.setTransparencyValue(to / 100);
-			viewer.gcodeProcessor.forceRedraw();
-		},
-		async progressMode() {
-			await this.reloadviewer()
-		},
-		viewGCode() {
-			this.$nextTick(() => {
-				this.resize();
-			});
-		},
-	},
-	activated() {
-		viewer.pause = false;
-		this.resize();
-	},
-	deactivated() {
-		viewer.pause = true;
-	},
+	}
 };
 </script>
 

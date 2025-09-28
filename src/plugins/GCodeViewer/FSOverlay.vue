@@ -137,17 +137,19 @@ export default {
     },
 	data: function () {
 		return {};
-    },
-    mounted() {
-        this.$window
-     },
-    beforeDestroy(){},
-	computed: {
+  },
+  computed: {
 		...mapState('machine/model', ['file', 'move', 'heat', 'tools']),
 		visibleAxes() {
 			return this.move.axes.filter(axis => axis.visible);
 		},
 	},
+  mounted() {
+    this.$window
+  },
+  beforeDestroy() {
+    
+  },
 	methods: {
 		displayAxisPosition(axis) {
 			const position = axis.userPosition;

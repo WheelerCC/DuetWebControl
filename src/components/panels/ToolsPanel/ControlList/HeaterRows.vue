@@ -176,7 +176,10 @@ import { getHeaterColor } from "@/utils/colors";
 import { displaySensorValue } from "@/utils/display";
 
 const props = defineProps({
-    type: String as PropType<"bed" | "chamber">
+    type: {
+        type: String as PropType<"bed" | "chamber">,
+        default: null
+    }
 });
 
 const emit = defineEmits<{

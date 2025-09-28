@@ -7,7 +7,9 @@
   >
     <v-card>
       <v-card-title class="headline">
-        {{ $t(tool ? (tool.filament ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }}
+        <!-- TODO this seems genuinely wrong, idk what to replace it with -->
+        {{ $t(tool ? (tool.filamentExtruder ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }}
+        <!-- {{ $t(tool ? (tool.filament ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }} -->
       </v-card-title>
 
       <v-card-text>
@@ -65,7 +67,10 @@ export default Vue.extend({
 			type: Boolean,
 			required: true
 		},
-		tool: Object
+		tool: {
+			type: Tool,
+			default: null
+		}
 	},
 	data() {
 		return {
@@ -121,11 +126,11 @@ export default Vue.extend({
 			let code = "";
 			if (this.currentTool !== this.tool) {
 				// Select tool first
-				code = `T${this.tool.number}\n`;
+				code = `T${this.tool!.number}\n`;
 			}
 
-			if (this.tool.filamentExtruder >= 0 && this.tool.filamentExtruder < store.state.machine.model.move.extruders.length &&
-				store.state.machine.model.move.extruders[this.tool.filamentExtruder].filament) {
+			if (this.tool!.filamentExtruder >= 0 && this.tool!.filamentExtruder < store.state.machine.model.move.extruders.length &&
+				store.state.machine.model.move.extruders[this.tool!.filamentExtruder].filament) {
 				// Unload current filament if it is still loaded
 				code += this.runMacros ? "M702\n" : "M702 P0\n";
 

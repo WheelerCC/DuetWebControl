@@ -100,7 +100,7 @@
                     can-delete
                     :files="files"
                     :files-last-modified="filesLastModified"
-                    :selectedFiles.sync="filesToAnalyze"
+                    :selected-files.sync="filesToAnalyze"
                     :frequencies.sync="fileFrequenciesToAnalyze"
                     :sample-start-index.sync="sampleStartIndex"
                     :sample-end-index.sync="sampleEndIndex"
@@ -410,7 +410,37 @@ export default {
 		InputShaperCheckbox,
 		InputShapingChart,
 		InputShapingFileList
-	},
+  },
+  data() {
+		return {
+			tab: null,
+			showDataCollection: false,
+
+			inputShapers: [],
+			customAmplitudes: [],
+			customDelays: [],
+			customMenu: false,
+			configuringCustomShaper: false,
+			frequency: 0,
+			damping: 0.1,
+
+			files: [],
+			filesLastModified: [],
+			loadingFiles: false,
+			filesError: null,
+
+			filesToAnalyze: [],
+			fileFrequenciesToAnalyze: [],
+			fileDataToAnalyze: null,
+			showOriginalValues: true,
+			estimateShaperEffect: false,
+			sampleStartIndex: null,
+			sampleEndIndex: null,
+			hadOverflow: false,
+
+			wideBand: false
+		}
+  },
 	computed: {
 		...mapState('machine/model', {
 			shaping: state => state.move.shaping
@@ -467,35 +497,75 @@ export default {
 			return !this.uiFrozen && !isNaN(this.damping) && this.damping !== this.shaping.damping;
 		}
 	},
-	data() {
-		return {
-			tab: null,
-			showDataCollection: false,
+  watch: {
+		'shaping.type'(to) {
+			if (to === 'none') {
+				this.inputShapers = [];
+			} else {
+				if (!this.inputShapers.includes(to)) {
+					this.inputShapers.push(to);
+				}
 
-			inputShapers: [],
-			customAmplitudes: [],
-			customDelays: [],
-			customMenu: false,
-			configuringCustomShaper: false,
-			frequency: 0,
-			damping: 0.1,
-
-			files: [],
-			filesLastModified: [],
-			loadingFiles: false,
-			filesError: null,
-
-			filesToAnalyze: [],
-			fileFrequenciesToAnalyze: [],
-			fileDataToAnalyze: null,
-			showOriginalValues: true,
-			estimateShaperEffect: false,
-			sampleStartIndex: null,
-			sampleEndIndex: null,
-			hadOverflow: false,
-
-			wideBand: false
+				if (to === 'custom') {
+					this.customAmplitudes = this.shaping.amplitudes.slice();
+					this.customDelays = this.shaping.delays.slice();
+				}
+			}
+		},
+		'shaping.amplitudes': {
+			deep: true,
+			handler(to) {
+				if (!this.inputShapers.includes('custom') || this.shaping.type === 'custom') {
+					this.customAmplitudes = to.slice();
+				}
+			}
+		},
+		'shaping.delays': {
+			deep: true,
+			handler(to) {
+				if (!this.inputShapers.includes('custom') || this.shaping.type === 'custom') {
+					this.customDelays = to.slice();
+				}
+			}
+		},
+		'shaping.frequency'(to) {
+			this.frequency = to;
+		},
+		'shaping.damping'(to) {
+			this.damping = to;
+		},
+		numCustomCoefficients() {
+			this.$nextTick(() => {
+				if (this.$refs.customMenu) {
+					this.$refs.customMenu.updateDimensions();
+				}
+			});
+		},
+		selectedMachine() {
+			this.refresh();
 		}
+	},
+	mounted() {
+		// Reload the file list
+		this.refresh();
+
+		// Init the current values
+		if (this.shaping.type === 'none') {
+			this.inputShapers = [];
+		} else {
+			this.inputShapers.push(this.shaping.type);
+		}
+		this.frequency = this.shaping.frequency;
+		this.damping = this.shaping.damping;
+		this.customAmplitudes = this.shaping.amplitudes.slice();
+		this.customDelays = this.shaping.delays.slice();
+
+		// Keep track of file changes
+		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
+	},
+	beforeDestroy() {
+		// No longer keep track of file changes
+		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
 	},
 	methods: {
 		...mapActions('machine', ['getFileList', 'sendCode']),
@@ -580,76 +650,7 @@ export default {
 			}
 		}
 	},
-	watch: {
-		'shaping.type'(to) {
-			if (to === 'none') {
-				this.inputShapers = [];
-			} else {
-				if (!this.inputShapers.includes(to)) {
-					this.inputShapers.push(to);
-				}
 
-				if (to === 'custom') {
-					this.customAmplitudes = this.shaping.amplitudes.slice();
-					this.customDelays = this.shaping.delays.slice();
-				}
-			}
-		},
-		'shaping.amplitudes': {
-			deep: true,
-			handler(to) {
-				if (!this.inputShapers.includes('custom') || this.shaping.type === 'custom') {
-					this.customAmplitudes = to.slice();
-				}
-			}
-		},
-		'shaping.delays': {
-			deep: true,
-			handler(to) {
-				if (!this.inputShapers.includes('custom') || this.shaping.type === 'custom') {
-					this.customDelays = to.slice();
-				}
-			}
-		},
-		'shaping.frequency'(to) {
-			this.frequency = to;
-		},
-		'shaping.damping'(to) {
-			this.damping = to;
-		},
-		numCustomCoefficients() {
-			this.$nextTick(() => {
-				if (this.$refs.customMenu) {
-					this.$refs.customMenu.updateDimensions();
-				}
-			});
-		},
-		selectedMachine() {
-			this.refresh();
-		}
-	},
-	mounted() {
-		// Reload the file list
-		this.refresh();
-
-		// Init the current values
-		if (this.shaping.type === 'none') {
-			this.inputShapers = [];
-		} else {
-			this.inputShapers.push(this.shaping.type);
-		}
-		this.frequency = this.shaping.frequency;
-		this.damping = this.shaping.damping;
-		this.customAmplitudes = this.shaping.amplitudes.slice();
-		this.customDelays = this.shaping.delays.slice();
-
-		// Keep track of file changes
-		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-	},
-	beforeDestroy() {
-		// No longer keep track of file changes
-		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-	}
 }
 </script>
 

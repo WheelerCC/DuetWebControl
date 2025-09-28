@@ -18,11 +18,26 @@ import Gauge from './gauge';
 
 export default {
 	props: {
-		label: String,
-		max: Number,
-		curval: Number,
-		settemp: Number,
-		state: String,
+		label: {
+			type: String,
+			default: null
+		},
+		max: {
+			type: Number,
+			default: null
+		},
+		curval: {
+			type: Number,
+			default: null
+		},
+		settemp: {
+			type: Number,
+			default: null
+		},
+		state: {
+			type: String,
+			default: null
+		},
 	},
 	data: function () {
 		return {

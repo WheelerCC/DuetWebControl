@@ -45,14 +45,14 @@
 
         <v-card>
           <v-list>
-            <template>
-              <v-list-item v-if="isCompensationEnabled">
+            <template v-if="isCompensationEnabled">
+              <v-list-item>
                 <v-spacer />
                 {{ $t("panel.movement.compensationInUse", [$t(`panel.movement.compensationType.${compensationType}`)]) }}
                 <v-spacer />
               </v-list-item>
 
-              <v-divider v-if="isCompensationEnabled" />
+              <v-divider />
             </template>
 
             <v-list-item

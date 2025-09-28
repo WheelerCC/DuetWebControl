@@ -130,7 +130,10 @@ export default Vue.extend({
 			type: String,
 			required: true
 		},
-		value: String
+		value: {
+			type: String,
+			default: null,
+		}
 	},
 	data() {
 		return {

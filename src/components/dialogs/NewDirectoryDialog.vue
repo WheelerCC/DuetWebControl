@@ -25,8 +25,14 @@ export default Vue.extend({
 			type: String,
 			required: true
 		},
-		title: String,
-		prompt: String,
+		title: {
+			type: String,
+			default: null
+		},
+		prompt: {
+			type: String,
+			default: null
+		},
 		showSuccess: {
 			type: Boolean,
 			default: true

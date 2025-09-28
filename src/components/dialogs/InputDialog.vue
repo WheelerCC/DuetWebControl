@@ -67,7 +67,10 @@ export default Vue.extend({
 			required: true
 		},
 		isNumericValue: Boolean,
-		preset: [String, Number]
+		preset: {
+			type: [String, Number],
+			default: ""
+		}
 	},
 	data() {
 		return {

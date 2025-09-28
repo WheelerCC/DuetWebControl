@@ -398,6 +398,20 @@ export default {
 			type: Boolean
 		}
 	},
+	data() {
+		return {
+			currentPage: 'start',
+			moves: [],
+			centerAxes: true,
+			xAxisCenter: 0,
+			yAxisCenter: 0,
+			zAxisCenter: 0,
+			recordWholeMove: true,
+			run: 0,
+			finished: false,
+			cancelled: false
+		}
+	},
 	computed: {
 		...mapState('machine/model', ['boards', 'move', 'tools', 'state']),
 		xAxis() { return this.move.axes.find(axis => axis.letter === 'X') || new Axis(); },
@@ -482,19 +496,36 @@ export default {
 			return false;
 		}
 	},
-	data() {
-		return {
-			currentPage: 'start',
-			moves: [],
-			centerAxes: true,
-			xAxisCenter: 0,
-			yAxisCenter: 0,
-			zAxisCenter: 0,
-			recordWholeMove: true,
-			run: 0,
-			finished: false,
-			cancelled: false
+	watch: {
+		accelerometers() { this.makeMoves(); },
+		'xAxis.min'() { this.makeMoves(); this.refreshCenters(); },
+		'xAxis.max'() { this.makeMoves(); this.refreshCenters(); },
+		'yAxis.min'() { this.makeMoves(); this.refreshCenters(); },
+		'yAxis.max'() { this.makeMoves(); this.refreshCenters(); },
+		'zAxis.min'() { this.refreshCenters(); },
+		'zAxis.max'() { this.refreshCenters(); },
+		shown(to) {
+			if (to){
+				this.run = this.lastRun + 1;
+			} else {
+				if (this.currentPage === 'collection') {
+					// This will interrupt the current sampling
+					this.cancelled = true;
+				}
+				this.currentPage = 'start';
+				this.cancelled = this.finished = false;
+			}
+		},
+		'state.status'(to) {
+			if ((to === MachineStatus.disconnected || to === MachineStatus.off) && this.currentPage === 'collection') {
+				this.cancelled = true;
+			}
 		}
+	},
+	mounted() {
+		this.run = this.lastRun + 1;
+		this.refreshCenters();
+		this.makeMoves();
 	},
 	methods: {
 		...mapActions('machine', ['sendCode']),
@@ -772,37 +803,7 @@ export default {
 			}
 		}
 	},
-	watch: {
-		accelerometers() { this.makeMoves(); },
-		'xAxis.min'() { this.makeMoves(); this.refreshCenters(); },
-		'xAxis.max'() { this.makeMoves(); this.refreshCenters(); },
-		'yAxis.min'() { this.makeMoves(); this.refreshCenters(); },
-		'yAxis.max'() { this.makeMoves(); this.refreshCenters(); },
-		'zAxis.min'() { this.refreshCenters(); },
-		'zAxis.max'() { this.refreshCenters(); },
-		shown(to) {
-			if (to){
-				this.run = this.lastRun + 1;
-			} else {
-				if (this.currentPage === 'collection') {
-					// This will interrupt the current sampling
-					this.cancelled = true;
-				}
-				this.currentPage = 'start';
-				this.cancelled = this.finished = false;
-			}
-		},
-		'state.status'(to) {
-			if ((to === MachineStatus.disconnected || to === MachineStatus.off) && this.currentPage === 'collection') {
-				this.cancelled = true;
-			}
-		}
-	},
-	mounted() {
-		this.run = this.lastRun + 1;
-		this.refreshCenters();
-		this.makeMoves();
-	}
+	
 }
 </script>
 

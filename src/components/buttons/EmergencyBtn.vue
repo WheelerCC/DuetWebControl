@@ -21,7 +21,10 @@ import Vue from "vue";
 
 export default Vue.extend({
 	props: {
-		color: String
+		color: {
+			type: String,
+			default: null
+		},
 	},
 	data() {
 		return {

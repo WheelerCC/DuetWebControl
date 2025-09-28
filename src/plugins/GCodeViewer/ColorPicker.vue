@@ -50,7 +50,12 @@
 'use strict'
 
 export default {
-	props: ["editcolor"],
+	props: {
+		editcolor: {
+			type: String,
+			required: true
+		}
+	},
 	data: () => ({
 		internalTextColor: "#000000",
 		color: "#000000",

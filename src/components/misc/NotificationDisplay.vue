@@ -1,3 +1,5 @@
+<!-- eslint-disable vue/no-v-html -->
+<!-- TODO prefer to not need this waiver -->
 <template>
   <v-fade-transition>
     <v-snackbar

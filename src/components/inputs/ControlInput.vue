@@ -30,7 +30,10 @@ import { LogType } from "@/utils/logging";
 export default Vue.extend({
 	props: {
 		disabled: Boolean,
-		label: String,
+		label: {
+			type: String,
+			default: null
+		},
 
 		type: {
 			required: true,
@@ -45,7 +48,10 @@ export default Vue.extend({
 			required: true,
 			type: Number
 		},
-		toolHeaterIndex: Number,
+		toolHeaterIndex: {
+			type: Number,
+			default: null
+		},
 
 		active: Boolean,
 		standby: Boolean

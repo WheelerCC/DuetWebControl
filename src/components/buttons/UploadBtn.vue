@@ -42,7 +42,7 @@
     <firmware-update-dialog
       :shown.sync="confirmUpdate"
       :multiple-updates="multipleUpdates"
-      :updateWiFiFirmware.sync="updates.wifiServer"
+      :update-wi-fi-firmware.sync="updates.wifiServer"
       @confirmed="startUpdate"
     />
     <config-updated-dialog :shown.sync="confirmFirmwareReset" />
@@ -121,10 +121,19 @@ export enum UploadType {
 export default Vue.extend({
 	props: {
 		block: Boolean,
-		color: String,
-		directory: String,
+		color: {
+			type: String,
+			default: null
+		},
+		directory: {
+			default: null,
+			type: String
+		},
 		fab: Boolean,
-		machine: String,
+		machine: {
+			default: null,
+			type: String
+		},
 		target: {
 			type: String as PropType<UploadType>,
 			required: true

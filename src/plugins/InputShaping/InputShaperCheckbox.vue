@@ -40,12 +40,18 @@ export default {
 		event: 'change'
 	},
 	props: {
-		inputValue: Array,
+		inputValue: {
+			type: Array,
+			default: null
+		},
 		value: {
 			required: true,
 			type: String
 		},
-		current: String,
+		current: {
+			type: String,
+			default: null
+		},
 		canApply: {
 			default: true,
 			type: Boolean

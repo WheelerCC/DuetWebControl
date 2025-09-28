@@ -237,6 +237,40 @@ import HeightMapViewer from './3dbjs';
 
 let heightMapViewer;
 export default {
+	data() {
+		return {
+			files: [],
+			selectedFile: null,
+
+			isActive: true,
+			ready: false,
+			loading: false,
+			errorMessage: null,
+
+			tooltip: {
+				coord: {
+					x: 0,
+					y: 0,
+					z: 0,
+				},
+				x: undefined,
+				y: undefined,
+				shown: false,
+			},
+			xLabel: 'X',
+			yLabel: 'Y',
+			numPoints: undefined, // points excluding NaN
+			area: undefined,
+			radius: undefined,
+			minDiff: undefined,
+			maxDiff: undefined,
+			meanError: undefined,
+			rmsError: undefined,
+
+			heightmapPoints: undefined,
+			probeRadius: undefined,
+		};
+	},
 	computed: {
 		...mapState(['selectedMachine']),
 		...mapGetters(['isConnected', 'uiFrozen']),
@@ -283,39 +317,117 @@ export default {
 			});
 		},
 	},
-	data() {
-		return {
-			files: [],
-			selectedFile: null,
-
-			isActive: true,
-			ready: false,
-			loading: false,
-			errorMessage: null,
-
-			tooltip: {
-				coord: {
-					x: 0,
-					y: 0,
-					z: 0,
-				},
-				x: undefined,
-				y: undefined,
-				shown: false,
+	
+	watch: {
+		colorScheme() {
+			if (this.heightmapPoints) {
+				this.showHeightMap(this.heightmapPoints, this.probeRadius);
+			}
+		},
+		deviationColoring() {
+			if (this.heightmapPoints) {
+				this.showHeightMap(this.heightmapPoints, this.probeRadius);
+			}
+		},
+		files() {
+			this.$nextTick(this.resize);
+		},
+		invertZ() {
+			if (this.heightmapPoints) {
+				this.showHeightMap(this.heightmapPoints, this.probeRadius);
+			}
+		},
+		isConnected() {
+			this.refresh();
+		},
+		heightmapFile(to) {
+			if (to) {
+				const that = this;
+				this.refresh().then(async function () {
+					const fileName = Path.extractFileName(to);
+					if (that.selectedFile === fileName) {
+						await that.getHeightMap();
+					} else {
+						that.selectedFile = fileName;
+					}
+				});
+			}
+		},
+		selectedFile() {
+			this.getHeightMap();
+		},
+		systemDirectory() {
+			this.refresh();
+		},
+		language() {
+			if (heightMapViewer) {
+				heightMapViewer.drawLegend(this.$refs.legend, this.colorScheme);
+			}
+		},
+		bedAxesValues: {
+			deep: true,
+			handler() {
+				this.buildBed();
 			},
-			xLabel: 'X',
-			yLabel: 'Y',
-			numPoints: undefined, // points excluding NaN
-			area: undefined,
-			radius: undefined,
-			minDiff: undefined,
-			maxDiff: undefined,
-			meanError: undefined,
-			rmsError: undefined,
+		},
+		isDelta(to) {
+			if (heightMapViewer) {
+				heightMapViewer.isDelta = to;
+				if (this.heightmapPoints) {
+					this.showHeightMap(this.heightmapPoints, this.probeRadius);
+				}
+			}
+		},
+	},
+	activated() {
+		this.isActive = true;
+		this.resize();
+	},
+	async mounted() {
+		const size = this.resize();
+		if (size.height <= 0) {
+			size.height = 1;
+		}
 
-			heightmapPoints: undefined,
-			probeRadius: undefined,
+		heightMapViewer = new HeightMapViewer(this.$refs.canvas);
+
+		if (this.isDelta) {
+			heightMapViewer.isDelta = this.isDelta;
+		}
+		await heightMapViewer.init();
+		this.buildBed();
+
+		heightMapViewer.labelCallback = (metadata) => {
+			if (metadata) {
+				this.tooltip.coord.x = metadata.x;
+				this.tooltip.coord.y = metadata.y;
+				this.tooltip.coord.z = metadata.z;
+				this.tooltip.shown = true;
+			} else {
+				this.tooltip.shown = false;
+			}
 		};
+
+		// Set current heightmap
+		if (this.isConnected) {
+			this.refresh();
+		}
+
+		// Keep track of file changes
+		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
+
+		// Kill the wheel on the canvas
+		this.$refs.canvas.addEventListener('wheel', evt => evt.preventDefault());
+
+		// Trigger resize event once more to avoid rendering glitches
+		setTimeout(this.resize.bind(this), 1000);
+		this.ready = true;
+
+	},
+	beforeDestroy() {
+		// No longer keep track of file changes
+		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
+		heightMapViewer.destroy();
 	},
 	methods: {
 		...mapActions('machine', ['download', 'getFileList']),
@@ -606,120 +718,11 @@ export default {
 			}
 		},
 	},
-	watch: {
-		colorScheme() {
-			if (this.heightmapPoints) {
-				this.showHeightMap(this.heightmapPoints, this.probeRadius);
-			}
-		},
-		deviationColoring() {
-			if (this.heightmapPoints) {
-				this.showHeightMap(this.heightmapPoints, this.probeRadius);
-			}
-		},
-		files() {
-			this.$nextTick(this.resize);
-		},
-		invertZ() {
-			if (this.heightmapPoints) {
-				this.showHeightMap(this.heightmapPoints, this.probeRadius);
-			}
-		},
-		isConnected() {
-			this.refresh();
-		},
-		heightmapFile(to) {
-			if (to) {
-				const that = this;
-				this.refresh().then(async function () {
-					const fileName = Path.extractFileName(to);
-					if (that.selectedFile === fileName) {
-						await that.getHeightMap();
-					} else {
-						that.selectedFile = fileName;
-					}
-				});
-			}
-		},
-		selectedFile() {
-			this.getHeightMap();
-		},
-		systemDirectory() {
-			this.refresh();
-		},
-		language() {
-			if (heightMapViewer) {
-				heightMapViewer.drawLegend(this.$refs.legend, this.colorScheme);
-			}
-		},
-		bedAxesValues: {
-			deep: true,
-			handler() {
-				this.buildBed();
-			},
-		},
-		isDelta(to) {
-			if (heightMapViewer) {
-				heightMapViewer.isDelta = to;
-				if (this.heightmapPoints) {
-					this.showHeightMap(this.heightmapPoints, this.probeRadius);
-				}
-			}
-		},
-	},
-	activated() {
-		this.isActive = true;
-		this.resize();
-	},
+	
 	deactivate() {
 		this.isActive = false;
 	},
-	async mounted() {
-		const size = this.resize();
-		if (size.height <= 0) {
-			size.height = 1;
-		}
-
-		heightMapViewer = new HeightMapViewer(this.$refs.canvas);
-
-		if (this.isDelta) {
-			heightMapViewer.isDelta = this.isDelta;
-		}
-		await heightMapViewer.init();
-		this.buildBed();
-
-		heightMapViewer.labelCallback = (metadata) => {
-			if (metadata) {
-				this.tooltip.coord.x = metadata.x;
-				this.tooltip.coord.y = metadata.y;
-				this.tooltip.coord.z = metadata.z;
-				this.tooltip.shown = true;
-			} else {
-				this.tooltip.shown = false;
-			}
-		};
-
-		// Set current heightmap
-		if (this.isConnected) {
-			this.refresh();
-		}
-
-		// Keep track of file changes
-		this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-
-		// Kill the wheel on the canvas
-		this.$refs.canvas.addEventListener('wheel', evt => evt.preventDefault());
-
-		// Trigger resize event once more to avoid rendering glitches
-		setTimeout(this.resize.bind(this), 1000);
-		this.ready = true;
-
-	},
-	beforeDestroy() {
-		// No longer keep track of file changes
-		this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged);
-		heightMapViewer.destroy();
-	},
+	
 };
 </script>
 

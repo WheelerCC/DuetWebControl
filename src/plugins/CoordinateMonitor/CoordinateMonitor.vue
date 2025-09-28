@@ -320,13 +320,13 @@ export default Vue.extend({
                       </td>
 											
                       <td 
-                        v-for="(axis, index) in visibleAxes"
-                        :key="index" 
+                        v-for="(axis, _index) in visibleAxes"
+                        :key="_index" 
                       >
                         <div class="pa-4 d-flex align-center">
                           <v-spacer />
                           <span class="">
-                            {{ offset[index]?.toFixed(3) ?? '—' }}
+                            {{ offset[_index]?.toFixed(3) ?? '—' }}
                           </span>
                           <v-btn
                             class="ml-10"

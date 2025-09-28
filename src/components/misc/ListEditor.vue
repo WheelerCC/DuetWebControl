@@ -148,10 +148,13 @@ import store from "@/store";
 import { MachineSettingsState } from "@/store/machine/settings";
 
 export default Vue.extend({
-	props: {
-		itemKey: String as PropType<keyof MachineSettingsState["temperatures"] | "spindleRPM">,
-		temperature: Boolean
-	},
+  props: {
+    itemKey: {
+      type: String as PropType<keyof MachineSettingsState["temperatures"] | "spindleRPM">,
+      default: null
+    },
+    temperature: Boolean
+  },
 	data() {
 		return {
 			activeValue: 0,
