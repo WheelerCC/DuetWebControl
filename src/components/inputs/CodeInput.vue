@@ -59,8 +59,13 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
+
 import { MessageBox } from "@duet3d/objectmodel";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesStore } from "@/stores/machines";
+import { useMachinesCacheStore } from "@/stores/machineCache";
 
 const conditionalKeywords = ["abort", "echo", "if", "elif", "else", "while", "break", "continue", "var", "global", "set"];
 
@@ -80,18 +85,18 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
 		displayedCodes(): Array<{ text: string, value: string }> {
-			if (this.showItems && !store.state.settings.disableAutoComplete) {
+			if (this.showItems && !useSettingsStore().disableAutoComplete) {
 				const currentCode = ((this.code instanceof Object) ? this.code.value : (this.code ?? "")).toLowerCase();
-				return store.state.machine.cache.lastSentCodes
+				return useMachinesCacheStore().lastSentCodes
 					.filter(code => (currentCode === "") || code.toLowerCase().includes(currentCode))
 					.map(code => ({ text: code, value: code }))
 					.reverse();
 			}
 			return [];
 		},
-		messageBox(): MessageBox | null { return store.state.machine.model.state.messageBox; }
+		messageBox(): MessageBox | null { return useMachinesModelStore().state.messageBox; }
 	},
 	watch: {
 		code(to: string | { value: string }) {
@@ -116,7 +121,7 @@ export default Vue.extend({
 			}
 		},
 		removeLastSentCode(code: string) {
-			store.commit("machine/cache/removeLastSentCode", code);
+			useMachinesCacheStore().removeLastSentCode(code)
 		},
 		change(value: string | { value: string } | null) {
 			this.code = (value !== null) ? value : "";
@@ -190,16 +195,16 @@ export default Vue.extend({
 				// Send the code and wait for completion
 				this.doingCode = true;
 				try {
-					const reply = await store.dispatch("machine/sendCode", {
+					const reply = await useMachinesStore().sendCode({
 						code: codeToSend,
 						fromInput: true
 					});
 
-					if (!inQuotes && !store.state.settings.disableAutoComplete &&
+					if (!inQuotes && !useSettingsStore().disableAutoComplete &&
 						!reply.startsWith("Error: ") && !reply.startsWith("Warning: ") &&
 						bareCode.indexOf("M587") === -1 && bareCode.indexOf("M589") === -1) {
 						// Automatically remember successful codes
-						store.commit("machine/cache/addLastSentCode", codeToSend.trim());
+						useMachinesCacheStore().addLastSentCode(codeToSend.trim())
 					}
 				} catch {
 					// handled before we get here

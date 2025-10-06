@@ -153,9 +153,14 @@ import { PluginManifest } from "@duet3d/objectmodel";
 import packageInfo from "@/../package.json";
 
 import Plugins from "@/plugins";
-import store from "@/store";
+
 import { LogType } from "@/utils/logging";
 import { getErrorMessage } from "@/utils/errors";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
+import { useRootStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
     data() {
@@ -167,18 +172,18 @@ export default Vue.extend({
     computed: {
 		plugins: () => {
 			const plugins: PluginManifest[] = [...Plugins];
-			for (const plugin of store.state.machine.model.plugins.values()) {
+			for (const plugin of useMachinesModelStore().plugins.values()) {
 				if (plugin !== null) {
 					plugins.push(plugin);
 				}
 			}
 			return plugins;
 		},
-        loadingDwcPlugins(): boolean { return store.state.loadingDwcPlugins; }
+        loadingDwcPlugins(): boolean { return useRootStore().loadingDwcPlugins; }
     },
 	methods: {
 		isDwcPlugin(plugin: PluginManifest) {
-			return !store.state.machine.model.plugins.has(plugin.id) || plugin.dwcVersion != null
+			return !useMachinesModelStore().plugins.has(plugin.id) || plugin.dwcVersion != null
 		},
 		isDsfPlugin(plugin: PluginManifest) {
 			return plugin.sbcDsfVersion != null;
@@ -187,14 +192,14 @@ export default Vue.extend({
 			return plugin.rrfVersion != null;
 		},
         isIntegratedPlugin(plugin: PluginManifest) {
-            return !store.state.machine.model.plugins.has(plugin.id);
+            return !useMachinesModelStore().plugins.has(plugin.id);
         },
         isPluginBusy(plugin: PluginManifest) {
 			return this.busyPlugins.includes(plugin.id);
 		},
 		getPluginDependencies(plugin: PluginManifest) {
 			let result: string[] = [] // todo correctly type
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
 				result.push(`DWC ${packageInfo.version}`);
 			} else if (plugin.dwcVersion) {
 				result.push(`DWC ${plugin.dwcVersion}`);
@@ -208,70 +213,70 @@ export default Vue.extend({
 			return (result.length > 0) ? result.join(", ") : this.$t("generic.noValue");
 		},
 		getPluginStatus(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
-				if (store.state.loadedDwcPlugins.includes(plugin.id)) {
-					const enabled = store.state.settings.enabledPlugins.includes(plugin.id) || store.state.machine.settings.enabledPlugins.includes(plugin.name);
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
+				if (useRootStore().loadedDwcPlugins.includes(plugin.id)) {
+					const enabled = useSettingsStore().enabledPlugins.includes(plugin.id) || useSettingsStore().enabledPlugins.includes(plugin.name);
 					return this.$t(enabled ? "tabs.plugins.started" : "tabs.plugins.deactivated");
 				}
 				return this.$t("tabs.plugins.stopped");
 			}
 
-			if (store.state.machine.model.sbc && plugin.sbcExecutable) {
-				const externalPlugin = store.state.machine.model.plugins.get(plugin.id)!;
-				if (externalPlugin.pid > 0 && (!plugin.dwcVersion || store.state.machine.settings.enabledPlugins.includes(plugin.id))) {
+			if (useMachinesModelStore().sbc && plugin.sbcExecutable) {
+				const externalPlugin = useMachinesModelStore().plugins.get(plugin.id)!;
+				if (externalPlugin.pid > 0 && (!plugin.dwcVersion || useSettingsStore().enabledPlugins.includes(plugin.id))) {
 					return this.$t("tabs.plugins.started");
 				}
 				if (plugin.dwcVersion) {
-					if ((externalPlugin.pid >= 0) != store.state.machine.settings.enabledPlugins.includes(plugin.id)) {
+					if ((externalPlugin.pid >= 0) != useMachinesSettingsStore().enabledPlugins.includes(plugin.id)) {
 						return this.$t("tabs.plugins.partiallyStarted");
 					}
-					if (store.state.loadedDwcPlugins.includes(plugin.id)) {
+					if (useRootStore().loadedDwcPlugins.includes(plugin.id)) {
 						return this.$t("tabs.plugins.deactivated");
 					}
 				}
 				return this.$t("tabs.plugins.stopped");
-			} else if (plugin.dwcVersion && store.state.loadedDwcPlugins.includes(plugin.id)) {
-				return store.state.machine.settings.enabledPlugins.includes(plugin.id) ? this.$t("tabs.plugins.started") : this.$t("tabs.plugins.deactivated");
+			} else if (plugin.dwcVersion && useRootStore().loadedDwcPlugins.includes(plugin.id)) {
+				return useSettingsStore().enabledPlugins.includes(plugin.id) ? this.$t("tabs.plugins.started") : this.$t("tabs.plugins.deactivated");
 			}
 			return this.$t("tabs.plugins.installed");
 		},
 		isPluginStarted(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
-				return store.state.loadedDwcPlugins.includes(plugin.id);
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
+				return useRootStore().loadedDwcPlugins.includes(plugin.id);
 			}
 
-			const externalPlugin = store.state.machine.model.plugins.get(plugin.id)!;
-			return (externalPlugin.pid > 0) || store.state.loadedDwcPlugins.includes(plugin.id);
+			const externalPlugin = useMachinesModelStore().plugins.get(plugin.id)!;
+			return (externalPlugin.pid > 0) || useRootStore().loadedDwcPlugins.includes(plugin.id);
 		},
 		canStartPlugin(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
 				return true;
 			}
 			return (plugin.sbcExecutable && plugin.sbcDsfVersion) || plugin.dwcVersion;
 		},
 		canStopPlugin(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
-				return store.state.settings.enabledPlugins.includes(plugin.id) || store.state.machine.settings.enabledPlugins.includes(plugin.name);
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
+				return useSettingsStore().enabledPlugins.includes(plugin.id) || useSettingsStore().enabledPlugins.includes(plugin.name);
 			}
 
-			const externalPlugin = store.state.machine.model.plugins.get(plugin.id)!;
-			return (externalPlugin.pid > 0) || store.state.machine.settings.enabledPlugins.includes(plugin.id);
+			const externalPlugin = useMachinesModelStore().plugins.get(plugin.id)!;
+			return (externalPlugin.pid > 0) || useSettingsStore().enabledPlugins.includes(plugin.id);
 		},
 		canUninstallPlugin(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
 				return false;
 			}
 
-			const externalPlugin = store.state.machine.model.plugins.get(plugin.id)!;
-			return (externalPlugin.pid <= 0) && !store.state.loadedDwcPlugins.includes(plugin.id);
+			const externalPlugin = useMachinesModelStore().plugins.get(plugin.id)!;
+			return (externalPlugin.pid <= 0) && !useRootStore().loadedDwcPlugins.includes(plugin.id);
 		},
 		async startPlugin(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
 				this.busyPlugins.push(plugin.id);
 				try {
 					try {
 						// Load DWC resources
-						await store.dispatch("loadDwcPlugin", {
+						await useRootStore().loadDwcPlugin({
 							id: plugin.id,
 							saveSettings: true
 						});
@@ -290,14 +295,14 @@ export default Vue.extend({
 				try {
 					try {
 						// Start the plugin on the SBC
-						const externalPlugin = store.state.machine.model.plugins.get(plugin.id)!;
+						const externalPlugin = useMachinesModelStore().plugins.get(plugin.id)!;
 						if (plugin.sbcExecutable && externalPlugin.pid <= 0) {
-							await store.dispatch("machine/startSbcPlugin", plugin.id);
+							await useMachinesStore().startSbcPlugin(plugin.id);
 						}
 
 						// Load DWC resources
-						if (plugin.dwcVersion && !store.state.loadedDwcPlugins.some(item => item === plugin.id)) {
-							await store.dispatch("machine/loadDwcPlugin", {
+						if (plugin.dwcVersion && !useRootStore().loadedDwcPlugins.some(item => item === plugin.id)) {
+							await useMachinesStore().loadDwcPlugin({
 								id: plugin.id,
 								saveSettings: true
 							});
@@ -315,19 +320,21 @@ export default Vue.extend({
 			}
 		},
 		async stopPlugin(plugin: PluginManifest) {
-			if (!store.state.machine.model.plugins.has(plugin.id)) {
-				if (!await store.dispatch("unloadDwcPlugin", plugin.id)) {
-					await store.dispatch("unloadDwcPlugin", plugin.name);
+			if (!useMachinesModelStore().plugins.has(plugin.id)) {
+				
+				if (!await useRootStore().unloadDwcPlugin(plugin.id)) {
+					await useRootStore().unloadDwcPlugin(plugin.name);
 				}
 				this.dwcPluginsUnloaded = true;
 			} else {
 				this.busyPlugins.push(plugin.id);
 				try {
 					// Stop the plugin on the SBC (if needed)
-					const externalPlugin = store.state.machine.model.plugins.get(plugin.id)!;
+					const externalPlugin = useMachinesModelStore().plugins.get(plugin.id)!;
 					if (plugin.sbcExecutable && externalPlugin.pid > 0) {
 						try {
-							await store.dispatch("machine/stopSbcPlugin", plugin.id);
+							
+							await useMachinesStore().stopSbcPlugin(plugin.id)
 							this.$makeNotification(LogType.success, this.$t("notification.plugins.stopped"));
 						} catch (e) {
 							this.$makeNotification(LogType.error, this.$t("notification.plugins.stopError"), getErrorMessage(e));
@@ -336,8 +343,8 @@ export default Vue.extend({
 					}
 
 					// Remove the plugin from the auto load list and tell the user to reload DWC
-					if (store.state.loadedDwcPlugins.includes(plugin.id)) {
-						store.dispatch("machine/unloadDwcPlugin", plugin.id);
+					if (useRootStore().loadedDwcPlugins.includes(plugin.id)) {
+						useMachinesStore().unloadDwcPlugin(plugin.id)
 						this.dwcPluginsUnloaded = true;
 					}
 				} finally {
@@ -350,7 +357,7 @@ export default Vue.extend({
 			try {
 				try {
 					// Uninstall the plugin
-					await store.dispatch("machine/uninstallPlugin", plugin);
+					await useMachinesStore().uninstallPlugin(plugin)
 
 					// Display a message
 					this.$makeNotification(LogType.success, this.$t("notification.plugins.uninstalled"));

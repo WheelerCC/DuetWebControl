@@ -63,9 +63,11 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data() {
@@ -76,16 +78,16 @@ export default Vue.extend({
 			],
 			password: "",
 			passwordRules: [
-				(value: string): string | boolean => (!value && store.state.passwordRequired) ? this.$t("dialog.connect.passwordRequired") : true
+				(value: string): string | boolean => (!value && useRootStore().passwordRequired) ? this.$t("dialog.connect.passwordRequired") : true
 			],
 			rememberPassword: false,
 			shown: false
 		}
 	},
 	computed: {
-		connectDialogShown(): boolean { return store.state.connectDialogShown; },
-		lastHostname(): string { return store.state.settings.lastHostname; },
-		passwordRequired(): boolean { return store.state.passwordRequired; }
+		connectDialogShown(): boolean { return useRootStore().connectDialogShown; },
+		lastHostname(): string { return useSettingsStore().lastHostname; },
+		passwordRequired(): boolean { return useRootStore().passwordRequired; }
 	},
 	watch: {
 		connectDialogShown(to: boolean) { 
@@ -107,7 +109,7 @@ export default Vue.extend({
 				this.close();
 
 				try {
-					await store.dispatch("connect", {
+					await useRootStore().connect({
 						hostname: this.hostname,
 						password: this.password
 					});
@@ -119,12 +121,13 @@ export default Vue.extend({
 					this.password = "";
 				} catch (e) {
 					console.warn(e);
-					store.commit("showConnectDialog");
+					useRootStore().showConnectDialog()
+
 				}
 			}
 		},
 		close() {
-			store.commit("hideConnectDialog");
+			useRootStore().hideConnectDialog()
 		},
 		savePassword() {
 			localStorage.setItem('dwc-password', this.password);

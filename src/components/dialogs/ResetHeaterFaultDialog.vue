@@ -39,9 +39,10 @@
 </template>
 
 <script lang="ts">
+import { useMachinesStore } from "@/stores/machines";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 /**
  * How long to wait before a user can reset a heater fault (in s)
@@ -91,7 +92,7 @@ export default Vue.extend({
 	methods: {
 		async resetFault() {
 			try {
-				await store.dispatch("machine/sendCode", `M562 P${this.heater}`);
+				await useMachinesStore().sendCode(`M562 P${this.heater}`);
 				this.resetHeaters.push(this.heater);
 			} finally {
 				this.hide();

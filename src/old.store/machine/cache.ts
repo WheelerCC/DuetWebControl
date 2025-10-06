@@ -1,6 +1,5 @@
 import { BaseConnector } from "@duet3d/connectors";
 import { GCodeFileInfo } from "@duet3d/objectmodel";
-import Vue from "vue";
 import { Module } from "vuex";
 
 import { FileNotFoundError } from "@/utils/errors";
@@ -170,12 +169,12 @@ export default function(connector: BaseConnector | null): MachineCacheModule {
 				if (fileOrDirectory) {
 					if (state.fileInfos[fileOrDirectory] !== undefined) {
 						// Delete specific item
-						Vue.delete(state.fileInfos, fileOrDirectory);
+						delete state.fileInfos[fileOrDirectory];
 					} else {
 						// Delete directory items
 						for (let filename in state.fileInfos) {
 							if (Path.equals(fileOrDirectory, Path.extractDirectory(filename))) {
-								Vue.delete(state.fileInfos, filename);
+								state.fileInfos[filename];
 							}
 						}
 					}
@@ -199,17 +198,17 @@ export default function(connector: BaseConnector | null): MachineCacheModule {
 				}
 
 				if (state.plugins[plugin] === undefined) {
-					Vue.set(state.plugins, plugin, {});
+					state.plugins[plugin] = {};
 				}
 				if (!(key in state.plugins[plugin])) {
-					Vue.set(state.plugins[plugin], key, defaultValue)
+					state.plugins[plugin][key] = defaultValue;
 				}
 			},
 			setPluginData(state, { plugin, key, value }: { plugin: string, key: string, value: any }) {
 				if (state.plugins[plugin] === undefined) {
-					Vue.set(state.plugins, plugin, { key: value });
+					state.plugins[plugin] = { key: value };
 				}
-				Vue.set(state.plugins[plugin], key, value)
+				state.plugins[plugin][key] = value
 			}
 		}
 	}

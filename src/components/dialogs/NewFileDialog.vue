@@ -17,8 +17,9 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
+
 import Path from "@/utils/path";
+import { useRootStore } from "@/stores";
 
 export default Vue.extend({
 	props: {
@@ -41,7 +42,7 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; }
+		isConnected(): boolean { return useRootStore().isConnected; }
 	},
 	watch: {
 		isConnected(to: boolean) {

@@ -181,10 +181,14 @@ import Vue, { Component } from "vue";
 import { Route, NavigationGuardNext } from "vue-router";
 
 import { Menu, MenuCategory, MenuItem, Routes } from "@/routes";
-import store from "@/store";
-import { DashboardMode } from "@/store/settings";
+
 import { isPrinting } from "@/utils/enums";
 import { LogType } from "./utils/logging";
+import { useMachinesModelStore } from "./stores/machineModel";
+import { useRootStore } from "./stores";
+import { useMachinesStore } from "./stores/machines";
+import { DashboardMode, useSettingsStore } from "./stores/settings";
+import { useUIInjectionStore } from "./stores/uiInjection";
 
 export default Vue.extend({
 	data() {
@@ -195,13 +199,13 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		name(): string { return store.state.machine.model.network.name; },
-		isConnecting(): boolean { return store.state.isConnecting || store.state.machine.isReconnecting; },
-		status(): MachineStatus { return store.state.machine.model.state.status; },
-		iconMenu(): boolean { return store.state.settings.iconMenu; },
-		jobProgress(): number { return store.getters["machine/model/jobProgress"]; },
-		injectedComponents(): Array<{ name: string, component: Component }> { return store.state.uiInjection.injectedComponents; },
-		model(): ObjectModel { return store.state.machine.model; },
+		name(): string { return useMachinesModelStore().network.name; },
+		isConnecting(): boolean { return useRootStore().isConnecting || useMachinesStore().isReconnecting; },
+		status(): MachineStatus { return useMachinesModelStore().state.status; },
+		iconMenu(): boolean { return useSettingsStore().iconMenu; },
+		jobProgress(): number { return useMachinesModelStore().jobProgress(null) }, // TODO getters???
+    injectedComponents() { return useUIInjectionStore().injectedComponents },
+    model(): ObjectModel { return useMachinesModelStore()[useRootStore().selectedMachine] as ObjectModel; },
 		categories(): Array<MenuCategory> {
 			return Object.keys(Menu)
 				.map(key => Menu[key])
@@ -220,21 +224,21 @@ export default Vue.extend({
 			};
 			return Routes.some(route => checkRoute(route as MenuItem));
 		},
-		darkTheme(): boolean { return store.state.settings.darkTheme; },
+		darkTheme(): boolean { return useSettingsStore().darkTheme; },
 		isFFForUnset(): boolean {
-			if (store.state.settings.dashboardMode === DashboardMode.default) {
+			if (useSettingsStore().dashboardMode === DashboardMode.default) {
 				return !this.model.state.machineMode || this.model.state.machineMode === MachineMode.fff;
 			}
-			return store.state.settings.dashboardMode === DashboardMode.fff;
+			return useSettingsStore().dashboardMode === DashboardMode.fff;
 		},
 		showBottomNavigation(): boolean {
-			return this.$vuetify.breakpoint.mobile && !this.$vuetify.breakpoint.xsOnly && store.state.settings.bottomNavigation;
+			return this.$vuetify.breakpoint.mobile && !this.$vuetify.breakpoint.xsOnly && useSettingsStore().bottomNavigation;
 		},
 		doNotSwitchToStatusPanelOnJobStart(): boolean {
-			return store.state.settings.behaviour.jobStart; 
+			return useSettingsStore().behaviour.jobStart; 
 		},
 		bottomMargin(): number {
-			return store.state.bottomMargin;
+			return useRootStore().bottomMargin;
 		}
 	},
 	watch: {
@@ -247,8 +251,8 @@ export default Vue.extend({
 			this.$vuetify.theme.dark = to;
 		},
 		isConnecting(to: boolean) {
-			if (!to && store.state.machine.model.volumes.length > 0) {
-				const firstVolume = store.state.machine.model.volumes[0];
+			if (!to && useMachinesModelStore().volumes.length > 0) {
+				const firstVolume = useMachinesModelStore().volumes[0];
 				if (firstVolume.capacity !== null && firstVolume.freeSpace !== null &&
 					firstVolume.capacity > 268435456 && (firstVolume.freeSpace as number) / (firstVolume.capacity as number) < 0.05)		// 256 MiB
 				{
@@ -293,15 +297,15 @@ export default Vue.extend({
 	},
 	mounted() {
 		// Attempt to disconnect from every machine when the page is being unloaded
-		window.addEventListener("unload", () => store.dispatch("disconnectAll"));
+		window.addEventListener("unload", () => useRootStore().disconnectAll());
 
 		// Connect if running on a board
 		if (process.env.NODE_ENV === "production") {
-			store.dispatch("connect");
+			useRootStore().connect();
 		}
 
 		// Attempt to load the settings
-		store.dispatch("settings/load");
+		useSettingsStore().load();
 
 		// Validate navigation
 		Vue.prototype.$vuetify = this.$vuetify;

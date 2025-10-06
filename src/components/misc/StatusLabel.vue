@@ -8,24 +8,28 @@
 </template>
 
 <script lang="ts">
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
 import { MachineMode, MachineStatus } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
 		statusText(): string {
-			let type: string = store.state.machine.model.state.status;
-			if (!store.state.machine.model.state.status) {
+			let type: string = useMachinesModelStore().state.status;
+			console.log(useMachinesModelStore().state)
+			if (!type) {
 				type = "unknown";
-			} else if (store.state.machine.model.state.status === MachineStatus.processing && store.state.machine.model.state.machineMode === MachineMode.fff) {
+			} else if (type === MachineStatus.processing && useMachinesModelStore().state.machineMode === MachineMode.fff) {
 				type = "printing";
 			}
+			console.log(type)
 			return this.$t(`generic.status.${type}`);
 		},
 		statusClass() {
-			const darkTheme = store.state.settings.darkTheme, status = store.state.machine.model.state.status;
+			const darkTheme = useSettingsStore().darkTheme, status = useMachinesModelStore().state.status;
 			switch (status) {
 				case MachineStatus.disconnected: return darkTheme ? "red darken-2 white--text" : "red darken-1 white--text";
 				case MachineStatus.starting: return darkTheme ? "light-blue darken-3" : "light-blue accent-1";

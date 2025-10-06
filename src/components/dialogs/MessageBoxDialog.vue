@@ -170,9 +170,12 @@
 import { Axis, AxisLetter, MessageBox, MessageBoxMode } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { isNumber } from "@/utils/numbers";
 import { log } from "@/utils/logging";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	data() {
@@ -185,10 +188,10 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => store.getters["machine/settings/moveSteps"](axisLetter)); },
-		numMoveSteps(): number { return store.getters["machine/settings/numMoveSteps"]; },
-		isReconnecting(): boolean { return store.state.machine.isReconnecting; },
-		currentMessageBox(): MessageBox | null { return store.state.machine.model.state.messageBox; },
+		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)) },
+		numMoveSteps(): number { return useMachinesSettingsStore().numMoveSteps() },
+		isReconnecting(): boolean { return useMachinesStore().isReconnecting; },
+		currentMessageBox(): MessageBox | null { return useMachinesModelStore().state.messageBox; },
 		canConfirm(): boolean {
 			if (this.needsNumberInput) {
 				let canConfirm;
@@ -208,7 +211,7 @@ export default Vue.extend({
 		},
 		displayedAxes(): Array<Axis> {
 			const axisControls = (this.messageBox && this.messageBox.axisControls !== null) ? this.messageBox.axisControls : 0;
-			return store.state.machine.model.move.axes.filter((axis, index) => axis.visible && ((axisControls & (1 << index)) !== 0));
+			return useMachinesModelStore().move.axes.filter((axis, index) => axis.visible && ((axisControls & (1 << index)) !== 0));
 		},
 		hasButtons(): boolean {
 			return this.messageBox.mode !== MessageBoxMode.noButtons;
@@ -258,7 +261,7 @@ export default Vue.extend({
 	},
 	methods: {
 		canMove(axis: Axis): boolean {
-			return axis.homed || !store.state.machine.model.move.noMovesBeforeHoming;
+			return axis.homed || !useMachinesModelStore().move.noMovesBeforeHoming;
 		},
 		displayAxisPosition(axis: Axis): string {
 			if (axis.userPosition === null) {
@@ -277,7 +280,7 @@ export default Vue.extend({
 			return classes;
 		},
 		getMoveCode(axis: Axis, index: number, decrementing: boolean): string {
-			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${store.state.machine.settings.moveFeedrate}\nM121`;
+			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`;
 		},
 		showSign: (value: number): string => (value > 0) ? `+${value}` : value.toString(),
 		// NOTE: The following calls use noWait because we don't want M292 replies to be logged.
@@ -285,23 +288,23 @@ export default Vue.extend({
 		async ok() {
 			this.shown = false;
 			if ([MessageBoxMode.closeOnly, MessageBoxMode.okOnly, MessageBoxMode.okCancel].includes(this.messageBox.mode)) {
-				await store.dispatch("machine/sendCode", { code: `M292 S${this.messageBox.seq}`, noWait: true });
+				await useMachinesStore().sendCode({ code: `M292 S${this.messageBox.seq}`, noWait: true });
 			} else if (this.messageBox.mode === MessageBoxMode.intInput || this.messageBox.mode === MessageBoxMode.floatInput) {
-				await store.dispatch("machine/sendCode", { code: `M292 R{${this.numberInput}} S${this.messageBox.seq}`, noWait: true });
-			} else if (this.messageBox.mode === MessageBoxMode.stringInput) {
-				await store.dispatch("machine/sendCode", { code: `M292 R{"${this.stringInput.replace(/"/g, '""').replace(/'/g, "''")}"} S${this.messageBox.seq}`, noWait: true });
+				await useMachinesStore().sendCode({ code: `M292 R{${this.numberInput}} S${this.messageBox.seq}`, noWait: true });
+      } else if (this.messageBox.mode === MessageBoxMode.stringInput) {
+        await useMachinesStore().sendCode({ code: `M292 R{"${this.stringInput.replace(/"/g, '""').replace(/'/g, "''")}"} S${this.messageBox.seq}`, noWait: true })
 			}
 		},
 		async accept(choice: number) {
 			this.shown = false;
 			if (this.messageBox.mode >= MessageBoxMode.multipleChoice) {
-				await store.dispatch("machine/sendCode", { code: `M292 R{${choice}} S${this.messageBox.seq}`, noWait: true });
+				await useMachinesStore().sendCode({ code: `M292 R{${choice}} S${this.messageBox.seq}`, noWait: true });
 			}
 		},
 		async cancel() {
 			this.shown = false;
 			if (this.messageBox.cancelButton) {
-				await store.dispatch("machine/sendCode", { code: `M292 P1 S${this.messageBox.seq}`, noWait: true });
+				await useMachinesStore().sendCode({ code: `M292 P1 S${this.messageBox.seq}`, noWait: true });
 			}
 		}
 	}

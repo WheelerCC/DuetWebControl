@@ -109,13 +109,17 @@ import { MachineMode } from "@duet3d/objectmodel";
 import * as monaco from "monaco-editor";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { indent } from "@/utils/display";
 import "@/utils/monaco-editor";
 import "@/utils/monaco-syntax";
 import "@/utils/monaco-menu";
 import "@/utils/monaco-STM32";
 import Path from "@/utils/path";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesStore } from "@/stores/machines";
+import { useRootStore } from "@/stores";
 
 const mediumFileThreshold = 4194304;	// 4 MiB
 const bigFileThreshold = 33554432;		// 32 MiB
@@ -143,12 +147,12 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		fffMode(): boolean { return store.state.machine.model.state.machineMode === MachineMode.fff; },
-		gCodesDirectory(): string { return store.state.machine.model.directories.gCodes; },
-		macrosDirectory(): string { return store.state.machine.model.directories.macros; },
-		menuDirectory(): string { return store.state.machine.model.directories.menu; },
-		darkTheme(): boolean { return store.state.settings.darkTheme; },
-		useMonacoEditor(): boolean { return !store.state.oskEnabled && !this.isMobile; },
+		fffMode(): boolean { return useMachinesModelStore().state.machineMode === MachineMode.fff; },
+		gCodesDirectory(): string { return useMachinesModelStore().directories.gCodes; },
+		macrosDirectory(): string { return useMachinesModelStore().directories.macros; },
+		menuDirectory(): string { return useMachinesModelStore().directories.menu; },
+		darkTheme(): boolean { return useSettingsStore().darkTheme; },
+		useMonacoEditor(): boolean { return !useRootStore().oskEnabled && !this.isMobile; },
 		language(): string {
 			if (Path.startsWith(this.filename, this.macrosDirectory) || /(\.g|\.gcode|\.gc|\.gco|\.nc|\.ngc|\.tap)(\.bak)?$/i.test(this.filename)) {
 				return this.fffMode ? "gcode-fdm" : "gcode-cnc";
@@ -180,7 +184,7 @@ export default Vue.extend({
 			return this.innerValue.length > bigFileThreshold;
 		},
 		bottomMargin(): number {
-			return store.state.bottomMargin;
+			return useRootStore().bottomMargin;
 		}
 	},
 	watch: {
@@ -201,7 +205,7 @@ export default Vue.extend({
 							occurrencesHighlight: this.isBigFile ? "off" :"singleFile",
 							rulers: [255],
 							scrollBeyondLastLine: false,
-							theme: store.state.settings.darkTheme ? "vs-dark" : "vs",
+							theme: useSettingsStore().darkTheme ? "vs-dark" : "vs",
 							value: this.innerValue,
 							wordBasedSuggestions: "off"
 						});
@@ -277,9 +281,9 @@ export default Vue.extend({
 			try {
 				if (this.filename.endsWith("/daemon.g")) {
 					// daemon.g may be still open and running at this time, move it first
-					await store.dispatch("machine/move", { from: this.filename, to: this.filename + ".bak", force: true });
+					await useMachinesStore().move({ from: this.filename, to: this.filename + ".bak", force: true })
 				}
-				await store.dispatch("machine/upload", { filename: this.filename, content });
+				await useMachinesStore().upload({ filename: this.filename, content });
 				this.$emit("editComplete", this.filename);
 			} catch (e) {
 				// TODO Optionally ask user to save file somewhere else

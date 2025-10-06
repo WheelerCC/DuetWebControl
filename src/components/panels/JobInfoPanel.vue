@@ -32,15 +32,16 @@
 </template>
 
 <script lang="ts">
+import { useMachinesModelStore } from "@/stores/machineModel";
 import { GCodeFileInfo, MachineMode } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
-		jobFile(): GCodeFileInfo | null { return store.state.machine.model.job.file; },
-		isFFForUnset(): boolean { return !store.state.machine.model.state.machineMode || store.state.machine.model.state.machineMode === MachineMode.fff; }
+		jobFile(): GCodeFileInfo | null { return useMachinesModelStore().job.file; },
+		isFFForUnset(): boolean { return !useMachinesModelStore().state.machineMode || useMachinesModelStore().state.machineMode === MachineMode.fff; }
 	}
 });
 </script>

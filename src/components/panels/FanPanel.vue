@@ -64,10 +64,13 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
 import { Fan, Tool } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data() {
@@ -76,9 +79,9 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		fans(): Array<Fan | null> { return store.state.machine.model.fans; },
-		currentTool(): Tool | null { return store.getters["machine/model/currentTool"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		fans(): Array<Fan | null> { return useMachinesModelStore().fans; },
+		currentTool(): Tool | null { return useMachinesModelStore().currentTool() },
 		fanValue: {
 			get(): number {
 				// Even though RRF allows multiple fans to be assigned to a tool,
@@ -91,9 +94,9 @@ export default Vue.extend({
 			set(value: number) {
 				value = Math.min(100, Math.max(0, value)) / 100;
 				if (this.fan === -1) {
-					store.dispatch("machine/sendCode", `M106 S${value.toFixed(2)}`);
+					useMachinesStore().sendCode(`M106 S${value.toFixed(2)}`)
 				} else {
-					store.dispatch("machine/sendCode", `M106 P${this.fan} S${value.toFixed(2)}`);
+					useMachinesStore().sendCode(`M106 P${this.fan} S${value.toFixed(2)}`);
 				}
 			}
 		},

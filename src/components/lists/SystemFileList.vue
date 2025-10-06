@@ -168,11 +168,14 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
+
 import { isPrinting } from "@/utils/enums";
 import Path from "@/utils/path";
 import { UploadType } from "../buttons/UploadBtn.vue";
 import { BaseFileListItem } from "./BaseFileList.vue";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	data() {
@@ -187,14 +190,14 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		systemDirectory(): string { return store.state.machine.model.directories.system ; },
-		isFirmwareDirectory(): boolean { return !this.isSystemDirectory && Path.startsWith(this.directory, store.state.machine.model.directories.firmware); },
+		uiFrozen(): boolean { return useRootStore().uiFrozen },
+		systemDirectory(): string { return useMachinesModelStore().directories.system ; },
+		isFirmwareDirectory(): boolean { return !this.isSystemDirectory && Path.startsWith(this.directory, useMachinesModelStore().directories.firmware); },
 		isSystemDirectory(): boolean { return Path.startsWith(this.directory, this.systemDirectory) || Path.startsWith(this.directory, Path.system); },
 		isSystemRootDirectory(): boolean { return Path.equals(this.directory, this.systemDirectory); },
 		isFirmwareFile(): boolean {
 			if (this.isFirmwareDirectory && (this.selection.length === 1) && !this.selection[0].isDirectory) {
-				if (store.state.machine.model.boards.some(board => board.wifiFirmwareFileName === this.selection[0].name) ||
+				if (useMachinesModelStore().boards.some(board => board.wifiFirmwareFileName === this.selection[0].name) ||
 					/DuetWiFiSocketServer(.*)\.bin/i.test(this.selection[0].name) || /DuetWiFiServer(.*)\.bin/i.test(this.selection[0].name))
 				{
 					return true;
@@ -202,7 +205,7 @@ export default Vue.extend({
 				if (/PanelDue(.*)\.bin/i.test(this.selection[0].name) || /DuetScreen(.*)\.bin/i.test(this.selection[0].name)) {
 					return true;
 				}
-				return store.state.machine.model.boards.some((board, index) => {
+				return useMachinesModelStore().boards.some((board, index) => {
 					if (board && board.firmwareFileName && (board.canAddress || index === 0)) {
 						const binRegEx = new RegExp(board.firmwareFileName.replace(/\.bin$/, '(.*)\\.bin'), 'i');
 						const uf2RegEx = new RegExp(board.firmwareFileName.replace(/\.uf2$/, '(.*)\\.uf2'), 'i');
@@ -216,7 +219,7 @@ export default Vue.extend({
 			return false;
 		},
 		noFilesText(): string {
-			if (Path.startsWith(this.directory, store.state.machine.model.directories.menu)) {
+			if (Path.startsWith(this.directory, useMachinesModelStore().directories.menu)) {
 				return "list.system.noFiles";
 			}
 			if (Path.startsWith(this.directory, this.systemDirectory) || Path.startsWith(this.directory, Path.system)) {
@@ -257,21 +260,21 @@ export default Vue.extend({
 		fileEdited(filename: string) {
 			const fullName = Path.combine(this.directory, filename);
 			const configFile = Path.combine(this.systemDirectory, Path.configFile);
-			if (!isPrinting(store.state.machine.model.state.status) && (fullName === Path.configFile || fullName === configFile || fullName === Path.boardFile)) {
+			if (!isPrinting(useMachinesModelStore().state.status) && (fullName === Path.configFile || fullName === configFile || fullName === Path.boardFile)) {
 				// Ask for firmware reset when config.g or 0:/sys/board.txt (RRF on LPC) has been edited
 				this.showResetPrompt = true;
 			}
 		},
 		async installFile() {
 			let module = -1, boardIndex = -1;
-			if (store.state.machine.model.boards.some(board => board.wifiFirmwareFileName === this.selection[0].name) ||
+			if (useMachinesModelStore().boards.some(board => board.wifiFirmwareFileName === this.selection[0].name) ||
 				/DuetWiFiSocketServer(.*)\.bin/i.test(this.selection[0].name) || /DuetWiFiServer(.*)\.bin/i.test(this.selection[0].name))
 			{
 				module = 1;
 			} else if (/PanelDue(.*)\.bin/i.test(this.selection[0].name) || /DuetScreen(.*)\.bin/i.test(this.selection[0].name)) {
 				module = 4;
 			} else {
-				store.state.machine.model.boards.forEach((board, index) => {
+				useMachinesModelStore().boards.forEach((board, index) => {
 					if (board && board.firmwareFileName && (board.canAddress || index === 0)) {
 						const binRegEx = new RegExp(board.firmwareFileName.replace(/\.bin$/, '(.*)\\.bin'), 'i');
 						const uf2RegEx = new RegExp(board.firmwareFileName.replace(/\.uf2$/, '(.*)\\.uf2'), 'i');
@@ -284,13 +287,13 @@ export default Vue.extend({
 			}
 
 			try {
-				await store.dispatch("machine/sendCode", `M997${(boardIndex >= 0) ? (" B" + boardIndex) : ""} S${module} P"${Path.combine(this.directory, this.selection[0].name)}"`);
+				await useMachinesStore().sendCode(`M997${(boardIndex >= 0) ? (" B" + boardIndex) : ""} S${module} P"${Path.combine(this.directory, this.selection[0].name)}"`);
 			} catch {
 				// expected
 			}
 		},
 		async editConfigTemplate() {
-			const jsonTemplate: string = await store.dispatch("machine/download", { filename: Path.combine(this.systemDirectory, "config.json"), type: "text" });
+			const jsonTemplate: string = await useMachinesStore().download({ filename: Path.combine(this.systemDirectory, "config.json"), type: "text" });
 
 			const form = document.createElement("form");
 			form.method = "POST";

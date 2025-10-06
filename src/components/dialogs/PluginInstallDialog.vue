@@ -268,10 +268,13 @@ import Vue from "vue";
 
 import packageInfo from "../../../package.json";
 import Plugins, { checkManifest, checkVersion } from "@/plugins";
-import store from "@/store";
+
 import Events from "@/utils/events";
 import { getErrorMessage } from "@/utils/errors";
 import JSZip from "jszip";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
 enum Page {
 	start,
@@ -355,30 +358,30 @@ export default Vue.extend({
 		},
 
 		rrfVersion(): string {
-			if (store.state.machine.model.boards.length > 0 && store.state.machine.model.boards[0].firmwareVersion) {
-				return store.state.machine.model.boards[0].firmwareVersion;
+			if (useMachinesModelStore().boards.length > 0 && useMachinesModelStore().boards[0].firmwareVersion) {
+				return useMachinesModelStore().boards[0].firmwareVersion;
 			}
 			return this.$t("generic.noValue");
 		},
 		checkRrfVersion(): boolean {
 			if (this.pluginManifest.rrfVersion) {
-				if (store.state.machine.model.boards.length > 0 && store.state.machine.model.boards[0].firmwareVersion) {
-					return checkVersion(store.state.machine.model.boards[0].firmwareVersion, this.pluginManifest.rrfVersion);
+				if (useMachinesModelStore().boards.length > 0 && useMachinesModelStore().boards[0].firmwareVersion) {
+					return checkVersion(useMachinesModelStore().boards[0].firmwareVersion, this.pluginManifest.rrfVersion);
 				}
 				return false;
 			}
 			return true;
 		},
 		dsfVersion(): string {
-			return store.state.machine.model.sbc?.dsf.version ?? this.$t("generic.noValue");
+			return useMachinesModelStore().sbc?.dsf.version ?? this.$t("generic.noValue");
 		},
 		showDsfVersion(): boolean {
 			return this.pluginManifest.sbcRequired && this.hasDsfFiles;
 		},
 		checkDsfVersion(): boolean {
 			if (this.pluginManifest.sbcDsfVersion) {
-				if (store.state.machine.model.sbc && store.state.machine.model.sbc.dsf.pluginSupport) {
-					return checkVersion(store.state.machine.model.sbc.dsf.version, this.pluginManifest.sbcDsfVersion);
+				if (useMachinesModelStore().sbc && useMachinesModelStore().sbc!.dsf.pluginSupport) {
+					return checkVersion(useMachinesModelStore().sbc!.dsf.version, this.pluginManifest.sbcDsfVersion);
 				}
 				return false;
 			}
@@ -394,8 +397,8 @@ export default Vue.extend({
 			return true;
 		},
 		pluginsSupported(): boolean {
-			if (store.state.machine.model.sbc) {
-				return store.state.machine.model.sbc.dsf.pluginSupport;
+			if (useMachinesModelStore().sbc) {
+				return useMachinesModelStore().sbc!.dsf.pluginSupport;
 			}
 			return true;
 		},
@@ -403,7 +406,7 @@ export default Vue.extend({
 			return this.permissions.has(SbcPermission.superUser);
 		},
 		checkRoot(): boolean {
-			return !this.requiresRoot || !!store.state.machine.model.sbc?.dsf.rootPluginSupport;
+			return !this.requiresRoot || !!useMachinesModelStore().sbc?.dsf.rootPluginSupport;
 		},
 		permissions(): Set<SbcPermission> {
 			return this.pluginManifest.sbcPermissions || new Set<SbcPermission>();
@@ -469,8 +472,8 @@ export default Vue.extend({
 				this.installationError = null;
 				this.isFinished = false;
 				try {
-					try {
-						await store.dispatch("machine/installPlugin", {
+          try {
+            await useMachinesStore().installPlugin({
 							zipFilename: this.zipFilename,
 							zipBlob: this.zipBlob,
 							zipFile: this.zipFile,
@@ -487,7 +490,7 @@ export default Vue.extend({
 		},
 		finish() {
 			this.shown = false;
-			this.showReloadPrompt = this.hasDwcFiles && store.state.loadedDwcPlugins.includes(this.pluginManifest.id);
+			this.showReloadPrompt = this.hasDwcFiles && useRootStore().loadedDwcPlugins.includes(this.pluginManifest.id);
 		},
 		reload() {
 			location.reload(true);

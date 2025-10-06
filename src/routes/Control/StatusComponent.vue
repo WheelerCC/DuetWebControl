@@ -9,16 +9,17 @@
 import { MachineMode } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
-import { DashboardMode } from "@/store/settings";
+
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { DashboardMode, useSettingsStore } from "@/stores/settings";
 
 export default Vue.extend({
 	computed: {
 		isFFForUnset() {
-			if (store.state.settings.dashboardMode === DashboardMode.default) {
-				return !store.state.machine.model.state.machineMode || store.state.machine.model.state.machineMode === MachineMode.fff;
+			if (useSettingsStore().dashboardMode === DashboardMode.default) {
+				return !useMachinesModelStore().state.machineMode || useMachinesModelStore().state.machineMode === MachineMode.fff;
 			}
-			return store.state.settings.dashboardMode === DashboardMode.fff;
+			return useSettingsStore().dashboardMode === DashboardMode.fff;
 		}
 	}
 });

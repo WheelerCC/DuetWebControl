@@ -82,22 +82,24 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
-import store from "@/store";
+
 
 import HeaterRows from "./HeaterRows.vue";
 import ToolRows from "./ToolRows.vue";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
 
 // General appearance
-const hasTools = computed(() => store.state.machine.model.tools.some(tool => tool !== null));
-const hasBeds = computed(() => store.state.machine.model.heat.bedHeaters.some(bedHeater => (bedHeater >= 0) && (bedHeater < store.state.machine.model.heat.heaters.length) && (store.state.machine.model.heat.heaters[bedHeater] !== null)));
-const hasChambers = computed(() => store.state.machine.model.heat.chamberHeaters.some(chamberHeater => (chamberHeater >= 0) && (chamberHeater < store.state.machine.model.heat.heaters.length) && (store.state.machine.model.heat.heaters[chamberHeater] !== null)));
+const hasTools = computed(() => useMachinesModelStore().tools.some(tool => tool !== null));
+const hasBeds = computed(() => useMachinesModelStore().heat.bedHeaters.some(bedHeater => (bedHeater >= 0) && (bedHeater < useMachinesModelStore().heat.heaters.length) && (useMachinesModelStore().heat.heaters[bedHeater] !== null)));
+const hasChambers = computed(() => useMachinesModelStore().heat.chamberHeaters.some(chamberHeater => (chamberHeater >= 0) && (chamberHeater < useMachinesModelStore().heat.heaters.length) && (useMachinesModelStore().heat.heaters[chamberHeater] !== null)));
 
 // Bed control
-const bedHeaters = computed(() => store.state.machine.model.heat.bedHeaters);
-const singleBedControl = computed<boolean>(() => store.state.machine.settings.singleBedControl);
+const bedHeaters = computed(() => useMachinesModelStore().heat.bedHeaters);
+const singleBedControl = computed<boolean>(() => useMachinesSettingsStore().singleBedControl);
 
 // Chamber control
-const chamberHeaters = computed(() => store.state.machine.model.heat.chamberHeaters);
+const chamberHeaters = computed(() => useMachinesModelStore().heat.chamberHeaters);
 
 // Heater fault management
 const resettingHeaterFault = ref(false), faultyHeaterToReset = ref(-1);

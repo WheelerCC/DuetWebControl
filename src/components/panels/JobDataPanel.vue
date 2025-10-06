@@ -55,25 +55,26 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
+
 import { isPrinting } from "@/utils/enums";
+import { useMachinesModelStore } from "@/stores/machineModel";
 
 export default Vue.extend({
 	computed: {
 		warmUpDuration(): number | null {
-			return isPrinting(store.state.machine.model.state.status) ? store.state.machine.model.job.warmUpDuration : store.state.machine.model.job.lastWarmUpDuration;
+			return isPrinting(useMachinesModelStore().state.status) ? useMachinesModelStore().job.warmUpDuration : useMachinesModelStore().job.lastWarmUpDuration;
 		},
 		layerTime(): number | null {
-			return store.state.machine.model.job.layerTime;
+			return useMachinesModelStore().job.layerTime;
 		},
 		lastLayerTime(): number | null {
-			if (store.state.machine.model.job.layers.length === 0) {
+			if (useMachinesModelStore().job.layers.length === 0) {
 				return null;
 			}
-			return store.state.machine.model.job.layers[store.state.machine.model.job.layers.length - 1].duration;
+			return useMachinesModelStore().job.layers[useMachinesModelStore().job.layers.length - 1].duration;
 		},
 		jobDuration(): number | null {
-			return isPrinting(store.state.machine.model.state.status) ? store.state.machine.model.job.duration : store.state.machine.model.job.lastDuration;
+			return isPrinting(useMachinesModelStore().state.status) ? useMachinesModelStore().job.duration : useMachinesModelStore().job.lastDuration;
 		}
 	}
 });

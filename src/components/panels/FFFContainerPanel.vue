@@ -33,13 +33,14 @@
 </template>
 
 <script lang="ts">
+import { useMachinesStore } from "@/stores/machines";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
-		hasTemperaturesToDisplay(): boolean { return store.getters["machine/hasTemperaturesToDisplay"]; }
+		hasTemperaturesToDisplay(): boolean { return useMachinesStore().hasTemperaturesToDisplay; }
 	}
 });
 </script>

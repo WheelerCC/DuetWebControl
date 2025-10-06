@@ -102,9 +102,10 @@
 import { CancellationToken } from "@duet3d/connectors";
 import Vue from "vue"
 
-import store from "@/store";
-import { FileTransferItem } from "@/store/machine";
+
 import Events from "@/utils/events"
+import { useRootStore } from "@/stores";
+import { FileTransferItem } from "@/stores/machines";
 
 export default Vue.extend({
 	data() {
@@ -119,10 +120,10 @@ export default Vue.extend({
 	},
 	computed: {
 		shown(): boolean {
-			return this.filesBeingTransferred[store.state.selectedMachine] !== undefined;
+			return this.filesBeingTransferred[useRootStore().selectedMachine] !== undefined;
 		},
 		isUploading(): boolean {
-			return this.isMachineUploading[store.state.selectedMachine];
+			return this.isMachineUploading[useRootStore().selectedMachine];
 		},
 		title(): string {
 			if (this.transfersFinished) {
@@ -146,7 +147,7 @@ export default Vue.extend({
 			return this.$t(translation, [fileBeingTransferred, this.files.length, (totalProgress * 100).toFixed(1)]);
 		},
 		fileNameOffset(): number {
-			return this.fileNameOffsets[store.state.selectedMachine] || 0;
+			return this.fileNameOffsets[useRootStore().selectedMachine] || 0;
 		},
 		currentSpeed(): number | null {
 			if (!this.files.some(file => file.error)) {
@@ -159,10 +160,10 @@ export default Vue.extend({
 			return null;
 		},
 		canCancel(): boolean {
-			return !this.transfersFinished && (this.cancellationTokens[store.state.selectedMachine] !== undefined);
+			return !this.transfersFinished && (this.cancellationTokens[useRootStore().selectedMachine] !== undefined);
 		},
 		files(): Array<FileTransferItem> {
-			return this.filesBeingTransferred[store.state.selectedMachine] || [];
+			return this.filesBeingTransferred[useRootStore().selectedMachine] || [];
 		},
 		transfersFinished(): boolean {
 			if (this.files.some(file => file.error)) {
@@ -213,13 +214,13 @@ export default Vue.extend({
 			return (file.retry > 0) ? "warning" : "info";
 		},
 		cancel() {
-			this.cancellationTokens[store.state.selectedMachine].cancel();
-			Vue.delete(this.cancellationTokens, store.state.selectedMachine);
+			this.cancellationTokens[useRootStore().selectedMachine].cancel();
+			Vue.delete(this.cancellationTokens, useRootStore().selectedMachine);
 		},
 		close() {
-			Vue.delete(this.closeProgressOnSuccess, store.state.selectedMachine);
-			Vue.delete(this.cancellationTokens, store.state.selectedMachine);
-			Vue.delete(this.filesBeingTransferred, store.state.selectedMachine);
+			Vue.delete(this.closeProgressOnSuccess, useRootStore().selectedMachine);
+			Vue.delete(this.cancellationTokens, useRootStore().selectedMachine);
+			Vue.delete(this.filesBeingTransferred, useRootStore().selectedMachine);
 		},
 		multiUploadStarting({ machine, files, showProgress, closeProgressOnSuccess, cancellationToken } : { machine: string, files: Array<FileTransferItem>, showProgress: boolean, closeProgressOnSuccess: boolean, cancellationToken: CancellationToken }) {
 			if (showProgress) {
@@ -265,7 +266,7 @@ export default Vue.extend({
 			}
 		},
 		fileComplete({ machine, num, count } : { machine: string, num: number, count: number }) {
-			if (store.state.selectedMachine === machine && num + 1 === count && this.closeProgressOnSuccess[machine]) {
+			if (useRootStore().selectedMachine === machine && num + 1 === count && this.closeProgressOnSuccess[machine]) {
 				this.close();
 			} else if (this.$refs.fileTable) {
 				const fileTable = this.$refs.fileTable as HTMLTableElement;

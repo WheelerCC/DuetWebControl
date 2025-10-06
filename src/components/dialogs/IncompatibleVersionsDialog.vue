@@ -48,9 +48,12 @@ import semver from "semver";
 import Vue from "vue";
 
 import packageInfo from "../../../package.json";
-import store from "@/store";
+
 import { LogType } from "@/utils/logging";
 import { MachineStatus } from "@duet3d/objectmodel";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
+import { useRootStore } from "@/stores";
 
 const patchDiffs: Array<semver.ReleaseType | null> = ["patch", "prepatch", "prerelease"];
 
@@ -62,9 +65,9 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnecting(): boolean { return store.state.isConnecting; },
-		state(): MachineStatus { return store.state.machine.model.state.status; },
-		upgradeDocs(): string { return (store.state.machine.model.sbc !== null) ? "https://docs.duet3d.com/en/User_manual/Machine_configuration/SBC_setup" : "https://docs.duet3d.com/en/User_manual/RepRapFirmware/Updating_firmware" }
+		isConnecting(): boolean { return useRootStore().isConnecting; },
+		state(): MachineStatus { return useMachinesModelStore().state.status; },
+		upgradeDocs(): string { return (useMachinesModelStore().sbc !== null) ? "https://docs.duet3d.com/en/User_manual/Machine_configuration/SBC_setup" : "https://docs.duet3d.com/en/User_manual/RepRapFirmware/Updating_firmware" }
 	},
 	watch: {
 		state(to: MachineStatus, from: MachineStatus) {
@@ -91,13 +94,13 @@ export default Vue.extend({
 	methods: {
 		checkVersions() {
 			this.checkVersionsTimeout = null;
-			if (store.state.machine.settings.checkVersions) {
+			if (useMachinesSettingsStore().checkVersions) {
 				let versionMismatch = false, patchVersionMismatch = false;
 				try {
-					const mainboardVersion = store.state.machine.model.boards.find(board => !board.canAddress)?.firmwareVersion;
+					const mainboardVersion = useMachinesModelStore().boards.find(board => !board.canAddress)?.firmwareVersion;
 					if (mainboardVersion) {
 						// Check expansion board firmware versions
-						for (const board of store.state.machine.model.boards) {
+						for (const board of useMachinesModelStore().boards) {
 							if (board.canAddress && board.firmwareVersion && semver.compare(mainboardVersion, board.firmwareVersion, true) !== 0) {
 								const vDiff = semver.diff(mainboardVersion, board.firmwareVersion);
 								if (patchDiffs.includes(vDiff)) {
@@ -111,13 +114,13 @@ export default Vue.extend({
 						}
 
 						// Check DSF version
-						if (!versionMismatch && store.state.machine.model.sbc !== null && semver.compare(mainboardVersion, store.state.machine.model.sbc.dsf.version, true) !== 0) {
-							const vDiff = semver.diff(mainboardVersion, store.state.machine.model.sbc.dsf.version);
+						if (!versionMismatch && useMachinesModelStore().sbc !== null && semver.compare(mainboardVersion, useMachinesModelStore().sbc!.dsf.version, true) !== 0) {
+							const vDiff = semver.diff(mainboardVersion, useMachinesModelStore().sbc!.dsf.version);
 							if (patchDiffs.includes(vDiff)) {
-								console.warn(`DSF minor version mismatch (MB ${mainboardVersion} != DSF ${store.state.machine.model.sbc.dsf.version})`);
+								console.warn(`DSF minor version mismatch (MB ${mainboardVersion} != DSF ${useMachinesModelStore().sbc!.dsf.version})`);
 								patchVersionMismatch = true;
 							} else {
-								console.warn(`DSF major version mismatch (MB ${mainboardVersion} != DSF ${store.state.machine.model.sbc.dsf.version})`);
+								console.warn(`DSF major version mismatch (MB ${mainboardVersion} != DSF ${useMachinesModelStore().sbc!.dsf.version})`);
 								versionMismatch = true;
 							}
 						}

@@ -29,8 +29,10 @@ import { CategoryScale, Chart, ChartDataset, Legend, LinearScale, LineController
 import { Layer, ModelCollection } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { display, displayZ, displayTime } from "@/utils/display";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
 
 // Register required components and scales
 Chart.register(
@@ -51,9 +53,9 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		darkTheme(): boolean { return store.state.settings.darkTheme; },
-		language(): string { return store.state.settings.language; },
-		layers(): ModelCollection<Layer> { return store.state.machine.model.job.layers; }
+		darkTheme(): boolean { return useSettingsStore().darkTheme; },
+		language(): string { return useSettingsStore().language; },
+		layers(): ModelCollection<Layer> { return useMachinesModelStore().job.layers; }
 	},
 	watch: {
 		darkTheme(to: boolean) {

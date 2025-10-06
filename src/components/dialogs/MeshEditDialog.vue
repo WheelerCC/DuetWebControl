@@ -144,8 +144,10 @@
 <script lang="ts">
 import Vue from "vue";
 import { KinematicsName, ProbeGrid } from "@duet3d/objectmodel";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	props: {
@@ -169,9 +171,9 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		probeGrid(): ProbeGrid { return store.state.machine.model.move.compensation.probeGrid; },
+		probeGrid(): ProbeGrid { return useMachinesModelStore().move.compensation.probeGrid; },
 		isDelta(): boolean {
-			return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(store.state.machine.model.move.kinematics.name);
+			return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(useMachinesModelStore().move.kinematics.name);
 		}
 	},
 	watch: {
@@ -203,9 +205,9 @@ export default Vue.extend({
 				this.hide();
 
 				if (this.isDelta) {
-					await store.dispatch("machine/sendCode", `M557 R${this.radius} S${this.spacingX}`);
+					await useMachinesStore().sendCode(`M557 R${this.radius} S${this.spacingX}`);
 				} else {
-					await store.dispatch("machine/sendCode", `M557 X${this.minX}:${this.maxX} Y${this.minY}:${this.maxY} S${this.spacingX}:${this.spacingY}`);
+					await useMachinesStore().sendCode(`M557 X${this.minX}:${this.maxX} Y${this.minY}:${this.maxY} S${this.spacingX}:${this.spacingY}`);
 				}
 			}
 		},

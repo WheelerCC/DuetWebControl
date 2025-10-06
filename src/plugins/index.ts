@@ -1,10 +1,11 @@
 import { PluginManifest, SbcPermission } from "@duet3d/objectmodel";
 import { Component } from "vue";
 
-import store from "@/store";
+
 
 import PluginImports from "./imports";
 import DwcPlugin from "./DwcPlugin";
+import { useUIInjectionStore } from "@/stores/uiInjection";
 
 /**
  * Check if the given plugin manifest is valid
@@ -103,13 +104,13 @@ export enum ContextMenuType {
  * @param contextMenuType Target of the context menu item
  */
 export function registerPluginContextMenuItem(name: string | (() => string), path: string | undefined, icon: string, action: string, contextMenuType: ContextMenuType) {
-	store.commit("uiInjection/registerPluginContextMenuItem", {
+	useUIInjectionStore().registerPluginContextMenuItem({
 		name,
 		path,
 		icon,
 		action,
 		contextMenuType
-	});
+	})
 }
 
 /**
@@ -119,5 +120,8 @@ export function registerPluginContextMenuItem(name: string | (() => string), pat
  * @param component Component type
  */
 export function injectComponent(name: string, component: Component) {
-	store.commit("uiInjection/injectComponent", { name, component });
+	useUIInjectionStore().injectComponent({
+		name,
+		component
+	})
 }

@@ -2,7 +2,7 @@ import { MachineMode } from "@duet3d/objectmodel";
 import Vue, { Component } from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
 
-import store from "@/store";
+
 
 import Status from "./Control/StatusComponent.vue";
 import Dashboard from "./Control/DashboardComponent.vue";
@@ -21,6 +21,8 @@ import Machine from "./Settings/MachineComponent.vue";
 import Plugins from "./Settings/PluginsComponent.vue";
 
 import Page404 from "./Page404Component.vue";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
 
 Vue.use(VueRouter);
 
@@ -128,7 +130,7 @@ export const Menu = Vue.observable<Record<string, MenuCategory>>({
 				icon: "mdi-webcam",
 				caption: "menu.job.webcam",
 				path: "/Job/Webcam",
-				condition: () => store.state.settings.webcam.enabled,
+				condition: () => useSettingsStore().webcam.enabled,
 				component: Webcam
 			}
 		],
@@ -142,7 +144,7 @@ export const Menu = Vue.observable<Record<string, MenuCategory>>({
 				icon: "mdi-database",
 				caption: "menu.files.filaments",
 				path: "/Files/Filaments",
-				condition: () => !store.state.machine.model.state.machineMode || store.state.machine.model.state.machineMode === MachineMode.fff,
+				condition: () => !useMachinesModelStore().state.machineMode || useMachinesModelStore().state.machineMode === MachineMode.fff,
 				component: Filaments
 			},
 			{

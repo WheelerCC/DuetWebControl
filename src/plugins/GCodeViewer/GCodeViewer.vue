@@ -657,7 +657,6 @@ import { KinematicsName } from '@duet3d/objectmodel';
 import gcodeViewer from '@sindarius/gcodeviewer';
 import { mapActions, mapState } from 'vuex';
 
-import { setPluginData, PluginDataType } from '@/store';
 import { isPrinting } from '@/utils/enums';
 import Path from '@/utils/path';
 import { Vector3 } from '@babylonjs/core/Maths/math';

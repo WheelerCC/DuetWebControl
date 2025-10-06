@@ -1,10 +1,12 @@
 import Vue from "vue";
 
 import i18n from "@/i18n";
-import store from "@/store";
-import { defaultMachine } from "@/store/machine";
+
 
 import { makeNotification } from "./notifications";
+import { defaultMachine } from "@/stores/misc";
+import { useMachinesStore } from "@/stores/machines";
+import { useRootStore } from "@/stores";
 
 /**
  * Possible logging types
@@ -24,9 +26,9 @@ export enum LogType {
  * @param message Actual message
  * @param hostname Hostname to log this message to
  */
-export function log(type: LogType, title: string, message: string | null = null, hostname = store.state.selectedMachine) {
+export function log(type: LogType, title: string, message: string | null = null, hostname?: string) {
 	makeNotification(type, title, message);
-	store.commit(`machines/${hostname}/log`, { date: new Date(), type, title, message });
+	logToConsole(type, title, message, hostname)
 }
 
 /**
@@ -36,8 +38,8 @@ export function log(type: LogType, title: string, message: string | null = null,
  * @param message Actual message
  * @param hostname Hostname to log this message to
  */
-export function logToConsole(type: LogType, title: string, message: string | null = null, hostname = store.state.selectedMachine) {
-	store.commit(`machines/${hostname}/log`, { date: new Date(), type, title, message });
+export function logToConsole(type: LogType, title: string, message: string | null = null, hostname?: string) {
+	useMachinesStore().log({ date: new Date(), type, title, message }, hostname);
 }
 
 /**
@@ -46,7 +48,7 @@ export function logToConsole(type: LogType, title: string, message: string | nul
  * @param reply Code reply
  * @param hostname Hostname of the machine that produced the reply
  */
-export function logCode(code: string | null, reply: string, hostname = store.state.selectedMachine) {
+export function logCode(code: string | null, reply: string, hostname?: string) {
 	if (!code && !reply) {
 		// Make sure there is something to log...
 		return;
@@ -62,9 +64,10 @@ export function logCode(code: string | null, reply: string, hostname = store.sta
 		type = LogType.success;
 	}
 
+	let rootStore = useRootStore()
 	// Log it
 	const responseLines = toLog.split('\n')
-	if (hostname === store.state.selectedMachine && !store.state.hideCodeReplyNotifications) {
+	if (hostname === rootStore.selectedMachine && !rootStore.hideCodeReplyNotifications) {
 		let title = code || "", message = responseLines.join("<br>");
 		if (responseLines.length > 3 || toLog.length > 128) {
 			title = (!code) ? i18n.t("notification.responseTooLong") : code;
@@ -76,12 +79,12 @@ export function logCode(code: string | null, reply: string, hostname = store.sta
 
 		makeNotification(type, title, message, null, "/Console");
 	}
-	store.commit(`machines/${hostname}/log`, {
+	useMachinesStore().log({
 		date: new Date(),
 		type,
-		title: code,
+		title: code ?? '',
 		message: reply
-	});
+	}, hostname)
 }
 
 /**
@@ -91,12 +94,12 @@ export function logCode(code: string | null, reply: string, hostname = store.sta
  * @param message Message content
  */
 export function logGlobal(type: LogType, title: string, message: string | null = null) {
-	if (store.state.selectedMachine !== defaultMachine) {
+	if (useRootStore().selectedMachine !== defaultMachine) {
 		log(type, title, message);
 	} else {
 		makeNotification(type, title, message);
 	}
-	store.commit(`machines/${defaultMachine}/log`, { date: new Date(), type, title, message });
+	useMachinesStore().log({ date: new Date(), type, title, message });
 }
 
 // Register extensions

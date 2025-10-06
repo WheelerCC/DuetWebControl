@@ -89,11 +89,14 @@ import { FileListItem } from "@duet3d/connectors";
 import { Volume } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { DisconnectedError, getErrorMessage } from "@/utils/errors";
 import Events from "@/utils/events";
 import { LogType } from "@/utils/logging";
 import Path, { escapeFilename } from "@/utils/path";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
 interface MacroItemProperties {
 	displayName: string;
@@ -112,11 +115,11 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; },
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		selectedMachine(): string { return store.state.selectedMachine; },
-		macrosDirectory(): string { return store.state.machine.model.directories.macros; },
-		volumes(): Array<Volume> { return store.state.machine.model.volumes; },
+		isConnected(): boolean { return useRootStore().isConnected; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		selectedMachine(): string { return useRootStore().selectedMachine; },
+		macrosDirectory(): string { return useMachinesModelStore().directories.macros; },
+		volumes(): Array<Volume> { return useMachinesModelStore().volumes; },
 		currentDirectory(): string {
 			if (Path.startsWith(this.directory, this.macrosDirectory)) {
 				let subDirectory = this.directory.substring(this.macrosDirectory.length);
@@ -196,7 +199,8 @@ export default Vue.extend({
 
 			this.loading = true;
 			try {
-				const files: Array<MacroItem> = await store.dispatch("machine/getFileList", directory);
+
+				const files: Array<MacroItem> = await useMachinesStore().getFileList(directory)
 				files.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 				files.sort((a, b) => (a.isDirectory === b.isDirectory) ? 0 : (a.isDirectory ? -1 : 1));
 				for (const item of files) {
@@ -228,7 +232,7 @@ export default Vue.extend({
 			} else if (!item.executing) {
 				item.executing = true;
 				try {
-					await store.dispatch("machine/sendCode", `M98 P"${escapeFilename(filename)}"`);
+					await useMachinesStore().sendCode(`M98 P"${escapeFilename(filename)}"`);
 				} catch (e) {
 					if (!(e instanceof DisconnectedError)) {
 						console.warn(e);
@@ -242,7 +246,7 @@ export default Vue.extend({
 		},
 
 		filesOrDirectoriesChanged({ machine, files, volume }: { machine: string, files?: Array<string>, volume?: number }) {
-			if (machine === store.state.selectedMachine && ((files !== undefined && Path.filesAffectDirectory(files, this.directory)) || (volume === Path.getVolume(this.directory)))) {
+			if (machine === useRootStore().selectedMachine && ((files !== undefined && Path.filesAffectDirectory(files, this.directory)) || (volume === Path.getVolume(this.directory)))) {
 				// File or directory has been changed in the current directory
 				this.refresh();
 			}

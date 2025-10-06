@@ -94,9 +94,11 @@ import Vue from "vue";
 import { DataTableHeader } from "vuetify";
 
 import i18n from "@/i18n";
-import store from "@/store";
-import { MachineEvent } from "@/store/machine";
+
 import { LogType } from "@/utils/logging";
+import { MachineEvent, useMachinesStore } from "@/stores/machines";
+import { useMachinesCacheStore } from "@/stores/machineCache";
+import { useSettingsStore } from "@/stores/settings";
 
 export default Vue.extend({
 	computed: {
@@ -122,9 +124,9 @@ export default Vue.extend({
 			]
 		},
 		sortBy: {
-			get(): string { return store.state.machine.cache.sorting.events.column; },
+			get(): string { return useMachinesCacheStore().sorting.events.column; },
 			set(value: string) {
-				store.commit("machine/cache/setSorting", {
+				useMachinesCacheStore().setSorting({
 					table: "events",
 					column: value,
 					descending: this.sortDesc
@@ -132,21 +134,21 @@ export default Vue.extend({
 			}
 		},
 		sortDesc: {
-			get() { return store.state.machine.cache.sorting.events.descending; },
-			set(value) {
-				store.commit("machine/cache/setSorting", {
+			get() { return useMachinesCacheStore().sorting.events.descending; },
+			set(value: boolean) {
+				useMachinesCacheStore().setSorting({
 					table: "events",
 					column: this.sortBy,
 					descending: value
 				});
 			}
 		},
-		events(): Array<MachineEvent> { return store.state.machine.events; }
+		events(): Array<MachineEvent> { return useMachinesStore().events; }
 	},
 	methods: {
 		getHeaderText: (header: { text: string | (() => string) }) => (header.text instanceof (Function)) ? header.text() : header.text,
 		getClassByEvent(type: LogType) {
-			if (store.state.settings.darkTheme) {
+			if (useSettingsStore().darkTheme) {
 				switch (type) {
 					case LogType.success: return "green darken-1";
 					case LogType.warning: return "amber darken-1";
@@ -179,11 +181,11 @@ export default Vue.extend({
 			return result;
 		},
 		clearLog() {
-			store.commit("machine/clearLog");
+			useMachinesStore().clearLog()
 		},
 		downloadText() {
 			let textContent = "";
-			for (const e of store.state.machine.events) {
+			for (const e of useMachinesStore().events) {
 				const title = e.title?.replace(/\n/g, "\r\n") ?? "";
 				const message = e.message ? e.message.replace(/\n/g, "\r\n") : "";
 				textContent += `${e.date.toLocaleString()}: ${message ? (title + ": " + message) : title}\r\n`;
@@ -194,7 +196,7 @@ export default Vue.extend({
 		},
 		downloadCSV() {
 			var csvContent = '"date","time","title","message"\r\n';
-			for (const e of store.state.machine.events) {
+			for (const e of useMachinesStore().events) {
 				const title = e.title?.replace(/\n/g, "\r\n") ?? "";
 				const message = e.message ? e.message.replace(/"/g, '""').replace(/\n/g, "\r\n") : "";
 				csvContent += `"${e.date.toLocaleDateString()}","${e.date.toLocaleTimeString()}","${title}","${message}"\r\n`;

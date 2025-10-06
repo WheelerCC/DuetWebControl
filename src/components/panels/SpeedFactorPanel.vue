@@ -37,15 +37,18 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
 		speedFactor: {
-			get(): number { return (store.state.machine.model.move.speedFactor !== null) ? (store.state.machine.model.move.speedFactor * 100) : 100; },
+			get(): number { return (useMachinesModelStore().move.speedFactor !== null) ? (useMachinesModelStore().move.speedFactor * 100) : 100; },
 			set(value: number) { this.sendCode(`M220 S${value}`); }
 		},
 		speedFactorMin(): number { return Math.max(1, Math.min(100, this.speedFactor - 50)); },
@@ -53,7 +56,7 @@ export default Vue.extend({
 	},
 	methods: {
 		async sendCode(code: string) {
-			await store.dispatch("machine/sendCode", code);
+			await useMachinesStore().sendCode(code);
 		}
 	}
 });

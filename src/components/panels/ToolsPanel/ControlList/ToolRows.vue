@@ -259,26 +259,31 @@ import { Heater, HeaterState, MachineStatus, SpindleState, Tool } from "@duet3d/
 import { computed, ref } from "vue";
 
 import i18n from "@/i18n";
-import store from "@/store";
+
 import { getHeaterColor } from "@/utils/colors";
 import { DisconnectedError, getErrorMessage } from "@/utils/errors";
 import { log, LogType } from "@/utils/logging";
 import { displaySensorValue } from "@/utils/display";
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
+import { useMachinesStore } from "@/stores/machines";
 
 const emit = defineEmits<{
     (e: "resetHeaterFault", heater: number): void
 }>();
 
-const disabled = computed<boolean>(() => store.getters["uiFrozen"] || [MachineStatus.pausing, MachineStatus.processing, MachineStatus.resuming, MachineStatus.simulating].includes(store.state.machine.model.state.status));
+const disabled = computed<boolean>(() => useRootStore().uiFrozen || [MachineStatus.pausing, MachineStatus.processing, MachineStatus.resuming, MachineStatus.simulating].includes(useMachinesModelStore().state.status));
 
 // Tool display
 const toolsToDisplay = computed<Array<Tool>>(() => {
-    if (!store.state.machine.settings.groupTools) {
-        return store.state.machine.model.tools.filter(tool => tool !== null) as Array<Tool>;
+    if (!useMachinesSettingsStore().groupTools) {
+        return useMachinesModelStore().tools.filter(tool => tool !== null) as Array<Tool>;
     }
 
     const tools: Array<Tool> = [];
-    for (const item of store.state.machine.model.tools) {
+    for (const item of useMachinesModelStore().tools) {
         if (item !== null) {
             let equalToolFound = false;
 
@@ -291,7 +296,7 @@ const toolsToDisplay = computed<Array<Tool>>(() => {
                 {
                     // Tool is identical
                     equalToolFound = true;
-                    if (item.number === store.state.machine.model.state.currentTool) {
+                    if (item.number === useMachinesModelStore().state.currentTool) {
                         // If another tool is selected, prefer the displayed tool
                         tools[i] = item;
                     }
@@ -306,12 +311,12 @@ const toolsToDisplay = computed<Array<Tool>>(() => {
     return tools;
 });
 
-const currentTool = computed(() => store.state.machine.model.state.currentTool), busyTool = ref<Tool | null>(null);
-const selectedToolClass = computed(() => store.state.settings.darkTheme ? "grey darken-3" : "blue lighten-5");
+const currentTool = computed(() => useMachinesModelStore().state.currentTool), busyTool = ref<Tool | null>(null);
+const selectedToolClass = computed(() => useSettingsStore().darkTheme ? "grey darken-3" : "blue lighten-5");
 
 function isToolCollapsed(tool: Tool) {
-    if (toolsToDisplay.value.length < store.state.machine.model.tools.length) {
-        for (const item of store.state.machine.model.tools) {
+    if (toolsToDisplay.value.length < useMachinesModelStore().tools.length) {
+        for (const item of useMachinesModelStore().tools) {
             if (item !== null && item !== tool) {
                 if ((item.extruders.length === tool.extruders.length && item.extruders.every((extruder, index) => extruder === tool.extruders[index])) &&
                     (item.heaters.length === tool.heaters.length && item.heaters.every((heater, index) => heater === tool.heaters[index])) &&
@@ -328,7 +333,7 @@ function isToolCollapsed(tool: Tool) {
 
 function getCollapsedTools(tool: Tool) {
     const tools: Array<Tool> = [];
-    for (const item of store.state.machine.model.tools) {
+    for (const item of useMachinesModelStore().tools) {
         if (item !== null &&
             (item.extruders.length === tool.extruders.length && item.extruders.every((extruder, index) => extruder === tool.extruders[index])) &&
             (item.heaters.length === tool.heaters.length && item.heaters.every((heater, index) => heater === tool.heaters[index])) &&
@@ -353,7 +358,7 @@ function isToolBusy(tool: Tool) {
 function getToolIcon(tool: Tool) {
     if (tool !== null) {
         if (tool.extruders.length > 0) {
-            if (store.state.machine.model.heat.heaters.some((heater, heaterIndex) => (heater !== null) && (heater.state === HeaterState.fault) && tool.heaters.includes(heaterIndex))) {
+            if (useMachinesModelStore().heat.heaters.some((heater, heaterIndex) => (heater !== null) && (heater.state === HeaterState.fault) && tool.heaters.includes(heaterIndex))) {
                 return "mdi-printer-3d-nozzle-alert";
             }
             return "mdi-printer-3d-nozzle";
@@ -370,7 +375,7 @@ function getToolIcon(tool: Tool) {
 }
 
 // Tool caption
-const toolChangeParameter = computed<string>(() => store.getters["machine/settings/toolChangeParameter"]);
+const toolChangeParameter = computed<string>(() => useMachinesSettingsStore().toolChangeParameter());
 
 async function toolClick(tool: Tool) {
     if (disabled.value || busyTool.value !== null) {
@@ -379,12 +384,12 @@ async function toolClick(tool: Tool) {
 
     busyTool.value = tool;
     try {
-        if (store.state.machine.model.state.currentTool === tool.number) {
+        if (useMachinesModelStore().state.currentTool === tool.number) {
             // Deselect current tool
-            await store.dispatch("machine/sendCode", "T-1" + toolChangeParameter.value);
+            await useMachinesStore().sendCode("T-1" + toolChangeParameter.value);
         } else {
             // Select new tool
-            await store.dispatch("machine/sendCode", `T${tool.number}${toolChangeParameter.value}`);
+            await useMachinesStore().sendCode(`T${tool.number}${toolChangeParameter.value}`);
         }
     } catch (e) {
         if (!(e instanceof DisconnectedError)) {
@@ -398,14 +403,14 @@ async function toolClick(tool: Tool) {
 const loadingFilament = ref(false), filamentDialogShown = ref(false), filamentRunMacros = ref(true), filamentDialogTool = ref<Tool | null>(null);
 
 function getFilament(tool: Tool) {
-    if ((tool.filamentExtruder >= 0) && (tool.filamentExtruder < store.state.machine.model.move.extruders.length)) {
-        return store.state.machine.model.move.extruders[tool.filamentExtruder].filament;
+    if ((tool.filamentExtruder >= 0) && (tool.filamentExtruder < useMachinesModelStore().move.extruders.length)) {
+        return useMachinesModelStore().move.extruders[tool.filamentExtruder].filament;
     }
     return null;
 }
 
 function canLoadFilament(tool: Tool) {
-    return (tool.filamentExtruder >= 0) && (tool.filamentExtruder < store.state.machine.model.move.extruders.length);
+    return (tool.filamentExtruder >= 0) && (tool.filamentExtruder < useMachinesModelStore().move.extruders.length);
 }
 
 async function showFilamentDialog(tool: Tool, runMacros: boolean) {
@@ -430,7 +435,7 @@ async function unloadFilament(tool: Tool) {
             code = `T${tool.number}\n`;
         }
         code += "M702";
-        await store.dispatch("machine/sendCode", code);
+        await useMachinesStore().sendCode(code);
     } finally {
         busyTool.value = null;
     }
@@ -438,7 +443,7 @@ async function unloadFilament(tool: Tool) {
 
 // Tool heaters
 function getToolHeaters(tool: Tool) {
-    const heaters = store.state.machine.model.heat.heaters;
+    const heaters = useMachinesModelStore().heat.heaters;
     const toolHeaters = tool.heaters
         .filter(heaterIndex => (heaterIndex >= 0) && (heaterIndex < heaters.length) && (heaters[heaterIndex] !== null))
         .map(heaterIndex => heaters[heaterIndex]);
@@ -454,8 +459,8 @@ function getHeaterClasses(heater: number) {
 }
 
 function getHeaterName(heater: Heater | null, heaterIndex: number) {
-    if ((heater !== null) && (heater.sensor >= 0) && (heater.sensor < store.state.machine.model.sensors.analog.length)) {
-        const sensor = store.state.machine.model.sensors.analog[heater.sensor];
+    if ((heater !== null) && (heater.sensor >= 0) && (heater.sensor < useMachinesModelStore().sensors.analog.length)) {
+        const sensor = useMachinesModelStore().sensors.analog[heater.sensor];
         if ((sensor !== null) && sensor.name) {
             const matches = /(.*)\[(.*)\]$/.exec(sensor.name);
             if (matches) {
@@ -468,8 +473,8 @@ function getHeaterName(heater: Heater | null, heaterIndex: number) {
 }
 
 function getHeaterValue(heater: Heater | null) {
-    if ((heater !== null) && (heater.sensor >= 0) && (heater.sensor < store.state.machine.model.sensors.analog.length)) {
-        const sensor = store.state.machine.model.sensors.analog[heater.sensor];
+    if ((heater !== null) && (heater.sensor >= 0) && (heater.sensor < useMachinesModelStore().sensors.analog.length)) {
+        const sensor = useMachinesModelStore().sensors.analog[heater.sensor];
         if (sensor !== null) {
             return displaySensorValue(sensor);
         }
@@ -484,26 +489,26 @@ async function toolHeaterClick(tool: Tool, heater: Heater) {
 
     switch (heater.state) {
         case HeaterState.off:		// Off -> Active
-            await store.dispatch("machine/sendCode", `M568 P${tool.number} A2`);
+            await useMachinesStore().sendCode(`M568 P${tool.number} A2`);
             break;
 
         case HeaterState.standby:	// Standby -> Off
-            await store.dispatch("machine/sendCode", `M568 P${tool.number} A0`);
+            await useMachinesStore().sendCode(`M568 P${tool.number} A0`);
             break;
 
         case HeaterState.active:	// Active -> Standby
-            await store.dispatch("machine/sendCode", `M568 P${tool.number} A1`);
+            await useMachinesStore().sendCode(`M568 P${tool.number} A1`);
             break;
 
         case HeaterState.fault:		// Fault -> Ask for reset
-            emit("resetHeaterFault", store.state.machine.model.heat.heaters.indexOf(heater));
+            emit("resetHeaterFault", useMachinesModelStore().heat.heaters.indexOf(heater));
             break;
     }
 }
 
 // Spindles
 function getSpindle(tool: Tool) {
-    return (tool.spindle >= 0) && (tool.spindle < store.state.machine.model.spindles.length) ? store.state.machine.model.spindles[tool.spindle] : null;
+    return (tool.spindle >= 0) && (tool.spindle < useMachinesModelStore().spindles.length) ? useMachinesModelStore().spindles[tool.spindle] : null;
 }
 
 function getSpindleSpeed(tool: Tool) {

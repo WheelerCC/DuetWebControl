@@ -1,7 +1,10 @@
 
 <script lang="ts">
 
-import store from '@/store';
+import { useRootStore } from '@/stores';
+import { useMachinesModelStore } from '@/stores/machineModel';
+import { useMachinesStore } from '@/stores/machines';
+import { useMachinesSettingsStore } from '@/stores/machineSettings';
 import { Axis, AxisLetter } from '@duet3d/objectmodel';
 import Vue from "vue";
 
@@ -19,26 +22,26 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => store.getters["machine/settings/moveSteps"](axisLetter)); },
+		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)); },
 			
-		numMoveSteps(): number { return store.getters["machine/settings/numMoveSteps"]; },
+		numMoveSteps(): number { return useMachinesSettingsStore().numMoveSteps() },
 		move() {
-			return store.state.machine.model.move
+			return useMachinesModelStore().move
 		}, 
 		tools() {
-			return store.state.machine.model.tools
+			return useMachinesModelStore().tools
 		},
 		endstops() {
-			return  store.state.machine.model.sensors.endstops
+			return  useMachinesModelStore().sensors.endstops
 		},
 		currentTool() {
-			return  store.state.machine.model.state.currentTool
+			return  useMachinesModelStore().state.currentTool
 		},
 		currentWorkOffset() {
-			return  store.state.machine.model.move.workplaceNumber
+			return  useMachinesModelStore().move.workplaceNumber
 		},
 		visibleAxes() {
-			return store.state.machine.model.move.axes.filter(axis => axis.visible);
+			return useMachinesModelStore().move.axes.filter(axis => axis.visible);
 		},
 		
 		workpieceOffsets() {
@@ -53,7 +56,7 @@ export default Vue.extend({
 			});
 			return offsets;
 		},
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
 		
 	},
 	
@@ -81,7 +84,7 @@ export default Vue.extend({
 			return classList;
 		},
 		getMoveCode(axis: Axis, index: number, decrementing: boolean) {
-			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${store.state.machine.settings.moveFeedrate}\nM121`;
+			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`;
 		},
 		showMoveStepDialog(axis: AxisLetter, index: number) {
 			this.moveStepDialog.axis = axis;
@@ -93,16 +96,16 @@ export default Vue.extend({
 		async setWorkplaceAxisZero(axes: Axis[]) {
 			let axesString = axes.map(axis=>`${axis.letter}0`).join(' ')
 			let code = `G10 L20 P${this.currentWorkplace} ${axesString}`;
-			await store.dispatch("machine/sendCode", `${code}`);
+			await useMachinesStore().sendCode(`${code}`);
 		},
 		async resetWorkplaceAxisZero(axes: Axis[]) {
 			let axesString = axes.map(axis=>`${axis.letter}0`).join(' ')
 			let code = `G10 L2 P${this.currentWorkplace} ${axesString}`;
-			await store.dispatch("machine/sendCode", `${code}`);
+			await useMachinesStore().sendCode(`${code}`);
 		},
 		async selectWorkplaceOffset(index: number) {
 			let code = this.workpieceLabel(index);
-			await store.dispatch("machine/sendCode", `${code}`);
+			await useMachinesStore().sendCode(`${code}`);
 		},
 	}
 })

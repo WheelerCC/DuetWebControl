@@ -123,7 +123,10 @@ import { Board, NetworkInterfaceType } from "@duet3d/objectmodel";
 import Vue from "vue";
 
 import packageInfo from "../../../package.json";
-import store from "@/store";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
+import { useRootStore } from "@/stores";
+
 
 export default Vue.extend({
 	data() {
@@ -133,17 +136,17 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; },
-		isRestConnector(): boolean { return store.getters["machine/connector"] instanceof RestConnector; },
-		boards(): Array<Board> { return store.state.machine.model.boards.filter(board => board !== null); },
+		isConnected(): boolean { return useRootStore().isConnected; },
+		isRestConnector(): boolean { return useMachinesStore().connector instanceof RestConnector; },
+		boards(): Array<Board> { return useMachinesModelStore().boards.filter(board => board !== null); },
 		isDuetFirmware(): boolean { return this.boards.some(board => !board.canAddress && board.firmwareFileName.startsWith("Duet")); },
-		dsfVersion(): string | null { return store.state.machine.model.sbc?.dsf.version ?? null; },
-		dsfBuildDateTime(): string | null { return store.state.machine.model.sbc?.dsf.buildDateTime ?? null; },
-		wifiVersion(): string | null { return store.state.machine.model.network.interfaces.find(iface => iface.type === NetworkInterfaceType.wifi)?.firmwareVersion ?? null; },
+		dsfVersion(): string | null { return useMachinesModelStore().sbc?.dsf.version ?? null; },
+		dsfBuildDateTime(): string | null { return useMachinesModelStore().sbc?.dsf.buildDateTime ?? null; },
+		wifiVersion(): string | null { return useMachinesModelStore().network.interfaces.find(iface => iface.type === NetworkInterfaceType.wifi)?.firmwareVersion ?? null; },
 	},
 	methods: {
 		async diagnostics() {
-			await store.dispatch("machine/sendCode", "M122");
+			await useMachinesStore().sendCode("M122");
 			await this.$router.push("/Console");
 		}
 	}

@@ -39,9 +39,12 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data() {
@@ -50,15 +53,15 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		atxPower(): boolean | null { return store.state.machine.model.state.atxPower; }
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		atxPower(): boolean | null { return useMachinesModelStore().state.atxPower; }
 	},
 	methods: {
 		async toggleAtxPower(value: boolean) {
 			if (!this.sendingCode) {
 				this.sendingCode = true;
 				try {
-					await store.dispatch("machine/sendCode", value ? "M80" : "M81");
+					await useMachinesStore().sendCode(value ? "M80" : "M81");
 				} catch (e) {
 					// handled before we get here
 				}

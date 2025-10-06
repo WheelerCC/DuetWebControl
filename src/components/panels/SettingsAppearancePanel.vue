@@ -87,27 +87,27 @@
 </template>
 
 <script lang="ts">
+import { DashboardMode, SettingsState, UnitOfMeasure, useSettingsStore } from "@/stores/settings";
 import Vue from "vue";
 
-import store from "@/store";
-import { DashboardMode, SettingsState, UnitOfMeasure } from "@/store/settings";
+
 
 export default Vue.extend({
 	computed: {
 		darkTheme: {
-			get(): boolean { return store.state.settings.darkTheme; },
+			get(): boolean { return useSettingsStore().darkTheme; },
 			set(value: boolean) { this.update({ darkTheme: value }); }
 		},
 		decimalPlaces: {
-			get(): number { return store.state.settings.decimalPlaces; },
+			get(): number { return useSettingsStore().decimalPlaces; },
 			set(value: number) { this.update({ decimalPlaces: value }); }
 		},
 		displayUnits: {
-			get(): UnitOfMeasure { return store.state.settings.displayUnits; },
+			get(): UnitOfMeasure { return useSettingsStore().displayUnits; },
 			set(value: UnitOfMeasure) { this.update({ displayUnits: value }); }
 		},
 		language: {
-			get(): string { return store.state.settings.language; },
+			get(): string { return useSettingsStore().language; },
 			set(value: string) { this.update({ language: value }); }
 		},
 		languages() {
@@ -121,19 +121,19 @@ export default Vue.extend({
 			return result;
 		},
 		useBinaryPrefix: {
-			get(): boolean { return store.state.settings.useBinaryPrefix; },
+			get(): boolean { return useSettingsStore().useBinaryPrefix; },
 			set(value: boolean) { this.update({ useBinaryPrefix: value }); }
 		},
 		disableAutoComplete: {
-			get(): boolean { return store.state.settings.disableAutoComplete; },
+			get(): boolean { return useSettingsStore().disableAutoComplete; },
 			set(value: boolean) { this.update({ disableAutoComplete: value }); }
 		},
 		dashboardMode: {
 			get(): DashboardMode {
-				if (!store.state.settings.dashboardMode) {
+				if (!useSettingsStore().dashboardMode) {
 					return DashboardMode.default;
 				}
-				return store.state.settings.dashboardMode;
+				return useSettingsStore().dashboardMode;
 			},
 			set(value: DashboardMode) {
 				this.update({ dashboardMode: value });
@@ -156,21 +156,21 @@ export default Vue.extend({
 			});
 		},
 		bottomNavigation: {
-			get(): boolean { return store.state.settings.bottomNavigation; },
+			get(): boolean { return useSettingsStore().bottomNavigation; },
 			set(value: boolean) { this.update({ bottomNavigation: value }); }
 		},
 		numericInputs: {
-			get(): boolean { return store.state.settings.numericInputs; },
+			get(): boolean { return useSettingsStore().numericInputs; },
 			set(value: boolean) { this.update({ numericInputs: value }); }
 		},
 		iconMenu: {
-			get(): boolean { return store.state.settings.iconMenu; },
+			get(): boolean { return useSettingsStore().iconMenu; },
 			set(value: boolean) { this.update({ iconMenu: value }); }
 		},
 	},
 	methods: {
-		update(data: Partial<SettingsState>) {
-			store.commit("settings/update", data);
+    update(data: Partial<SettingsState>) {
+      useSettingsStore().update(data)
 		}
 	}
 });;

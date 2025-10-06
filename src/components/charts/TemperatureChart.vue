@@ -35,10 +35,15 @@ import { AnalogSensor } from "@duet3d/objectmodel";
 import Vue from "vue";
 
 import i18n from "@/i18n";
-import store from "@/store";
-import { defaultMachine } from "@/store/machine";
+
 import { getRealHeaterColor } from "@/utils/colors";
 import Events from "@/utils/events";
+import { defaultMachine } from "@/stores/misc";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
+import { useRootStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
 
 // Register required components and scales
 Chart.register(
@@ -197,45 +202,45 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		darkTheme(): boolean { return store.state.settings.darkTheme; },
-		selectedMachine(): string { return store.state.selectedMachine; },
-		hasTemperaturesToDisplay(): boolean { return store.getters["machine/hasTemperaturesToDisplay"] },
+		darkTheme(): boolean { return useSettingsStore().darkTheme; },
+		selectedMachine(): string { return useRootStore().selectedMachine; },
+		hasTemperaturesToDisplay(): boolean { return useMachinesStore().hasTemperaturesToDisplay },
 		minConfiguredTemperature(): number {
 			let minTemperature = 0;
-			for (const bedTemp of store.state.machine.settings.temperatures.bed.active) {
+			for (const bedTemp of useMachinesSettingsStore().temperatures.bed.active) {
 				if (bedTemp < minTemperature) {
 					minTemperature = bedTemp;
 				}
 			}
-			for (const bedTemp of store.state.machine.settings.temperatures.bed.standby) {
+			for (const bedTemp of useMachinesSettingsStore().temperatures.bed.standby) {
 				if (bedTemp < minTemperature) {
 					minTemperature = bedTemp;
 				}
 			}
-			for (const chamberTemp of store.state.machine.settings.temperatures.chamber) {
+			for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
 				if (chamberTemp < minTemperature) {
 					minTemperature = chamberTemp;
 				}
 			}
-			for (const chamberTemp of store.state.machine.settings.temperatures.chamber) {
+			for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
 				if (chamberTemp < minTemperature) {
 					minTemperature = chamberTemp;
 				}
 			}
-			for (const toolTemp of store.state.machine.settings.temperatures.tool.active) {
+			for (const toolTemp of useMachinesSettingsStore().temperatures.tool.active) {
 				if (toolTemp < minTemperature) {
 					minTemperature = toolTemp;
 				}
 			}
-			for (const toolTemp of store.state.machine.settings.temperatures.tool.standby) {
+			for (const toolTemp of useMachinesSettingsStore().temperatures.tool.standby) {
 				if (toolTemp < minTemperature) {
 					minTemperature = toolTemp;
 				}
 			}
 			return minTemperature;
 		},
-		minHeaterTemperature(): number | null { return store.getters["machine/model/minHeaterTemperature"] },
-		maxHeaterTemperature(): number | null { return store.getters["machine/model/maxHeaterTemperature"] },
+		minHeaterTemperature(): number | null { return useMachinesModelStore().minHeaterTemperature() },
+		maxHeaterTemperature(): number | null { return useMachinesModelStore().maxHeaterTemperature() },
 	},
 	watch: {
 		darkTheme(to: boolean) {
@@ -350,9 +355,9 @@ export default Vue.extend({
 				const dataset = tempSamples[hostname], now = (new Date()).getTime();
 				if (dataset.times.length === 0 || now - dataset.times[dataset.times.length - 1] > sampleInterval) {
 					// Record sensor temperatures
-					store.state.machines[hostname].model.sensors.analog.forEach((sensor, sensorIndex) => {
+					useMachinesModelStore().sensors.analog.forEach((sensor, sensorIndex) => {
 						if (sensor !== null) {
-							const heaters: Array<{ sensor: number } | null> = store.state.machines[hostname].model.heat.heaters;
+							const heaters: Array<{ sensor: number } | null> = useMachinesModelStore().heat.heaters;
 							const heaterIndex: number = heaters.findIndex((heater: { sensor: number } | null, idx: number) => (heater !== null) && (heater.sensor === sensorIndex));
 							if (heaterIndex !== -1) {
 								pushSeriesData(hostname, heaterIndex, false, sensor);
@@ -371,7 +376,7 @@ export default Vue.extend({
 
 					// Deal with visibility and tell chart instances to update
 					dataset.temps.forEach((dataset) => {
-						dataset.showLine = !dataset.extra || (store.state.machines[hostname].settings.displayedExtraTemperatures.includes(dataset.index));
+						dataset.showLine = !dataset.extra || (useMachinesSettingsStore().displayedExtraTemperatures.includes(dataset.index));
 					}, this);
 					instances.forEach(instance => instance.update());
 				}

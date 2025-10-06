@@ -1,6 +1,6 @@
 import Vue from "vue";
 
-import store from "@/store";
+
 import { LogType } from "@/utils/logging";
 
 declare module "vue/types/vue" {
@@ -12,7 +12,7 @@ declare module "vue/types/vue" {
 		 * @param message Actual message
 		 * @param hostname Hostname to log this message to
 		 */
-		$log(type: LogType, title: string, message: string | null = null, hostname = store.state.selectedMachine): void;
+		$log(type: LogType, title: string, message: string | null = null, hostname = useRootStore().selectedMachine): void;
 
 		/**
 		 * Log an arbitrary machine-related message to the console only
@@ -21,7 +21,7 @@ declare module "vue/types/vue" {
 		 * @param message Actual message
 		 * @param hostname Hostname to log this message to
 		 */
-		$logToConsole(type: LogType, title: string, message: string | null = null, hostname = store.state.selectedMachine): void;
+		$logToConsole(type: LogType, title: string, message: string | null = null, hostname = useRootStore().selectedMachine): void;
 
 		/**
 		 * Log a code reply from a given machine
@@ -29,7 +29,7 @@ declare module "vue/types/vue" {
 		 * @param reply Code reply
 		 * @param hostname Hostname of the machine that produced the reply
 		 */
-		$logCode(code: string | null, reply: string, hostname = store.state.selectedMachine): void;
+		$logCode(code: string | null, reply: string, hostname = useRootStore().selectedMachine): void;
 
 		/**
 		 * Log a global message that is logged by all connected machines

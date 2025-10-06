@@ -2,9 +2,10 @@ import { CancellationToken, OnProgressCallback } from "@duet3d/connectors";
 import Vue from "vue";
 
 import i18n from "@/i18n";
-import store from "@/store";
+
 import { extractFileName } from "@/utils/path";
 import { LogType } from "./logging";
+import { useSettingsStore } from "@/stores/settings";
 
 /**
  * Possible file transfer types
@@ -122,8 +123,9 @@ export const fileTransferNotifications = Vue.observable(new Array<Notification>(
  * @returns Notification instance
  */
 export function makeNotification(type: NotificationType, title: string, message: string | null = null, timeout: number | null  = null, route: string | null = null, icon: string | null = null, pushToEnd: boolean = false): Notification {
-	if (timeout === null) {
-		timeout = (type === "error" && store.state.settings.notifications.errorsPersistent) ? 0 : store.state.settings.notifications.timeout;
+	let settingsStore = useSettingsStore()
+    if (timeout === null) {
+		timeout = (type === "error" && settingsStore.notifications.errorsPersistent) ? 0 : settingsStore.notifications.timeout;
 	}
 
     if (icon === null) {

@@ -59,7 +59,7 @@ import { AnalogSensor, AnalogSensorType } from "@duet3d/objectmodel";
 import { computed } from "vue";
 
 import i18n from "@/i18n";
-import store from "@/store";
+
 import { getExtraColor } from "@/utils/colors";
 import { displaySensorValue } from "@/utils/display";
 
@@ -69,8 +69,8 @@ interface ExtraSensor {
 }
 
 const extraSensors = computed<Array<ExtraSensor>>(() => {
-    const heaters = store.state.machine.model.heat.heaters;
-    return store.state.machine.model.sensors.analog
+    const heaters = useMachinesModelStore().heat.heaters;
+    return useMachinesModelStore().sensors.analog
         .map((sensor, index) => ({
             sensor,
             index
@@ -78,13 +78,13 @@ const extraSensors = computed<Array<ExtraSensor>>(() => {
         .filter(({ sensor, index }) => (sensor !== null) && !heaters.some(heater => (heater !== null) && (heater.sensor === index))) as Array<ExtraSensor>;
 });
 
-const displayedExtraTemperatures = computed(() => store.state.machine.settings.displayedExtraTemperatures);
+const displayedExtraTemperatures = computed(() => useMachinesSettingsStore().displayedExtraTemperatures);
 
 function toggleExtraVisibility(sensor: number) {
     store.commit("machine/settings/toggleExtraVisibility", sensor);
 }
 
-const uiFrozen = computed<boolean>(() => store.getters["uiFrozen"]);
+const uiFrozen = computed<boolean>(() => useRootStore().uiFrozen);
 
 function formatExtraName(sensor: { sensor: AnalogSensor, index: number }) {
     if (sensor.sensor.name) {

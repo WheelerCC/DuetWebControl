@@ -55,9 +55,10 @@
 </template>
 
 <script lang="ts">
+import { useMachinesModelStore } from "@/stores/machineModel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	props: {
@@ -75,10 +76,10 @@ export default Vue.extend({
 	},
 	computed: {
 		isDuetFirmware(): boolean {
-			return (store.state.machine.model.boards.length > 0 && store.state.machine.model.boards[0].firmwareFileName) ? store.state.machine.model.boards[0].firmwareFileName.startsWith("Duet") : true;
+			return (useMachinesModelStore().boards.length > 0 && useMachinesModelStore().boards[0].firmwareFileName) ? useMachinesModelStore().boards[0].firmwareFileName.startsWith("Duet") : true;
 		},
 		dsfVersion(): string | null {
-			return store.state.machine.model.sbc?.dsf.version ?? null;
+			return useMachinesModelStore().sbc?.dsf.version ?? null;
 		},
 		internalShown: {
 			get(): boolean { return this.shown; },

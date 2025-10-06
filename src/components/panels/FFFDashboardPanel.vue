@@ -65,24 +65,26 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from '@/stores';
+import { useMachinesModelStore } from '@/stores/machineModel';
 import { MachineMode, Tool } from '@duet3d/objectmodel';
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		currentTool(): Tool | null { return store.getters["machine/model/currentTool"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		currentTool(): Tool | null { return useMachinesModelStore().currentTool() },
 		isFFForUnset(): boolean {
-			return !store.state.machine.model.state.machineMode || (store.state.machine.model.state.machineMode === MachineMode.fff);
+			return !useMachinesModelStore().state.machineMode || (useMachinesModelStore().state.machineMode === MachineMode.fff);
 		},
 		showATXPanel(): boolean {
-			return (store.state.machine.model.state.atxPower !== null);
+			return (useMachinesModelStore().state.atxPower !== null);
 		},
 		showFansPanel(): boolean {
 			return ((this.currentTool !== null) && (this.currentTool.fans.length > 0)) ||
-				store.state.machine.model.fans.some(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0));
+				useMachinesModelStore().fans.some(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0));
 		}
 	}
 });

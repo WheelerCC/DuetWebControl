@@ -38,12 +38,10 @@
 </template>
 
 <script setup lang="ts">
+import { useSettingsStore } from "@/stores/settings";
 import { computed, onActivated, onDeactivated, ref, watch } from "vue";
 
-import store from "@/store";
-import { WebcamFlip } from "@/store/settings";
-
-const webcam = computed(() => store.state.settings.webcam);
+const webcam = computed(() => useSettingsStore().webcam);
 const webcamIsRTC = computed(() => webcam.value.url.startsWith("ws:") || webcam.value.url.startsWith("wss:"));
 
 // Lifecycle

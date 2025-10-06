@@ -52,10 +52,13 @@ import { FileListItem } from "@duet3d/connectors";
 import { Tool } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 import { DisconnectedError, getErrorMessage } from "@/utils/errors"
 import { LogType } from "@/utils/logging";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	props: {
@@ -80,7 +83,7 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		currentTool(): Tool { return store.getters["machine/model/currentTool"]; }
+		currentTool(): Tool { return useMachinesModelStore().currentTool()! }
 	},
 	watch: {
 		shown(to: boolean) {
@@ -107,7 +110,7 @@ export default Vue.extend({
 
 			this.loading = true
 			try {
-				const response: Array<FileListItem> = await store.dispatch("machine/getFileList", store.state.machine.model.directories.filaments);
+				const response: Array<FileListItem> = await useMachinesStore().getFileList(useMachinesModelStore().directories.filaments);
 				const filaments = response.filter(item => item.isDirectory).map(item => item.name);
 				filaments.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 				this.filaments = filaments;
@@ -129,20 +132,20 @@ export default Vue.extend({
 				code = `T${this.tool!.number}\n`;
 			}
 
-			if (this.tool!.filamentExtruder >= 0 && this.tool!.filamentExtruder < store.state.machine.model.move.extruders.length &&
-				store.state.machine.model.move.extruders[this.tool!.filamentExtruder].filament) {
+			if (this.tool!.filamentExtruder >= 0 && this.tool!.filamentExtruder < useMachinesModelStore().move.extruders.length &&
+				useMachinesModelStore().move.extruders[this.tool!.filamentExtruder].filament) {
 				// Unload current filament if it is still loaded
 				code += this.runMacros ? "M702\n" : "M702 P0\n";
 
 				// Show message box between unload/load if required
-				if (this.runMacros && store.state.settings.behaviour.promptDuringFilamentChange) {
+				if (this.runMacros && useSettingsStore().behaviour.promptDuringFilamentChange) {
 					code += `M400 M291 P"${this.$t("dialog.filament.changePrompt.message")}" R"${this.$t("dialog.filament.changePrompt.title")}" S2\n`;
 				}
 			}
 
 			// Run load sequence and configure current tool for it
 			code += this.runMacros ? `M701 S"${filament}"\nM703` : `M701 P0 S"${filament}"\nM703`;
-			await store.dispatch("machine/sendCode", code);
+			await useMachinesStore().sendCode(code);
 		},
 		hide() {
 			this.innerShown = false;

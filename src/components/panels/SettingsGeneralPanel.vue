@@ -83,9 +83,10 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
-import { SettingsState } from "@/store/settings";
+
 import { localStorageSupported } from "@/utils/localStorage";
+import { SettingsState, useSettingsStore } from "@/stores/settings";
+import { useRootStore } from "@/stores";
 
 export default Vue.extend({
 	data() {
@@ -94,35 +95,35 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
 		supportsLocalStorage() { return localStorageSupported; },
 		darkTheme: {
-			get(): boolean { return store.state.settings.darkTheme; },
+			get(): boolean { return useSettingsStore().darkTheme; },
 			set(value: boolean) { this.update({ darkTheme: value }); }
 		},
 		settingsStorageLocal: {
-			get(): boolean { return store.state.settings.settingsStorageLocal; },
+			get(): boolean { return useSettingsStore().settingsStorageLocal; },
 			set(value: boolean) { this.update({ settingsStorageLocal: value }); }
 		},
 		settingsSaveDelay: {
-			get(): number { return store.state.settings.settingsSaveDelay; },
+			get(): number { return useSettingsStore().settingsSaveDelay; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ settingsSaveDelay: value }); } }
 		},
 		cacheStorageLocal: {
-			get(): boolean { return store.state.settings.cacheStorageLocal; },
+			get(): boolean { return useSettingsStore().cacheStorageLocal; },
 			set(value: boolean) { this.update({ cacheStorageLocal: value }); }
 		},
 		cacheSaveDelay: {
-			get(): number { return store.state.settings.cacheSaveDelay; },
+			get(): number { return useSettingsStore().cacheSaveDelay; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ cacheSaveDelay: value }); } }
 		}
 	},
 	methods: {
-		reset() {
-			store.commit("settings/reset");
+    reset() {
+      useSettingsStore().reset()
 		},
-		update(data: Partial<SettingsState>) {
-			store.commit("settings/update", data);
+    update(data: Partial<SettingsState>) {
+      useSettingsStore().update(data)
 		}
 	}
 });

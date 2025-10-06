@@ -5,7 +5,6 @@ import Vue from 'vue';
 import i18n from '@/i18n';
 import { registerPluginContextMenuItem, ContextMenuType } from '@/plugins';
 import { registerRoute } from '@/routes';
-import { registerPluginData, PluginDataType } from '@/store';
 
 import Gauge from './Gauge/GaugeComponent.vue';
 import ColorPicker from './ColorPicker.vue';

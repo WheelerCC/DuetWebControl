@@ -155,10 +155,13 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
+
 import Path, { escapeFilename } from "@/utils/path"
 
 import { BaseFileListItem } from "./BaseFileList.vue";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	data() {
@@ -178,8 +181,8 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		macrosDirectory(): string { return store.state.machine.model.directories.macros; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		macrosDirectory(): string { return useMachinesModelStore().directories.macros; },
 		isFile(): boolean { return (this.selection.length === 1) && !this.selection[0].isDirectory; }
 	},
 	watch: {
@@ -203,7 +206,7 @@ export default Vue.extend({
 			this.runMacroDialog.shown = true;
 		},
 		async runFile(filename: string) {
-			await store.dispatch("machine/sendCode", `M98 P"${escapeFilename(Path.combine(this.directory, filename))}"`);
+			await useMachinesStore().sendCode(`M98 P"${escapeFilename(Path.combine(this.directory, filename))}"`);
 		}
 	}
 });

@@ -24,8 +24,13 @@
 <script lang="ts">
 import Vue, { PropType } from "vue";
 
-import store from "@/store";
+
 import { LogType } from "@/utils/logging";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
+import { useRootStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	props: {
@@ -66,33 +71,33 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
 		items(): Array<number> {
-			if (store.state.settings.disableAutoComplete) {
+			if (useSettingsStore().disableAutoComplete) {
 				return [];
 			}
 
 			if (this.type === "spindle") {
-				return store.state.machine.settings.spindleRPM;
+				return useMachinesSettingsStore().spindleRPM;
 			}
 			const key = this.active ? "active" : "standby";
 			if (this.type === "all") {
 				if (this.controlBeds) {
-					return store.state.machine.settings.temperatures.bed[key];
+					return useMachinesSettingsStore().temperatures.bed[key];
 				}
 				if (this.controlChambers) {
-					return store.state.machine.settings.temperatures.chamber;
+					return useMachinesSettingsStore().temperatures.chamber;
 				}
-				return store.state.machine.settings.temperatures.tool[key];
+				return useMachinesSettingsStore().temperatures.tool[key];
 			}
 			if (this.type === "tool") {
-				return store.state.machine.settings.temperatures.tool[key];
+				return useMachinesSettingsStore().temperatures.tool[key];
 			}
 			if (this.type === "bed") {
-				return store.state.machine.settings.temperatures.bed[key];
+				return useMachinesSettingsStore().temperatures.bed[key];
 			}
 			if (this.type === "chamber") {
-				return store.state.machine.settings.temperatures.chamber;
+				return useMachinesSettingsStore().temperatures.chamber;
 			}
 
 			console.warn("[control-input] Failed to retrieve temperature presets");
@@ -103,14 +108,14 @@ export default Vue.extend({
 				return true;
 			}
 			if (this.type === "tool") {
-				if ((this.index >= 0) && (this.index < store.state.machine.model.tools.length) && (store.state.machine.model.tools[this.index] !== null)) {
-					const heater = store.state.machine.model.tools[this.index]!.heaters[this.toolHeaterIndex];
-					return (heater >= 0) && (heater < store.state.machine.model.heat.heaters.length) && (store.state.machine.model.heat.heaters[heater] !== null);
+				if ((this.index >= 0) && (this.index < useMachinesModelStore().tools.length) && (useMachinesModelStore().tools[this.index] !== null)) {
+					const heater = useMachinesModelStore().tools[this.index]!.heaters[this.toolHeaterIndex];
+					return (heater >= 0) && (heater < useMachinesModelStore().heat.heaters.length) && (useMachinesModelStore().heat.heaters[heater] !== null);
 				}
 			} else if (this.type === "bed") {
-				return (this.index >= 0) && (this.index < store.state.machine.model.heat.bedHeaters.length);
+				return (this.index >= 0) && (this.index < useMachinesModelStore().heat.bedHeaters.length);
 			} else if (this.type === "chamber") {
-				return (this.index >= 0) && (this.index < store.state.machine.model.heat.chamberHeaters.length);
+				return (this.index >= 0) && (this.index < useMachinesModelStore().heat.chamberHeaters.length);
 			}
 			return false;
 		},
@@ -122,8 +127,8 @@ export default Vue.extend({
 					break;
 
 				case "tool":
-					if (this.index >= 0 && this.index < store.state.machine.model.tools.length && store.state.machine.model.tools[this.index] !== null) {
-						const values = store.state.machine.model.tools[this.index]![activeOrStandby];
+					if (this.index >= 0 && this.index < useMachinesModelStore().tools.length && useMachinesModelStore().tools[this.index] !== null) {
+						const values = useMachinesModelStore().tools[this.index]![activeOrStandby];
 						if (this.toolHeaterIndex >= 0 && this.toolHeaterIndex < values.length) {
 							return values[this.toolHeaterIndex];
 						}
@@ -131,25 +136,25 @@ export default Vue.extend({
 					break;
 
 				case "spindle":
-					if (this.index >= 0 && this.index < store.state.machine.model.tools.length && store.state.machine.model.tools[this.index] !== null) {
-						return store.state.machine.model.tools[this.index]!.spindleRpm;
+					if (this.index >= 0 && this.index < useMachinesModelStore().tools.length && useMachinesModelStore().tools[this.index] !== null) {
+						return useMachinesModelStore().tools[this.index]!.spindleRpm;
 					}
 					break;
 
 				case "bed":
-					if (this.index >= 0 && this.index < store.state.machine.model.heat.bedHeaters.length) {
-						const heaterIndex = store.state.machine.model.heat.bedHeaters[this.index];
-						if (heaterIndex >= 0 && heaterIndex < store.state.machine.model.heat.heaters.length && store.state.machine.model.heat.heaters[heaterIndex] !== null) {
-							return store.state.machine.model.heat.heaters[heaterIndex]![activeOrStandby];
+					if (this.index >= 0 && this.index < useMachinesModelStore().heat.bedHeaters.length) {
+						const heaterIndex = useMachinesModelStore().heat.bedHeaters[this.index];
+						if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length && useMachinesModelStore().heat.heaters[heaterIndex] !== null) {
+							return useMachinesModelStore().heat.heaters[heaterIndex]![activeOrStandby];
 						}
 					}
 					break;
 
 				case "chamber":
-					if (this.index >= 0 && this.index < store.state.machine.model.heat.chamberHeaters.length) {
-						const heaterIndex = store.state.machine.model.heat.chamberHeaters[this.index];
-						if (heaterIndex >= 0 && heaterIndex < store.state.machine.model.heat.heaters.length && store.state.machine.model.heat.heaters[heaterIndex] !== null) {
-							return store.state.machine.model.heat.heaters[heaterIndex]![activeOrStandby];
+					if (this.index >= 0 && this.index < useMachinesModelStore().heat.chamberHeaters.length) {
+						const heaterIndex = useMachinesModelStore().heat.chamberHeaters[this.index];
+						if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length && useMachinesModelStore().heat.heaters[heaterIndex] !== null) {
+							return useMachinesModelStore().heat.heaters[heaterIndex]![activeOrStandby];
 						}
 					}
 					break;
@@ -194,7 +199,7 @@ export default Vue.extend({
 						case "all":
 							let code = "";
 							if (this.controlTools) {
-								for (const tool of store.state.machine.model.tools) {
+								for (const tool of useMachinesModelStore().tools) {
 									if (tool && tool.heaters.length > 0) {
 										const temps = tool.heaters.map(() => this.inputValue, this).join(':');
 										code += `M568 P${tool.number} ${this.active ? 'S' : 'R'}${temps}\n`;
@@ -202,48 +207,48 @@ export default Vue.extend({
 								}
 							}
 							if (this.controlBeds) {
-								for (let i = 0; i < store.state.machine.model.heat.bedHeaters.length; i++) {
-									const bedHeater = store.state.machine.model.heat.bedHeaters[i];
-									if (bedHeater >= 0 && bedHeater <= store.state.machine.model.heat.heaters.length) {
+								for (let i = 0; i < useMachinesModelStore().heat.bedHeaters.length; i++) {
+									const bedHeater = useMachinesModelStore().heat.bedHeaters[i];
+									if (bedHeater >= 0 && bedHeater <= useMachinesModelStore().heat.heaters.length) {
 										code += `M140 P${i} ${this.active ? 'S' : 'R'}${this.inputValue}\n`;
 									}
 								}
 							}
 							if (this.controlChambers) {
-								for (let i = 0; i < store.state.machine.model.heat.chamberHeaters.length; i++) {
-									const chamberHeater = store.state.machine.model.heat.chamberHeaters[i];
-									if (chamberHeater >= 0 && chamberHeater <= store.state.machine.model.heat.heaters.length) {
+								for (let i = 0; i < useMachinesModelStore().heat.chamberHeaters.length; i++) {
+									const chamberHeater = useMachinesModelStore().heat.chamberHeaters[i];
+									if (chamberHeater >= 0 && chamberHeater <= useMachinesModelStore().heat.heaters.length) {
 										code += `M141 P${i} ${this.active ? 'S' : 'R'}${this.inputValue}\n`;
 									}
 								}
 							}
 							if (code !== "") {
-								await store.dispatch("machine/sendCode", code);
+								await useMachinesStore().sendCode(code);
 							}
 							this.actualValue = inputValue;
 							break;
 
 						case "tool":
 							if (inputValue >= -273.15 && inputValue <= 1999) {
-								const currentTemps = store.state.machine.model.tools[this.index]![this.active ? "active" : "standby"];
+								const currentTemps = useMachinesModelStore().tools[this.index]![this.active ? "active" : "standby"];
 								const newTemps = currentTemps.map((temp, i) => (i === this.toolHeaterIndex) ? this.inputValue : temp, this).join(':');
-								await store.dispatch("machine/sendCode", `M568 P${this.index} ${this.active ? 'S' : 'R'}${newTemps}`);
+								await useMachinesStore().sendCode(`M568 P${this.index} ${this.active ? 'S' : 'R'}${newTemps}`);
 							}
 							break;
 
 						case "spindle":
-							await store.dispatch("machine/sendCode", `M568 P${this.index} F${this.inputValue}`);
+							await useMachinesStore().sendCode(`M568 P${this.index} F${this.inputValue}`);
 							break;
 
 						case "bed":
 							if (inputValue >= -273.15 && inputValue <= 1999) {
-								await store.dispatch("machine/sendCode", `M140 P${this.index} ${this.active ? 'S' : 'R'}${this.inputValue}`);
+								await useMachinesStore().sendCode(`M140 P${this.index} ${this.active ? 'S' : 'R'}${this.inputValue}`);
 							}
 							break;
 
 						case "chamber":
 							if (inputValue >= -273.15 && inputValue <= 1999) {
-								await store.dispatch("machine/sendCode", `M141 P${this.index} ${this.active ? 'S' : 'R'}${this.inputValue}`);
+								useMachinesStore().sendCode(`M141 P${this.index} ${this.active ? 'S' : 'R'}${this.inputValue}`);
 							}
 							break;
 
@@ -260,7 +265,7 @@ export default Vue.extend({
 			}
 		},
 		blur() {
-			if (store.state.bottomMargin > 0) {
+			if (useRootStore().bottomMargin > 0) {
 				if (!this.blurTimer) {
 					// Do not update the input value before a potentially installed on-screen keyboard is hidden.
 					// This work-around is necessary because the input field loses focus every time a button is pressed

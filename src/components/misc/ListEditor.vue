@@ -144,8 +144,8 @@
 <script lang="ts">
 import Vue, { PropType } from "vue";
 
-import store from "@/store";
-import { MachineSettingsState } from "@/store/machine/settings";
+
+import { MachineSettingsState, useMachinesSettingsStore } from "@/stores/machineSettings";
 
 export default Vue.extend({
   props: {
@@ -164,7 +164,7 @@ export default Vue.extend({
 	},
 	computed: {
 		items(): Array<number> | { active: Array<number>, standby: Array<number> } {
-			return (this.itemKey === "spindleRPM") ? store.state.machine.settings.spindleRPM : store.state.machine.settings.temperatures[this.itemKey];
+			return (this.itemKey === "spindleRPM") ? useMachinesSettingsStore().spindleRPM : useMachinesSettingsStore().temperatures[this.itemKey];
 		},
 		unit(): string { return this.temperature ? "°C" : "RPM"; },
 
@@ -178,7 +178,7 @@ export default Vue.extend({
 				return;
 			}
 
-			store.commit("machine/settings/update", {
+      useMachinesSettingsStore().update({
 				temperatures: {
 					[this.itemKey]: {
 						active: this.items.active.filter((_, i) => i !== index)
@@ -200,16 +200,15 @@ export default Vue.extend({
 					}
 				}
 				updateData.temperatures[this.itemKey].active.push(this.activeValue);
-				updateData.temperatures[this.itemKey].active.sort((a, b) => b - a);
-				store.commit("machine/settings/update", updateData);
+        updateData.temperatures[this.itemKey].active.sort((a, b) => b - a);
+        useMachinesSettingsStore().update(updateData)
 			}
 		},
 		removeStandby(index: number) {
 			if (this.items instanceof Array) {
 				return;
 			}
-
-			store.commit("machine/settings/update", {
+      useMachinesSettingsStore().update({
 				temperatures: {
 					[this.itemKey]: {
 						standby: this.items.standby.filter((_, i) => i !== index)
@@ -232,17 +231,17 @@ export default Vue.extend({
 				}
 				updateData.temperatures[this.itemKey].standby.push(this.standbyValue);
 				updateData.temperatures[this.itemKey].standby.sort((a, b) => b - a);
-				store.commit("machine/settings/update", updateData);
+				useMachinesSettingsStore().update(updateData);
 			}
 		},
 		remove(index: number) {
 			if (this.items instanceof Array) {
-				if (this.itemKey === "spindleRPM") {
-					store.commit("machine/settings/update", {
+        if (this.itemKey === "spindleRPM") {
+          useMachinesSettingsStore().update({
 						spindleRPM: this.items.filter((_, i) => i !== index)
 					});
-				} else {
-					store.commit("machine/settings/update", {
+        } else {
+          useMachinesSettingsStore().update({
 						temperatures: {
 							[this.itemKey]: this.items.filter((_, i) => i !== index)
 						}
@@ -267,8 +266,8 @@ export default Vue.extend({
 					};
 					updateData.temperatures[this.itemKey].push(this.value);
 					updateData.temperatures[this.itemKey].sort((a, b) => b - a);
-				}
-				store.commit("machine/settings/update", updateData);
+        }
+        useMachinesSettingsStore().update(updateData);
 			}
 		}
 	}

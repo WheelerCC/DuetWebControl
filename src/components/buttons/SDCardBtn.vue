@@ -36,9 +36,12 @@
 import { Volume } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { getErrorMessage } from "@/utils/errors";
 import { LogType } from "@/utils/logging";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
+import { useRootStore } from "@/stores";
 
 export default Vue.extend({
 	props: {
@@ -53,8 +56,8 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; },
-		volumes(): Array<Volume> { return store.state.machine.model.volumes; }
+		isConnected(): boolean { return useRootStore().isConnected; },
+		volumes(): Array<Volume> { return useMachinesModelStore().volumes; }
 	},
 	methods: {
 		getVolumeName(index: number) {
@@ -79,7 +82,7 @@ export default Vue.extend({
 			let success = true, response;
 			this.mounting = true;
 			try {
-				response = await store.dispatch("machine/sendCode", {
+				response = await useMachinesStore().sendCode({
 					code: `M21 P${index}`,
 					log: false
 				});

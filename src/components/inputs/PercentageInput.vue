@@ -100,8 +100,9 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, ref, watch } from "vue";
 
-import store from "@/store";
+
 import { isNumber } from "@/utils/numbers";
+import { useSettingsStore } from "@/stores/settings";
 
 const props = withDefaults(defineProps<{
 	value: number,
@@ -159,14 +160,14 @@ watch(() => props.value, (to) => {
 
 // Numeric input logic
 
-const numericInputs = computed(() => store.state.settings.numericInputs);
+const numericInputs = computed(() => useSettingsStore().numericInputs);
 
 const items = computed(() => {
-	if (store.state.settings.disableAutoComplete || !props.step) {
+	if (useSettingsStore().disableAutoComplete || !props.step) {
 		return [];
 	}
 
-	const result = [];
+	const result: number[] = [];
 	if (isNumber(props.min) && isNumber(props.max)) {
 		for (let value = props.min; value <= props.max; value += props.step) {
 			result.push(value);

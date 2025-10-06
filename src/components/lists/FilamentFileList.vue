@@ -179,12 +179,15 @@ import saveAs from "file-saver";
 import JSZip from "jszip";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { DisconnectedError, FileNotFoundError, getErrorMessage, OperationCancelledError } from "@/utils/errors";
 import Path from "@/utils/path";
 import { LogType } from "@/utils/logging";
 
 import { BaseFileListItem } from "./BaseFileList.vue";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	data() {
@@ -201,15 +204,15 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
 		isRootDirectory(): boolean {
-			return Path.equals(this.directory, store.state.machine.model.directories.filaments);
+			return Path.equals(this.directory, useMachinesModelStore().directories.filaments);
 		},
 		filamentsDirectory(): string {
-			return store.state.machine.model.directories.filaments;
+			return useMachinesModelStore().directories.filaments;
 		},
 		filamentLoaded(): boolean {
-			return this.isRootDirectory && this.selection.some(item => store.state.machine.model.move.extruders.some(extruder => extruder.filament === item.name));
+			return this.isRootDirectory && this.selection.some(item => useMachinesModelStore().move.extruders.some(extruder => extruder.filament === item.name));
 		},
 		filamentSelected(): boolean {
 			return Path.equals(this.directory, this.filamentsDirectory) && (this.selection.length === 1) && this.selection[0].isDirectory;
@@ -237,9 +240,9 @@ export default Vue.extend({
 			this.doingFileOperation = true;
 			try {
 				const emptyFile = new Blob();
-				await store.dispatch("machine/upload", { filename: Path.combine(path, "load.g"), content: emptyFile, showSuccess: false });
-				await store.dispatch("machine/upload", { filename: Path.combine(path, "config.g"), content: emptyFile, showSuccess: false });
-				await store.dispatch("machine/upload", { filename: Path.combine(path, "unload.g"), content: emptyFile, showSuccess: false });
+				await useMachinesStore().upload({ filename: Path.combine(path, "load.g"), content: emptyFile, showSuccess: false });
+				await useMachinesStore().upload({ filename: Path.combine(path, "config.g"), content: emptyFile, showSuccess: false });
+				await useMachinesStore().upload({ filename: Path.combine(path, "unload.g"), content: emptyFile, showSuccess: false });
 				this.$makeNotification(LogType.success, this.$t("notification.newFilament.successTitle"), this.$t("notification.newFilament.successMessage", [Path.extractFileName(path)]));
 			} catch (e) {
 				console.warn(e);
@@ -256,8 +259,8 @@ export default Vue.extend({
 			// Download the files first
 			let loadG, unloadG;
 			try {
-				loadG = await store.dispatch("machine/download", { filename: Path.combine(Path.filaments, filament, "load.g"), type: "blob", showSuccess: false, showError: false });
-				unloadG = await store.dispatch("machine/download", { filename: Path.combine(Path.filaments, filament, "unload.g"), type: "blob", showSuccess: false, showError: false });
+				loadG = await useMachinesStore().download({ filename: Path.combine(Path.filaments, filament, "load.g"), type: "blob", showSuccess: false, showError: false });
+				unloadG = await useMachinesStore().download({ filename: Path.combine(Path.filaments, filament, "unload.g"), type: "blob", showSuccess: false, showError: false });
 			} catch (e) {
 				if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError)) {
 					this.$makeNotification(LogType.error, this.$t("notification.download.error", [!loadG ? "load.g" : "unload.g"]), getErrorMessage(e));
@@ -267,7 +270,7 @@ export default Vue.extend({
 
 			let configG;
 			try {
-				configG = await store.dispatch("machine/download", { filename: Path.combine(Path.filaments, filament, "config.g"), type: "blob", showSuccess: false, showError: false });
+				configG = await useMachinesStore().download({ filename: Path.combine(Path.filaments, filament, "config.g"), type: "blob", showSuccess: false, showError: false });
 			} catch (e) {
 				// config.g may not exist
 				if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError) && !(e instanceof FileNotFoundError)) {
@@ -305,8 +308,8 @@ export default Vue.extend({
 				// Download the files first
 				let loadG, unloadG;
 				try {
-					loadG = await store.dispatch("machine/download", { filename: Path.combine(Path.filaments, this.filamentToDuplicate, "load.g"), type: "blob", showSuccess: false, showError: false });
-					unloadG = await store.dispatch("machine/download", { filename: Path.combine(Path.filaments, this.filamentToDuplicate, "unload.g"), type: "blob", showSuccess: false, showError: false });
+					loadG = await useMachinesStore().download({ filename: Path.combine(Path.filaments, this.filamentToDuplicate, "load.g"), type: "blob", showSuccess: false, showError: false });
+					unloadG = await useMachinesStore().download({ filename: Path.combine(Path.filaments, this.filamentToDuplicate, "unload.g"), type: "blob", showSuccess: false, showError: false });
 				} catch (e) {
 					if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError)) {
 						this.$makeNotification(LogType.error, this.$t("notification.download.error", [!loadG ? "load.g" : "unload.g"]), getErrorMessage(e));
@@ -316,7 +319,7 @@ export default Vue.extend({
 
 				let configG;
 				try {
-					configG = await store.dispatch("machine/download", { filename: Path.combine(Path.filaments, this.filamentToDuplicate, "config.g"), type: "blob", showSuccess: false, showError: false });
+					configG = await useMachinesStore().download({ filename: Path.combine(Path.filaments, this.filamentToDuplicate, "config.g"), type: "blob", showSuccess: false, showError: false });
 				} catch (e) {
 					// config.g may not exist
 					if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError) && !(e instanceof FileNotFoundError)) {
@@ -326,9 +329,9 @@ export default Vue.extend({
 
 				// Upload them
 				const emptyFile = new Blob();
-				await store.dispatch("machine/upload", { filename: Path.combine(path, "load.g"), content: loadG ?? emptyFile, showSuccess: false });
-				await store.dispatch("machine/upload", { filename: Path.combine(path, "config.g"), content: configG ?? emptyFile, showSuccess: false });
-				await store.dispatch("machine/upload", { filename: Path.combine(path, "unload.g"), content: unloadG ?? emptyFile, showSuccess: false });
+				await useMachinesStore().upload( { filename: Path.combine(path, "load.g"), content: loadG ?? emptyFile, showSuccess: false });
+				await useMachinesStore().upload({ filename: Path.combine(path, "config.g"), content: configG ?? emptyFile, showSuccess: false });
+				await useMachinesStore().upload({ filename: Path.combine(path, "unload.g"), content: unloadG ?? emptyFile, showSuccess: false });
 				this.$makeNotification(LogType.success, this.$t("notification.newFilament.successTitle"), this.$t("notification.newFilament.successMessage", [Path.extractFileName(path)]));
 			} catch (e) {
 				console.warn(e);

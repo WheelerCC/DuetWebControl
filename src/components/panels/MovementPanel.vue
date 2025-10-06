@@ -248,10 +248,14 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
 import { Axis, AxisLetter, KinematicsName, MachineStatus, MoveCompensationType } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data() {
@@ -266,21 +270,21 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; },
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => store.getters["machine/settings/moveSteps"](axisLetter)); },
-		numMoveSteps(): number { return store.getters["machine/settings/numMoveSteps"]; },
-		isCompensationEnabled(): boolean { return store.state.machine.model.move.compensation.type !== MoveCompensationType.none; },
-		compensationType(): MoveCompensationType { return store.state.machine.model.move.compensation.type; },
-		visibleAxes(): Array<Axis> { return store.state.machine.model.move.axes.filter(axis => axis.visible); },
-		isDelta(): boolean { return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(store.state.machine.model.move.kinematics.name); },
+		isConnected(): boolean { return useRootStore().isConnected; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)); },
+		numMoveSteps(): number { return useMachinesSettingsStore().numMoveSteps() },
+		isCompensationEnabled(): boolean { return useMachinesModelStore().move.compensation.type !== MoveCompensationType.none; },
+		compensationType(): MoveCompensationType { return useMachinesModelStore().move.compensation.type; },
+		visibleAxes(): Array<Axis> { return useMachinesModelStore().move.axes.filter(axis => axis.visible); },
+		isDelta(): boolean { return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(useMachinesModelStore().move.kinematics.name); },
 		canHome(): boolean {
 			return !this.uiFrozen && (
-				store.state.machine.model.state.status !== MachineStatus.pausing &&
-				store.state.machine.model.state.status !== MachineStatus.processing &&
-				store.state.machine.model.state.status !== MachineStatus.resuming);
+				useMachinesModelStore().state.status !== MachineStatus.pausing &&
+				useMachinesModelStore().state.status !== MachineStatus.processing &&
+				useMachinesModelStore().state.status !== MachineStatus.resuming);
 		},
-		unhomedAxes(): Array<Axis> { return store.state.machine.model.move.axes.filter(axis => axis.visible && !axis.homed); }
+		unhomedAxes(): Array<Axis> { return useMachinesModelStore().move.axes.filter(axis => axis.visible && !axis.homed); }
 	},
 	watch: {
 		isConnected() {
@@ -291,10 +295,10 @@ export default Vue.extend({
 	},
 	methods: {
 		async sendCode(code: string) {
-			await store.dispatch("machine/sendCode", code);
+			await useMachinesStore().sendCode(code);
 		},
 		canMove(axis: Axis) {
-			return (axis.homed || !store.state.machine.model.move.noMovesBeforeHoming) && this.canHome;
+			return (axis.homed || !useMachinesModelStore().move.noMovesBeforeHoming) && this.canHome;
 		},
 		getMoveCellClass(index: number) {
 			let classes = "";
@@ -307,7 +311,7 @@ export default Vue.extend({
 			return classes;
 		},
 		getMoveCode(axis: Axis, index: number, decrementing: boolean) {
-			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${store.state.machine.settings.moveFeedrate}\nM121`;
+			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`;
 		},
 		showSign: (value: number) => (value > 0) ? `+${value}` : value,
 		showMoveStepDialog(axis: AxisLetter, index: number) {
@@ -316,8 +320,8 @@ export default Vue.extend({
 			this.moveStepDialog.preset = this.moveSteps(this.moveStepDialog.axis)[this.moveStepDialog.index];
 			this.moveStepDialog.shown = true;
 		},
-		moveStepDialogConfirmed(value: number) {
-			store.commit("machine/settings/setMoveStep", {
+    moveStepDialogConfirmed(value: number) {
+      useMachinesSettingsStore().setMoveStep({
 				axis: this.moveStepDialog.axis,
 				index: this.moveStepDialog.index,
 				value

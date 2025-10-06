@@ -13,16 +13,17 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
-	activated() {
-		store.commit("hideCodeReplyNotifications");
+  activated() {
+		useRootStore().hideCodeReplyNotifications;
 	},
-	deactivated() {
-		store.commit("showCodeReplyNotifications");
+  deactivated() {
+    useRootStore().showCodeReplyNotifications;
 	}
 });
 </script>

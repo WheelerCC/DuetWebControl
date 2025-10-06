@@ -116,8 +116,11 @@
 import ObjectModel, { DriverId, isDriverId } from "@duet3d/objectmodel";
 import { getErrorMessage } from "@/utils/errors";
 import Vue from "vue";
+import { useSettingsStore } from "@/stores/settings";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
-import store from "@/store";
+
 
 // List of regexs to resolve properties in the XML documentation.
 // It's a shame the C# XML compiler doesn't include the property types...
@@ -159,9 +162,9 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		model(): ObjectModel { return store.state.machine.model; },
-		darkTheme(): boolean { return store.state.settings.darkTheme; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		model(): ObjectModel { return useMachinesStore()[useRootStore().selectedMachine]},
+		darkTheme(): boolean { return useSettingsStore().darkTheme; },
 		apiDocumentation(): Element | null {
 			if (this.apiFile !== null && this.active.length > 0) {
 				let selectedNode = this.active[0].toLowerCase();
@@ -233,7 +236,7 @@ export default Vue.extend({
 	async activated() {
 		if (this.apiFile === null) {
 			try {
-				const apiFileContent = await store.dispatch("machine/download", {
+				const apiFileContent = await useMachinesStore().download({
 					filename: "DuetAPI.xml",
 					type: "text",
 					showError: false,

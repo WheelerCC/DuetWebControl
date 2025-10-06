@@ -8,11 +8,13 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data() {
@@ -22,7 +24,7 @@ export default Vue.extend({
 		}
 	},
 	mounted() {
-		store.commit("oskEnabled");
+		useRootStore().oskEnabled; // why?
 		window.addEventListener("focusin", this.inputFocused);
 		window.addEventListener("click", this.globalClick);
 	},
@@ -46,7 +48,7 @@ export default Vue.extend({
 							onKeyPress: this.onKeyPress,
 							newLineOnEnter: e.target instanceof HTMLTextAreaElement,
 							tabCharOnTab: e.target instanceof HTMLTextAreaElement,
-							theme: store.state.settings.darkTheme ? "hg-theme-default dark" : "hg-theme-default"
+							theme: useSettingsStore().darkTheme ? "hg-theme-default dark" : "hg-theme-default"
 						});
 					}
 					this.keyboard.setInput((e.target as HTMLInputElement | HTMLTextAreaElement).value);
@@ -67,7 +69,7 @@ export default Vue.extend({
 					}
 
 					// Add some space at the bottom so the keyboard does not cover inputs 
-					store.commit("setBottomMargin", (this.$refs.keyboard as HTMLElement).offsetHeight);
+					useRootStore().setBottomMargin((this.$refs.keyboard as HTMLElement).offsetHeight);
 				});
 			}
 		},
@@ -80,7 +82,7 @@ export default Vue.extend({
 		hide() {
 			this.input = null;
 			this.keyboard = null;
-			store.commit("setBottomMargin", 0);
+			useRootStore().setBottomMargin(0);
 		},
 		onInput(e: Event) {
 			this.keyboard.setInput((e.target as HTMLInputElement | HTMLTextAreaElement).value);

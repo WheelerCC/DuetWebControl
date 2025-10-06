@@ -11,7 +11,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import * as monaco from 'monaco-editor';
-import store from '@/store';
+import { useSettingsStore } from '@/stores/settings';
 
 export default Vue.extend({
    props: {
@@ -40,7 +40,7 @@ export default Vue.extend({
    },
    computed: {
       darkTheme() {
-         return store.state.settings.darkTheme;
+         return useSettingsStore().darkTheme;
       }
    },
    watch: {
@@ -70,7 +70,7 @@ export default Vue.extend({
             automaticLayout: true,
             language: 'gcode',
             scrollBeyondLastLine: false,
-            theme: store.state.settings.darkTheme ? 'vs-dark' : 'vs',
+            theme: useSettingsStore().darkTheme ? 'vs-dark' : 'vs',
             value: this.innerDocument,
             readOnly: true,
             occurrencesHighlight: 'off',

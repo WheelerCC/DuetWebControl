@@ -34,25 +34,24 @@
 </template>
 
 <script lang="ts">
+import { SettingsState, useSettingsStore } from "@/stores/settings";
 import Vue from "vue";
 
-import store from "@/store";
-import { SettingsState } from "@/store/settings";
 
 export default Vue.extend({
 	computed: {
 		behaviourJobStart: {
-			get(): boolean { return store.state.settings.behaviour.jobStart; },
+			get(): boolean { return useSettingsStore().behaviour.jobStart; },
 			set(value: boolean) { this.update({ jobStart: value }); }
 		},
 		promptDuringFilamentChange: {
-			get(): boolean { return store.state.settings.behaviour.promptDuringFilamentChange; },
+			get(): boolean { return useSettingsStore().behaviour.promptDuringFilamentChange; },
 			set(value: boolean) { this.update({ promptDuringFilamentChange: value }); }
 		}
 	},
 	methods: {
-		update(data: Partial<SettingsState["behaviour"]>) {
-			store.commit("settings/update", { behaviour: data });
+    update(data: Partial<SettingsState["behaviour"]>) {
+      useSettingsStore().update({ behaviour: data })
 		}
 	}
 });

@@ -38,23 +38,23 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
-import { SettingsState } from "@/store/settings";
+
+import { SettingsState, useSettingsStore } from "@/stores/settings";
 
 export default Vue.extend({
 	computed: {
 		notificationErrorsPersistent: {
-			get(): boolean { return store.state.settings.notifications.errorsPersistent; },
+			get(): boolean { return useSettingsStore().notifications.errorsPersistent; },
 			set(value: boolean) { this.update({ errorsPersistent: value }); }
 		},
 		notificationTimeout: {
-			get(): number { return store.state.settings.notifications.timeout; },
+			get(): number { return useSettingsStore().notifications.timeout; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ timeout: value }); } }
 		}
 	},
 	methods: {
-		update(data: Partial<SettingsState["notifications"]>) {
-			store.commit("settings/update", { notifications: data });
+    update(data: Partial<SettingsState["notifications"]>) {
+      useSettingsStore().update({ notifications: data })
 		}
 	}
 });

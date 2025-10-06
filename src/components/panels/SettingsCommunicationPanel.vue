@@ -95,52 +95,53 @@
 </template>
 
 <script lang="ts">
+import { useMachinesStore } from "@/stores/machines";
+import { MachineSettingsState, useMachinesSettingsStore } from "@/stores/machineSettings";
 import { PollConnector, RestConnector } from "@duet3d/connectors";
 import Vue from "vue";
 
-import store from "@/store";
-import { MachineSettingsState } from "@/store/machine/settings";
+
 
 export default Vue.extend({
 	computed: {
-		isRestConnector(): boolean { return store.getters["machine/connector"] instanceof RestConnector; },
-		isPollConnector(): boolean { return store.getters["machine/connector"] instanceof PollConnector; },
+		isRestConnector(): boolean { return useMachinesStore().connector instanceof RestConnector; },
+		isPollConnector(): boolean { return useMachinesStore().connector instanceof PollConnector; },
 		ignoreFileTimestamps: {
-			get(): boolean { return store.state.machine.settings.ignoreFileTimestamps; },
+			get(): boolean { return useMachinesSettingsStore().ignoreFileTimestamps; },
 			set(value: boolean) { this.update({ ignoreFileTimestamps: value }); }
 		},
 		pingInterval: {
-			get(): number { return store.state.machine.settings.pingInterval; },
+			get(): number { return useMachinesSettingsStore().pingInterval; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ pingInterval: value }); } }
 		},
 		updateDelay: {
-			get(): number { return store.state.machine.settings.updateDelay; },
+			get(): number { return useMachinesSettingsStore().updateDelay; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ updateDelay: value }); } }
 		},
 		ajaxRetries: {
-			get(): number { return store.state.machine.settings.ajaxRetries; },
+			get(): number { return useMachinesSettingsStore().ajaxRetries; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ ajaxRetries: value }); } }
 		},
 		retryDelay: {
-			get(): number { return store.state.machine.settings.retryDelay; },
+			get(): number { return useMachinesSettingsStore().retryDelay; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ retryDelay: value }); } }
 		},
 		updateInterval: {
-			get(): number { return store.state.machine.settings.updateInterval; },
+			get(): number { return useMachinesSettingsStore().updateInterval; },
 			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ updateInterval: value }); } }
 		},
 		fileTransferRetryThreshold: {
-			get(): number { return Math.round(store.state.machine.settings.fileTransferRetryThreshold / 1024); },
+			get(): number { return Math.round(useMachinesSettingsStore().fileTransferRetryThreshold / 1024); },
 			set(value: number) { if (isFinite(value) && value > 0) { this.update({ fileTransferRetryThreshold: Math.round(value * 1024) }); } }
 		},
 		crcUploads: {
-			get(): boolean { return store.state.machine.settings.crcUploads; },
+			get(): boolean { return useMachinesSettingsStore().crcUploads; },
 			set(value: boolean) { this.update({ crcUploads: value }); }
 		}
 	},
 	methods: {
-		update(data: Partial<MachineSettingsState>) {
-			store.commit("machine/settings/update", data);
+    update(data: Partial<MachineSettingsState>) {
+      useMachinesSettingsStore().update(data);
 		}
 	}
 });

@@ -43,18 +43,20 @@
 </template>
 
 <script lang="ts">
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
 import { AxisLetter } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
 		babystepping(): number {
-			return store.state.machine.model.move.axes.find(axis => axis.letter === AxisLetter.Z)?.babystep ?? 0;
+			return useMachinesModelStore().move.axes.find(axis => axis.letter === AxisLetter.Z)?.babystep ?? 0;
 		},
 		babystepAmount(): number {
-			return store.state.machine.settings.babystepAmount;
+			return useMachinesSettingsStore().babystepAmount;
 		}
 	}
 });

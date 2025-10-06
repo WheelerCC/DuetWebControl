@@ -91,8 +91,8 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
-import { MachineSettingsState, ToolChangeMacro } from "@/store/machine/settings";
+
+import { MachineSettingsState, ToolChangeMacro, useMachinesSettingsStore } from "@/stores/machineSettings";
 
 export default Vue.extend({
 	data() {
@@ -115,37 +115,37 @@ export default Vue.extend({
 	},
 	computed: {
 		babystepAmount: {
-			get(): number { return store.state.machine.settings.babystepAmount; },
+			get(): number { return useMachinesSettingsStore().babystepAmount; },
 			set(value: number) { if (isFinite(value) && value > 0) { this.update({ babystepAmount: value }); } }
 		},
 		checkVersions: {
-			get(): boolean { return store.state.machine.settings.checkVersions; },
+			get(): boolean { return useMachinesSettingsStore().checkVersions; },
 			set(value: boolean) { this.update({ checkVersions: value }); }
 		},
 		moveFeedrate: {
-			get(): number { return store.state.machine.settings.moveFeedrate; },
+			get(): number { return useMachinesSettingsStore().moveFeedrate; },
 			set(value: number) { if (isFinite(value) && value > 0) { this.update({ moveFeedrate: value }); } }
 		},
 		toolChangeMacros: {
-			get(): Array<ToolChangeMacro> { return store.state.machine.settings.toolChangeMacros; },
+			get(): Array<ToolChangeMacro> { return useMachinesSettingsStore().toolChangeMacros; },
 			set(value: Array<ToolChangeMacro>) { this.update({ toolChangeMacros: value }); }
 		},
 		groupTools: {
-			get(): boolean { return store.state.machine.settings.groupTools; },
+			get(): boolean { return useMachinesSettingsStore().groupTools; },
 			set(value: boolean) { this.update({ groupTools: value }); }
 		},
 		singleBedControl: {
-			get(): boolean { return store.state.machine.settings.singleBedControl; },
+			get(): boolean { return useMachinesSettingsStore().singleBedControl; },
 			set(value: boolean) { this.update({ singleBedControl: value }); }
 		},
 		singleChamberControl: {
-			get(): boolean { return store.state.machine.settings.singleChamberControl; },
+			get(): boolean { return useMachinesSettingsStore().singleChamberControl; },
 			set(value: boolean) { this.update({ singleChamberControl: value }); }
 		}
 	},
 	methods: {
-		update(data: Partial<MachineSettingsState>) {
-			store.commit("machine/settings/update", data);
+    update(data: Partial<MachineSettingsState>) {
+      useMachinesSettingsStore().update(data)
 		},
 		removeToolChangeMacro(item: ToolChangeMacro) {
 			this.toolChangeMacros = this.toolChangeMacros.filter(macro => macro !== item);

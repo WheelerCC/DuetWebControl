@@ -10,10 +10,12 @@
 <script lang="ts">
 import Vue from "vue";
 
-import store from "@/store";
+
 import { DisconnectedError, getErrorMessage } from "@/utils/errors";
 import { LogType } from "@/utils/logging";
 import Path from "@/utils/path";
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 
 export default Vue.extend({
 	props: {
@@ -48,7 +50,7 @@ export default Vue.extend({
 		}
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; }
+		isConnected(): boolean { return useRootStore().isConnected; }
 	},
 	watch: {
 		isConnected(to: boolean) {
@@ -72,7 +74,7 @@ export default Vue.extend({
 			const currentDirectory = this.directory;
 			try {
 				const path = Path.combine(currentDirectory, directory);
-				await store.dispatch("machine/makeDirectory", path);
+				await useMachinesStore().makeDirectory(path)
 
 				this.$emit("directoryCreated", path);
 				if (this.showSuccess) {

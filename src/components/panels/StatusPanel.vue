@@ -349,9 +349,11 @@
 import ObjectModel, { Axis, Board, MachineMode, Probe, ProbeType } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 import { isPrinting } from "@/utils/enums";
-import { DashboardMode } from "@/store/settings";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { DashboardMode, useSettingsStore } from "@/stores/settings";
+import { useRootStore } from "@/stores";
 
 export default Vue.extend({
 	data() {
@@ -363,19 +365,19 @@ export default Vue.extend({
 	},
 	computed: {
 		isConnected(): boolean {
-			return store.getters["isConnected"];
+			return useRootStore().isConnected;
 		},
 		model(): ObjectModel {
-			return store.state.machine.model;
+			return useMachinesModelStore()[useRootStore().selectedMachine];
 		},
 		isFFForUnset(): boolean {
-			if (store.state.settings.dashboardMode === DashboardMode.default) {
+			if (useSettingsStore().dashboardMode === DashboardMode.default) {
 				return !this.model.state.machineMode || this.model.state.machineMode === MachineMode.fff;
 			}
-			return store.state.settings.dashboardMode === DashboardMode.fff;
+			return useSettingsStore().dashboardMode === DashboardMode.fff;
 		},
 		virtualEPos(): number {
-			return store.state.machine.model.move.virtualEPos;
+			return useMachinesModelStore().move.virtualEPos;
 		},
 		volumetricFlow(): number {
 			if (this.model.state.currentTool >= 0 && this.model.state.currentTool < this.model.tools.length) {
@@ -404,7 +406,7 @@ export default Vue.extend({
 			return NaN;
 		},
 		fanRPM(): Array<{ name: string, rpm: number }> {
-			return store.state.machine.model.fans
+			return useMachinesModelStore().fans
 				.filter(fan => (fan !== null) && (fan.rpm >= 0))
 				.map((fan, index) => ({
 					name: fan!.name || this.$t("panel.fan.fan", [index]),
@@ -412,7 +414,7 @@ export default Vue.extend({
 				}), this);
 		},
 		validProbes(): Array<Probe> {
-			return store.state.machine.model.sensors.probes.filter((probe) => (probe !== null) && (probe.type !== ProbeType.none)) as Array<Probe>;
+			return useMachinesModelStore().sensors.probes.filter((probe) => (probe !== null) && (probe.type !== ProbeType.none)) as Array<Probe>;
 		},
 		mainboard(): Board | null {
 			return this.model.boards.find(board => !board.canAddress) ?? null;
@@ -425,12 +427,12 @@ export default Vue.extend({
 			return this.model.move.axes.filter(axis => axis.visible);
 		},
 		darkTheme(): boolean {
-			return store.state.settings.darkTheme;
+			return useSettingsStore().darkTheme;
 		}
 	},
 	methods: {
 		axisSpanClasses(axisIndex: number) {
-			if (axisIndex >= 0 && axisIndex < store.state.machine.model.sensors.endstops.length && store.state.machine.model.sensors.endstops[axisIndex]?.triggered) {
+			if (axisIndex >= 0 && axisIndex < useMachinesModelStore().sensors.endstops.length && useMachinesModelStore().sensors.endstops[axisIndex]?.triggered) {
 				return this.darkTheme ? "light-green darken-3" : "light-green lighten-4";
 			}
 			return null;

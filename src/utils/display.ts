@@ -2,8 +2,10 @@ import { AnalogSensor, AnalogSensorType, Axis, AxisLetter, MachineMode } from "@
 import Vue from "vue";
 
 import i18n from "@/i18n";
-import store from "@/store";
-import { UnitOfMeasure } from "@/store/settings";
+
+import { UnitOfMeasure, useSettingsStore } from "@/stores/settings";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useRootStore } from "@/stores";
 
 /**
  * Display a numeric value with a given precision and an optional unit.
@@ -37,8 +39,10 @@ export function displayAxisPosition(axis: Axis, machinePosition: boolean = false
 		return i18n.t("generic.noValue");
 	}
 
-	position = position / ((store.state.settings.displayUnits === UnitOfMeasure.imperial) ? 25.4 : 1);
-	return axis.letter === AxisLetter.Z ? displayZ(position, false) : display(position, store.state.settings.decimalPlaces);
+	let settingsStore = useSettingsStore()
+
+	position = position / ((settingsStore.displayUnits === UnitOfMeasure.imperial) ? 25.4 : 1);
+	return axis.letter === AxisLetter.Z ? displayZ(position, false) : display(position, settingsStore.decimalPlaces);
 }
 
 /**
@@ -48,7 +52,7 @@ export function displayAxisPosition(axis: Axis, machinePosition: boolean = false
  * @returns Formatted string
  */
 export function displayZ(value: number | Array<number> | string | null | undefined, showUnit = true) {
-	const decimalPlaces = Math.max((store.state.machine.model.state.machineMode === MachineMode.cnc) ? 3 : 2, store.state.settings.decimalPlaces);
+	const decimalPlaces = Math.max((useMachinesModelStore()[useRootStore().selectedMachine].state.machineMode === MachineMode.cnc) ? 3 : 2, useSettingsStore().decimalPlaces);
 	return display(value, decimalPlaces, showUnit ? "mm" : undefined);
 }
 
@@ -77,8 +81,9 @@ export function displaySize(bytes: number | null | undefined) {
 	if (typeof bytes !== "number") {
 		return i18n.t("generic.noValue");
 	}
+	let settingsStore = useSettingsStore()
 
-	if (store.state.settings.useBinaryPrefix) {
+	if (settingsStore.useBinaryPrefix) {
 		if (bytes > 1073741824) {	// GiB
 			return (bytes / 1073741824).toFixed(1) + " GiB";
 		}
@@ -108,7 +113,8 @@ export function displaySize(bytes: number | null | undefined) {
  * @returns Formatted move speed in mm/s or ipm
  */
 export function displayMoveSpeed(speed: number | null | undefined) {
-	if (typeof speed === "number" && store.state.settings.displayUnits === UnitOfMeasure.imperial) {
+
+	if (typeof speed === "number" && useSettingsStore().displayUnits === UnitOfMeasure.imperial) {
 		return display(speed * 60 / 25.4, 1, i18n.t("panel.settingsAppearance.unitInchSpeed"));
 	}
 	return display(speed, 1, i18n.t("panel.settingsAppearance.unitMmSpeed"));
@@ -123,8 +129,9 @@ export function displayTransferSpeed(bytesPerSecond: number | null | undefined) 
 	if (typeof bytesPerSecond !== "number") {
 		return i18n.t("generic.noValue");
 	}
+	let settingsStore = useSettingsStore()
 
-	if (store.state.settings.useBinaryPrefix) {
+	if (settingsStore.useBinaryPrefix) {
 		if (bytesPerSecond > 1073741824) {		// GiB
 			return (bytesPerSecond / 1073741824).toFixed(2) + " GiB/s";
 		}

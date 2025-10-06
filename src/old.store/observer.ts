@@ -1,8 +1,7 @@
 import { Store } from "vuex";
 
-import { InternalRootState, RootState } from "@/store";
-
 import { defaultMachine } from "./machine";
+import { InternalRootState, RootState } from ".";
 
 let settingsTimer: NodeJS.Timeout | null = null;
 const machineSettingsTimer: Record<string, NodeJS.Timeout> = {}, machineCacheTimer: Record<string, NodeJS.Timeout> = {};

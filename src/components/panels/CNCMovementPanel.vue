@@ -297,10 +297,14 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
 import { Axis, AxisLetter, KinematicsName, MoveCompensationType } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data() {
@@ -316,16 +320,16 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
-		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => store.getters["machine/settings/moveSteps"](axisLetter)); },
-		numMoveSteps(): number { return store.getters["machine/settings/numMoveSteps"]; },
-		isCompensationEnabled(): boolean { return store.state.machine.model.move.compensation.type !== MoveCompensationType.none; },
-		compensationType(): MoveCompensationType { return store.state.machine.model.move.compensation.type; },
-		visibleAxes(): Array<Axis> { return store.state.machine.model.move.axes.filter(axis => axis.visible); },
-		isDelta(): boolean { return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(store.state.machine.model.move.kinematics.name); },
-		unhomedAxes(): Array<Axis> { return store.state.machine.model.move.axes.filter(axis => axis.visible && !axis.homed); },
+		uiFrozen(): boolean { return useRootStore().uiFrozen; },
+		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)); },
+		numMoveSteps(): number { return useMachinesSettingsStore().numMoveSteps(); },
+		isCompensationEnabled(): boolean { return useMachinesModelStore().move.compensation.type !== MoveCompensationType.none; },
+		compensationType(): MoveCompensationType { return useMachinesModelStore().move.compensation.type; },
+		visibleAxes(): Array<Axis> { return useMachinesModelStore().move.axes.filter(axis => axis.visible); },
+		isDelta(): boolean { return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(useMachinesModelStore().move.kinematics.name); },
+		unhomedAxes(): Array<Axis> { return useMachinesModelStore().move.axes.filter(axis => axis.visible && !axis.homed); },
 		workCoordinates(): Array<number> { return [...Array(9).keys()].map(i => i + 1); },
-		workplaceNumber(): number { return store.state.machine.model.move.workplaceNumber; }
+		workplaceNumber(): number { return useMachinesModelStore().move.workplaceNumber; }
 	},
 	watch: {
 		isConnected() {
@@ -352,7 +356,7 @@ export default Vue.extend({
 			return classes;
 		},
 		getMoveCode(axis: Axis, index: number, decrementing: boolean) {
-			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${store.state.machine.settings.moveFeedrate}\nM121`;
+			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`;
 		},
 		showSign: (value: number) => (value > 0 ? `+${value}` : value),
 		showMoveStepDialog(axis: AxisLetter, index: number) {
@@ -361,23 +365,23 @@ export default Vue.extend({
 			this.moveStepDialog.preset = this.moveSteps(this.moveStepDialog.axis)[this.moveStepDialog.index];
 			this.moveStepDialog.shown = true;
 		},
-		moveStepDialogConfirmed(value: number) {
-			store.commit("machine/settings/setMoveStep", {
+    moveStepDialogConfirmed(value: number) {
+      useMachinesSettingsStore().setMoveStep({
 				axis: this.moveStepDialog.axis,
 				index: this.moveStepDialog.index,
 				value
 			});
 		},
 		async sendCode(code: string) {
-			await store.dispatch("machine/sendCode", code);
+			await useMachinesStore().sendCode(code);
 		},
 		async setWorkplaceZero() {
 			let code = `G10 L20 P${this.currentWorkplace}`;
 			this.visibleAxes.forEach(axis => (code += ` ${axis.letter}0`));
-			await store.dispatch("machine/sendCode", `${code}\nG10 L20 P${this.currentWorkplace}`);
+			await useMachinesStore().sendCode(`${code}\nG10 L20 P${this.currentWorkplace}`);
 		},
 		async goToWorkplaceZero() {
-			await store.dispatch("machine/sendCode", 'M98 P"workzero.g"');
+			await useMachinesStore().sendCode('M98 P"workzero.g"');
 		},
 		async updateWorkplaceCoordinate() {
 			let code;
@@ -388,7 +392,7 @@ export default Vue.extend({
 			}
 
 			if (code) {
-				await store.dispatch("machine/sendCode", `${code}\nG10 L20 P${this.currentWorkplace}`);
+				await useMachinesStore().sendCode(`${code}\nG10 L20 P${this.currentWorkplace}`);
 			}
 		},
 	},

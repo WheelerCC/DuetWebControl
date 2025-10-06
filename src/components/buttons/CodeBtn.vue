@@ -12,9 +12,11 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesStore } from "@/stores/machines";
 import { VBtn } from "vuetify/lib";
 
-import store from "@/store";
+
 
 export default VBtn.extend({
 	props: {
@@ -33,7 +35,7 @@ export default VBtn.extend({
 		}
 	},
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; }
+		uiFrozen(): boolean { return useRootStore().uiFrozen; }
 	},
 	data() {
 		return {
@@ -45,7 +47,7 @@ export default VBtn.extend({
 			try {
 				if (this.noWait) {
 					// Run the requested code but don't wait for a result
-					await store.dispatch("machine/sendCode", {
+					await useMachinesStore().sendCode({
 						code: this.code,
 						log: this.log,
 						noWait: true
@@ -54,7 +56,7 @@ export default VBtn.extend({
 					// Wait for the code to complete and block while doing so
 					this.waitingForCode = true;
 					try {
-						await store.dispatch("machine/sendCode", {
+						await useMachinesStore().sendCode({
 							code: this.code,
 							log: this.log
 						});

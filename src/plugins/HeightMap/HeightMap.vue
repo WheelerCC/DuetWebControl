@@ -228,7 +228,6 @@
 import { KinematicsName } from '@duet3d/objectmodel';
 import { mapState, mapGetters, mapActions } from 'vuex';
 
-import { setPluginData, PluginDataType } from '@/store';
 import CSV from '@/utils/csv';
 import Events from '@/utils/events';
 import Path from '@/utils/path';

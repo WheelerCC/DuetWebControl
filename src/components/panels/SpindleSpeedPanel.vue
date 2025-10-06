@@ -82,10 +82,13 @@
 </template>
 
 <script lang="ts">
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
 import { Spindle, SpindleState } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	data: function () {
@@ -94,7 +97,7 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		spindles(): Array<Spindle | null> { return store.state.machine.model.spindles; },
+		spindles(): Array<Spindle | null> { return useMachinesModelStore().spindles; },
 		hasReverseableSpindle(): boolean { return this.spindles.some((spindle) => spindle?.canReverse); }
 	},
 	watch: {
@@ -119,20 +122,20 @@ export default Vue.extend({
 			return (spindle.state == SpindleState.forward) || (spindle.state == SpindleState.reverse);
 		},
 		async setActiveRPM(spindleIndex: number, value: number) {
-			await store.dispatch("machine/sendCode", `${this.spindleDirections[spindleIndex] ? "M4" : "M3"} P${spindleIndex} S${value}`);
+			await useMachinesStore().sendCode(`${this.spindleDirections[spindleIndex] ? "M4" : "M3"} P${spindleIndex} S${value}`);
 		},
 		async spindleOn(spindleIndex: number) {
-			await store.dispatch("machine/sendCode", `${this.spindleDirections[spindleIndex] ? "M4" : "M3"} P${spindleIndex} S${this.spindles[spindleIndex]!.active}`);
+			await useMachinesStore().sendCode(`${this.spindleDirections[spindleIndex] ? "M4" : "M3"} P${spindleIndex} S${this.spindles[spindleIndex]!.active}`);
 		},
 		async spindleOff(spindleIndex: number) {
-			await store.dispatch("machine/sendCode", `M5 P${spindleIndex}`);
+			await useMachinesStore().sendCode(`M5 P${spindleIndex}`);
 		},
 		getValidRpm(spindle: Spindle) {
 			if (spindle.min === null || spindle.max === null) {
 				return [];
 			}
 
-			const rpmValues = store.state.machine.settings.spindleRPM.filter((rpm) => (rpm >= spindle.min!) && (rpm <= spindle.max!));
+			const rpmValues = useMachinesSettingsStore().spindleRPM.filter((rpm) => (rpm >= spindle.min!) && (rpm <= spindle.max!));
 			if (!rpmValues.includes(0)) {
 				rpmValues.push(0);
 			}

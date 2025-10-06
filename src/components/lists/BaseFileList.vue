@@ -216,13 +216,17 @@ import { DataItemProps, DataTableHeader } from "vuetify";
 import { VDataTable } from "vuetify/lib";
 
 import i18n from "@/i18n";
-import store from "@/store";
-import { FileTransferItem, defaultMachine } from "@/store/machine";
+
 import { DisconnectedError, getErrorMessage, OperationCancelledError } from "@/utils/errors";
 import Events from "@/utils/events";
 import Path from "@/utils/path";
 import { LogType } from "@/utils/logging";
 import ConfirmDialog from "../dialogs/ConfirmDialog.vue";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { FileTransferItem, useMachinesStore } from "@/stores/machines";
+import { defaultMachine } from "@/stores/misc";
+import { useRootStore } from "@/stores";
+import { useMachinesCacheStore } from "@/stores/machineCache";
 
 /**
  * Maximum permitted size of files to edit (defaults to 32MiB)
@@ -278,12 +282,12 @@ export default VDataTable.extend({
 		noDelete: Boolean
 	},
 	computed: {
-		isConnected(): boolean { return store.getters["isConnected"]; },
+		isConnected(): boolean { return useRootStore().isConnected; },
 		isMounted(): boolean {
 			const volume = Path.getVolume(this.innerDirectory);
-			return (volume >= 0) && (volume < store.state.machine.model.volumes.length) && store.state.machine.model.volumes[volume].mounted;
+			return (volume >= 0) && (volume < useMachinesModelStore().volumes.length) && useMachinesModelStore().volumes[volume].mounted;
 		},
-		transferringFiles(): boolean { return store.state.machine.transferringFiles; },
+		transferringFiles(): boolean { return useMachinesStore().transferringFiles; },
 		defaultHeaders(): Array<BaseFileListHeader> {
 			return [
 				{
@@ -317,23 +321,24 @@ export default VDataTable.extend({
 			return (this.innerValue.length > 0) && (this.innerValue[0].size < maxEditFileSize);
 		},
 		noItemsText(): string {
-			return (this.innerFilelistLoaded || this.isMounted || store.state.selectedMachine === defaultMachine) ? this.noFilesText : "list.baseFileList.driveUnmounted";
+			return (this.innerFilelistLoaded || this.isMounted || useRootStore().selectedMachine === defaultMachine) ? this.noFilesText : "list.baseFileList.driveUnmounted";
 		},
 		internalSortBy: {
-			get(): string { return store.state.machine.cache.sorting[this.sortTable].column; },
+			get(): string { return useMachinesCacheStore().sorting[this.sortTable!].column; },
 			set(value: string) {
-				store.commit("machine/cache/setSorting", {
-					table: this.sortTable,
+				useMachinesCacheStore().setSorting({
+					table: this.sortTable!,
 					column: value,
 					descending: this.internalSortDesc
-				});
+				}
+				)
 			}
 		},
 		internalSortDesc: {
-			get(): boolean { return store.state.machine.cache.sorting[this.sortTable].descending; },
+			get(): boolean { return useMachinesCacheStore().sorting[this.sortTable!].descending; },
 			set(value: boolean) {
-				store.commit("machine/cache/setSorting", {
-					table: this.sortTable,
+				useMachinesCacheStore().setSorting({
+					table: this.sortTable!,
 					column: this.internalSortBy,
 					descending: value
 				});
@@ -429,7 +434,7 @@ export default VDataTable.extend({
 		async loadDirectory(directory: string) {
 			// Make sure the requested volume is actually available
 			const volume = Path.getVolume(this.directory)
-			if (!this.isConnected || ((volume >= 0) && (volume < store.state.machine.model.volumes.length) && !store.state.machine.model.volumes[volume].mounted)) {
+			if (!this.isConnected || ((volume >= 0) && (volume < useMachinesModelStore().volumes.length) && !useMachinesModelStore().volumes[volume].mounted)) {
 				this.innerDirectory = (volume === Path.getVolume(this.initialDirectory)) ? this.initialDirectory : `${volume}:`;
 				this.innerFilelist = [];
 				this.innerFilelistLoaded = false;
@@ -446,7 +451,7 @@ export default VDataTable.extend({
 			this.innerLoading = true;
 			this.innerFilelistLoaded = false;
 			try {
-				const files: Array<BaseFileListItem> = await store.dispatch("machine/getFileList", directory);
+				const files: Array<BaseFileListItem> = await useMachinesStore().getFileList(directory);;
 
 				// Create missing props if required
 				if (this.headers) {
@@ -648,7 +653,7 @@ export default VDataTable.extend({
 						const from = Path.combine(data.directory, dragItem.name);
 						const to = Path.combine(directory, item.name, dragItem.name);
 						try {
-							await store.dispatch("machine/move", { from, to });
+							await useMachinesStore().move({ from, to })
 						} catch (e) {
 							if (data.items.length === 1) {
 								this.forceMoveDialog.from = from;
@@ -665,7 +670,7 @@ export default VDataTable.extend({
 		},
 		async forceMove() {
 			try {
-				await store.dispatch("machine/move", {
+				await useMachinesStore().move({
 					from: this.forceMoveDialog.from,
 					to: this.forceMoveDialog.to,
 					force: true
@@ -677,7 +682,7 @@ export default VDataTable.extend({
 		async download(item: BaseFileListItem) {
 			try {
 				const filename = (item && item.name) ? item.name : this.innerValue[0].name;
-				const blob: Blob = await store.dispatch("machine/download", {
+				const blob: Blob = await useMachinesStore().download({
 					filename: Path.combine(this.innerDirectory, filename),
 					type: "blob"
 				});
@@ -692,7 +697,7 @@ export default VDataTable.extend({
 		async edit(item: BaseFileListItem) {
 			try {
 				const filename = Path.combine(this.innerDirectory, item.name);
-				const response: string = await store.dispatch("machine/download", {
+				const response: string = await useMachinesStore().download({
 					filename,
 					type: "text",
 					showSuccess: false
@@ -720,7 +725,7 @@ export default VDataTable.extend({
 
 			this.innerDoingFileOperation = true;
 			try {
-				await store.dispatch("machine/move", {
+				await useMachinesStore().move({
 					from: Path.combine(this.renameDialog.directory, oldFilename),
 					to: Path.combine(this.renameDialog.directory, newFilename)
 				});
@@ -745,7 +750,7 @@ export default VDataTable.extend({
 			const deletedItems: any[] = [], directory = this.directory;  // todo correctly type
 			for (const item of this.removeDialog.items) {
 				try {
-					await store.dispatch("machine/delete", {
+					await useMachinesStore().delete({
 						filename: Path.combine(directory, item.name),
 						recursive: item.isDirectory ? true : undefined
 					});
@@ -771,7 +776,7 @@ export default VDataTable.extend({
 			// Download the selected files
 			let downloadedFiles: Array<FileTransferItem>;
 			try {
-				downloadedFiles = await store.dispatch("machine/download", {
+				downloadedFiles = await useMachinesStore().download({
 					files: items.map(item => Path.combine(this.directory, item.name)),
 					type: "blob",
 					closeProgressOnSuccess: true
@@ -802,9 +807,9 @@ export default VDataTable.extend({
 		},
 
 		filesOrDirectoriesChanged({ machine, files, volume }: { machine: string, files?: Array<string>, volume?: number }) {
-			if (machine === store.state.selectedMachine && ((files !== undefined && Path.filesAffectDirectory(files, this.directory)) || (volume === Path.getVolume(this.directory)))) {
+			if (machine === useRootStore().selectedMachine && ((files !== undefined && Path.filesAffectDirectory(files, this.directory)) || (volume === Path.getVolume(this.directory)))) {
 				// File or directory has been changed in the current directory
-				if (store.state.machine.transferringFiles) {
+				if (useMachinesStore().transferringFiles) {
 					this.refreshAfterTransfer = true;
 				} else {
 					this.refresh();

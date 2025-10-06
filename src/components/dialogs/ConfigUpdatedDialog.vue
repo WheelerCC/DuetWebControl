@@ -46,9 +46,10 @@
 </template>
 
 <script lang="ts">
+import { useMachinesStore } from "@/stores/machines";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	props: {
@@ -63,11 +64,11 @@ export default Vue.extend({
 		},
 		async reset() {
 			this.$emit("update:shown", false);
-			await store.dispatch("machine/sendCode", "M999");
+			await useMachinesStore().sendCode("M999");
 		},
 		async runConfig() {
 			this.$emit("update:shown", false);
-			await store.dispatch("machine/sendCode", "M98 P\"config.g\"");
+			await useMachinesStore().sendCode("M98 P\"config.g\"");
 		}
 	}
 });

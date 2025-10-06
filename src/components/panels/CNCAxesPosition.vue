@@ -44,20 +44,20 @@
                 <span
                   :style="{ overflow: 'hidden', 'font-size': '0.8vw', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontFamily: 'monospace'}"
                 >
-                  <!-- Should use display(...) or store.state.settings.decimalPlaces -->
+                  <!-- Should use display(...) or useSettingsStore().decimalPlaces -->
                   {{ `${axis.machinePosition?.toFixed(3)}` }}
 
                 </span>
                 <span
                   :style="{ overflow: 'hidden', 'font-size': '0.8vw', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontFamily: 'monospace'}"
                 >
-                  <!-- Should use display(...) or store.state.settings.decimalPlaces -->
+                  <!-- Should use display(...) or useSettingsStore().decimalPlaces -->
                   {{ `-${axis.workplaceOffsets[currentWorkOffset].toFixed(3)}` }}
                 </span>
                 <span
                   :style="{ overflow: 'hidden', 'font-size': '0.8vw', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontFamily: 'monospace'}"
                 >
-                  <!-- Should use display(...) or store.state.settings.decimalPlaces -->
+                  <!-- Should use display(...) or useSettingsStore().decimalPlaces -->
                   {{ `${tools[currentTool]?.offsets[index].toFixed(3)}` }} 
                 </span>
               </v-col>
@@ -85,10 +85,12 @@
 </template>
 
 <script lang="ts">
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useSettingsStore } from "@/stores/settings";
 import { Axis } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	props: {
@@ -99,26 +101,26 @@ export default Vue.extend({
 	},
 	computed: {
 		darkTheme(): boolean {
-			return store.state.settings.darkTheme;
+			return useSettingsStore().darkTheme;
 		},
 		visibleAxes(): Array<Axis> {
-			return store.state.machine.model.move.axes.filter(axis => axis.visible);
+			return useMachinesModelStore().move.axes.filter(axis => axis.visible);
 		},
 		currentTool(): number {
-			return store.state.machine.model.state.currentTool
+			return useMachinesModelStore().state.currentTool
 		},
 		currentWorkOffset() {
-			return  store.state.machine.model.move.workplaceNumber
+			return  useMachinesModelStore().move.workplaceNumber
 		},
 		tools() {
-			return store.state.machine.model.tools
+			return useMachinesModelStore().tools
 		},
 	},
 	methods: {
 		axisSpanClasses(axisIndex: number) {
 			const classList: Array<string> = [];
 			if (this.machinePosition) {
-				if (axisIndex >= 0 && axisIndex < store.state.machine.model.sensors.endstops.length && store.state.machine.model.sensors.endstops[axisIndex]?.triggered) {
+				if (axisIndex >= 0 && axisIndex < useMachinesModelStore().sensors.endstops.length && useMachinesModelStore().sensors.endstops[axisIndex]?.triggered) {
 					classList.push("px-2");
 					classList.push("light-green");
 					classList.push(this.darkTheme ? "darken-3" : "lighten-4");

@@ -93,19 +93,23 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from "@/stores";
+import { useMachinesModelStore } from "@/stores/machineModel";
+import { useMachinesStore } from "@/stores/machines";
+import { useMachinesSettingsStore } from "@/stores/machineSettings";
 import { Extruder } from "@duet3d/objectmodel";
 import Vue from "vue";
 
-import store from "@/store";
+
 
 export default Vue.extend({
 	computed: {
-		uiFrozen(): boolean { return store.getters["uiFrozen"]; },
+		uiFrozen(): boolean { return useRootStore().uiFrozen },
 		displayedExtruders(): Array<number> {
-			return store.state.machine.settings.displayedExtruders;
+			return useMachinesSettingsStore().displayedExtruders;
 		},
 		extruders(): Array<Extruder> {
-			return store.state.machine.model.move.extruders;
+			return useMachinesModelStore().move.extruders;
 		},
 		hasVisibleExtruders(): boolean {
 			return this.extruders.some((_, index) => this.displayedExtruders.includes(index));
@@ -117,10 +121,10 @@ export default Vue.extend({
 			return Math.round(extruder.factor * 100);
 		},
 		async setExtrusionFactor(extruderIndex: number, value: number) {
-			await store.dispatch("machine/sendCode", `M221 D${extruderIndex} S${value}`);
+			await useMachinesStore().sendCode(`M221 D${extruderIndex} S${value}`);
 		},
-		toggleExtruderVisibility(extruderIndex: number) {
-			store.commit("machine/settings/toggleExtruderVisibility", extruderIndex);
+    toggleExtruderVisibility(extruderIndex: number) {
+      useMachinesSettingsStore().toggleExtruderVisibility(extruderIndex)
 		}
 	}
 });
