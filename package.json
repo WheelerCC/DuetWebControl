@@ -10,7 +10,7 @@
       "serve": "vue-cli-service serve",
       "build": "vue-cli-service build",
       "lint": "eslint . --fix",
-      "format": "prettier --write src/",
+      "format": "prettier --write src/ scripts/",
       "build-plugin": "node scripts/build-plugin.js",
       "build-plugin-pkg": "node scripts/build-plugin-pkg.js",
       "report": "vue-cli-service build --report"
