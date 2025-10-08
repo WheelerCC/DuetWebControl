@@ -1,7 +1,7 @@
 <template>
   <v-card outlined>
     <v-card-title class="pb-0">
-      {{ $t("panel.settingsCommunication.caption") }}
+      {{ $t('panel.settingsCommunication.caption') }}
     </v-card-title>
 
     <v-card-text>
@@ -87,7 +87,7 @@
           </v-col>
         </template>
         <v-col v-else>
-          {{ $t("panel.settingsCommunication.unavailable") }}
+          {{ $t('panel.settingsCommunication.unavailable') }}
         </v-col>
       </v-row>
     </v-card-text>
@@ -95,54 +95,100 @@
 </template>
 
 <script lang="ts">
-import { useMachinesStore } from "@/stores/machines";
-import { MachineSettingsState, useMachinesSettingsStore } from "@/stores/machineSettings";
-import { PollConnector, RestConnector } from "@duet3d/connectors";
-import Vue from "vue";
-
-
+import { useMachinesStore } from '@/stores/machines'
+import { MachineSettingsState, useMachinesSettingsStore } from '@/stores/machineSettings'
+import { PollConnector, RestConnector } from '@duet3d/connectors'
+import Vue from 'vue'
 
 export default Vue.extend({
-	computed: {
-		isRestConnector(): boolean { return useMachinesStore().connector instanceof RestConnector; },
-		isPollConnector(): boolean { return useMachinesStore().connector instanceof PollConnector; },
-		ignoreFileTimestamps: {
-			get(): boolean { return useMachinesSettingsStore().ignoreFileTimestamps; },
-			set(value: boolean) { this.update({ ignoreFileTimestamps: value }); }
-		},
-		pingInterval: {
-			get(): number { return useMachinesSettingsStore().pingInterval; },
-			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ pingInterval: value }); } }
-		},
-		updateDelay: {
-			get(): number { return useMachinesSettingsStore().updateDelay; },
-			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ updateDelay: value }); } }
-		},
-		ajaxRetries: {
-			get(): number { return useMachinesSettingsStore().ajaxRetries; },
-			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ ajaxRetries: value }); } }
-		},
-		retryDelay: {
-			get(): number { return useMachinesSettingsStore().retryDelay; },
-			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ retryDelay: value }); } }
-		},
-		updateInterval: {
-			get(): number { return useMachinesSettingsStore().updateInterval; },
-			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ updateInterval: value }); } }
-		},
-		fileTransferRetryThreshold: {
-			get(): number { return Math.round(useMachinesSettingsStore().fileTransferRetryThreshold / 1024); },
-			set(value: number) { if (isFinite(value) && value > 0) { this.update({ fileTransferRetryThreshold: Math.round(value * 1024) }); } }
-		},
-		crcUploads: {
-			get(): boolean { return useMachinesSettingsStore().crcUploads; },
-			set(value: boolean) { this.update({ crcUploads: value }); }
-		}
-	},
-	methods: {
+  computed: {
+    isRestConnector(): boolean {
+      return useMachinesStore().connector instanceof RestConnector
+    },
+    isPollConnector(): boolean {
+      return useMachinesStore().connector instanceof PollConnector
+    },
+    ignoreFileTimestamps: {
+      get(): boolean {
+        return useMachinesSettingsStore().ignoreFileTimestamps
+      },
+      set(value: boolean) {
+        this.update({ ignoreFileTimestamps: value })
+      },
+    },
+    pingInterval: {
+      get(): number {
+        return useMachinesSettingsStore().pingInterval
+      },
+      set(value: number) {
+        if (isFinite(value) && value >= 0) {
+          this.update({ pingInterval: value })
+        }
+      },
+    },
+    updateDelay: {
+      get(): number {
+        return useMachinesSettingsStore().updateDelay
+      },
+      set(value: number) {
+        if (isFinite(value) && value >= 0) {
+          this.update({ updateDelay: value })
+        }
+      },
+    },
+    ajaxRetries: {
+      get(): number {
+        return useMachinesSettingsStore().ajaxRetries
+      },
+      set(value: number) {
+        if (isFinite(value) && value >= 0) {
+          this.update({ ajaxRetries: value })
+        }
+      },
+    },
+    retryDelay: {
+      get(): number {
+        return useMachinesSettingsStore().retryDelay
+      },
+      set(value: number) {
+        if (isFinite(value) && value >= 0) {
+          this.update({ retryDelay: value })
+        }
+      },
+    },
+    updateInterval: {
+      get(): number {
+        return useMachinesSettingsStore().updateInterval
+      },
+      set(value: number) {
+        if (isFinite(value) && value >= 0) {
+          this.update({ updateInterval: value })
+        }
+      },
+    },
+    fileTransferRetryThreshold: {
+      get(): number {
+        return Math.round(useMachinesSettingsStore().fileTransferRetryThreshold / 1024)
+      },
+      set(value: number) {
+        if (isFinite(value) && value > 0) {
+          this.update({ fileTransferRetryThreshold: Math.round(value * 1024) })
+        }
+      },
+    },
+    crcUploads: {
+      get(): boolean {
+        return useMachinesSettingsStore().crcUploads
+      },
+      set(value: boolean) {
+        this.update({ crcUploads: value })
+      },
+    },
+  },
+  methods: {
     update(data: Partial<MachineSettingsState>) {
-      useMachinesSettingsStore().update(data);
-		}
-	}
-});
+      useMachinesSettingsStore().update(data)
+    },
+  },
+})
 </script>

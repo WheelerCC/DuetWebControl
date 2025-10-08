@@ -5,11 +5,7 @@
       <tr>
         <!-- Heater item name -->
         <th class="pl-2">
-          <v-menu
-            bottom
-            offset-y
-            :disabled="disabled"
-          >
+          <v-menu bottom offset-y :disabled="disabled">
             <template #activator="{ on, attrs }">
               <a
                 href="javascript:void(0)"
@@ -18,19 +14,18 @@
                 v-on="on"
               >
                 {{ singleHeaterCaption }}
-                <v-icon
-                  dense
-                  class="ms-n1"
-                >mdi-menu-down</v-icon>
+                <v-icon dense class="ms-n1">mdi-menu-down</v-icon>
               </a>
             </template>
             <v-list>
               <v-list-item @click="selectHeater(-1, null, -1)">
                 <v-list-item-title>
                   <v-icon small>
-                    {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                    {{ props.type === 'bed' ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
                   </v-icon>
-                  {{ (props.type === "bed") ? $t("panel.tools.allBeds") : $t("panel.tools.allChambers") }}
+                  {{
+                    props.type === 'bed' ? $t('panel.tools.allBeds') : $t('panel.tools.allChambers')
+                  }}
                 </v-list-item-title>
               </v-list-item>
 
@@ -42,9 +37,13 @@
                 >
                   <v-list-item-title>
                     <v-icon class="mr-1">
-                      {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                      {{ props.type === 'bed' ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
                     </v-icon>
-                    {{ (props.type === "bed") ? $t("panel.tools.bed", [index]) : $t("panel.tools.chamber", [index]) }}
+                    {{
+                      props.type === 'bed'
+                        ? $t('panel.tools.bed', [index])
+                        : $t('panel.tools.chamber', [index])
+                    }}
                   </v-list-item-title>
                 </v-list-item>
               </template>
@@ -61,17 +60,13 @@
           >
             {{ getHeaterName(selectedHeater, selectedHeaterIndex) }}
           </a>
-          <br>
+          <br />
           <span class="font-weight-regular caption">
             {{ $t(`generic.heaterStates.${selectedHeater.state}`) }}
           </span>
         </th>
         <th v-else>
-          <a
-            href="javascript:void(0)"
-            class="font-weight-regular"
-            @click="allHeatersClick"
-          >
+          <a href="javascript:void(0)" class="font-weight-regular" @click="allHeatersClick">
             {{ $t(`generic.heaterStates.${firstHeater.state}`) }}
           </a>
         </th>
@@ -102,7 +97,7 @@
         </td>
       </tr>
     </template>
-    <template v-else-if="heaterItems.some(item => item.heater !== null)">
+    <template v-else-if="heaterItems.some((item) => item.heater !== null)">
       <template v-for="{ index, heater, heaterIndex } in heaterItems">
         <!-- Individual Heater Control-->
         <template v-if="heater !== null">
@@ -116,9 +111,13 @@
                 @click="heaterClick(index, heater)"
               >
                 <v-icon small>
-                  {{ (props.type === 'bed') ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
+                  {{ props.type === 'bed' ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
                 </v-icon>
-                {{ (props.type === "bed") ? $t("panel.tools.bed", [(heaterItems.length === 1) ? "" : index]) : $t("panel.tools.chamber", [(heaterItems.length === 1) ? "" : index]) }}
+                {{
+                  props.type === 'bed'
+                    ? $t('panel.tools.bed', [heaterItems.length === 1 ? '' : index])
+                    : $t('panel.tools.chamber', [heaterItems.length === 1 ? '' : index])
+                }}
               </a>
             </th>
 
@@ -131,7 +130,7 @@
               >
                 {{ getHeaterName(heater, heaterIndex) }}
               </a>
-              <br>
+              <br />
               <span class="font-weight-regular caption">
                 {{ $t(`generic.heaterStates.${heater.state}`) }}
               </span>
@@ -144,20 +143,12 @@
 
             <!-- Heater active -->
             <td class="pl-2 pr-1">
-              <control-input
-                :type="props.type"
-                :index="index"
-                active
-              />
+              <control-input :type="props.type" :index="index" active />
             </td>
 
             <!-- Heater standby -->
             <td class="pl-1 pr-2">
-              <control-input
-                :type="props.type"
-                :index="index"
-                standby
-              />
+              <control-input :type="props.type" :index="index" standby />
             </td>
           </tr>
         </template>
@@ -167,219 +158,257 @@
 </template>
 
 <script setup lang="ts">
-import { Heater, HeaterState, MachineStatus } from "@duet3d/objectmodel";
-import { computed, PropType, ref } from "vue";
+import { Heater, HeaterState, MachineStatus } from '@duet3d/objectmodel'
+import { computed, PropType, ref } from 'vue'
 
-import i18n from "@/i18n";
+import i18n from '@/i18n'
 
-import { getHeaterColor } from "@/utils/colors";
-import { displaySensorValue } from "@/utils/display";
-import { useMachinesSettingsStore } from "@/stores/machineSettings";
-import { useRootStore } from "@/stores";
-import { useMachinesStore } from "@/stores/machines";
-import { useMachinesModelStore } from "@/stores/machineModel";
+import { getHeaterColor } from '@/utils/colors'
+import { displaySensorValue } from '@/utils/display'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { useRootStore } from '@/stores'
+import { useMachinesStore } from '@/stores/machines'
+import { useMachinesModelStore } from '@/stores/machineModel'
 
 const props = defineProps({
-    type: {
-        type: String as PropType<"bed" | "chamber">,
-        default: null
-    }
-});
+  type: {
+    type: String as PropType<'bed' | 'chamber'>,
+    default: null,
+  },
+})
 
 const emit = defineEmits<{
-    (e: "resetHeaterFault", heater: number): void
-}>();
+  (e: 'resetHeaterFault', heater: number): void
+}>()
 
-const disabled = computed<boolean>(() => useRootStore().uiFrozen || [MachineStatus.pausing, MachineStatus.processing, MachineStatus.resuming].includes(useMachinesModelStore().state.status));
+const disabled = computed<boolean>(
+  () =>
+    useRootStore().uiFrozen ||
+    [MachineStatus.pausing, MachineStatus.processing, MachineStatus.resuming].includes(
+      useMachinesModelStore().state.status,
+    ),
+)
 
 // Settings
-const singleControl = computed(() => (props.type === "bed") ? useMachinesSettingsStore().singleBedControl : useMachinesSettingsStore().singleChamberControl);
+const singleControl = computed(() =>
+  props.type === 'bed'
+    ? useMachinesSettingsStore().singleBedControl
+    : useMachinesSettingsStore().singleChamberControl,
+)
 
 // Heater abstraction
 const heaterItems = computed(() => {
-    const heaterIndices = (props.type === "bed") ? useMachinesModelStore().heat.bedHeaters : useMachinesModelStore().heat.chamberHeaters;
-    const heaterList: Array<{ index: number, heater: Heater, heaterIndex: number }> = [];
-    for (let index = 0; index < heaterIndices.length; index++) {
-        const heaterIndex = heaterIndices[index];
-        if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length) {
-            const heater = useMachinesModelStore().heat.heaters[heaterIndex];
-            if (heater !== null) {
-                heaterList.push({
-                    index,
-                    heater,
-                    heaterIndex
-                });
-            }
-        }
+  const heaterIndices =
+    props.type === 'bed'
+      ? useMachinesModelStore().heat.bedHeaters
+      : useMachinesModelStore().heat.chamberHeaters
+  const heaterList: Array<{ index: number; heater: Heater; heaterIndex: number }> = []
+  for (let index = 0; index < heaterIndices.length; index++) {
+    const heaterIndex = heaterIndices[index]
+    if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length) {
+      const heater = useMachinesModelStore().heat.heaters[heaterIndex]
+      if (heater !== null) {
+        heaterList.push({
+          index,
+          heater,
+          heaterIndex,
+        })
+      }
     }
-    return heaterList;
-});
-const firstHeater = computed(() => (heaterItems.value.length > 0) ? heaterItems.value[0].heater : null);
+  }
+  return heaterList
+})
+const firstHeater = computed(() =>
+  heaterItems.value.length > 0 ? heaterItems.value[0].heater : null,
+)
 
 // Single heater control
-const selectedIndex = ref(-1), selectedHeater = ref<Heater | null>(null), selectedHeaterIndex = ref(-1);
+const selectedIndex = ref(-1),
+  selectedHeater = ref<Heater | null>(null),
+  selectedHeaterIndex = ref(-1)
 
 function selectHeater(index: number, heater: Heater | null, heaterIndex: number) {
-    selectedIndex.value = index;
-    selectedHeater.value = heater;
-    selectedHeaterIndex.value = heaterIndex;
+  selectedIndex.value = index
+  selectedHeater.value = heater
+  selectedHeaterIndex.value = heaterIndex
 }
 
 const singleHeaterCaption = computed(() => {
-    if (selectedHeater.value === null) {
-        return (props.type === "bed") ? i18n.t("panel.tools.beds") : i18n.t("panel.tools.chambers");
-    }
-    return (props.type === "bed") ? i18n.t("panel.tools.bed", [""]) : i18n.t("panel.tools.chamber", [""]);
-});
+  if (selectedHeater.value === null) {
+    return props.type === 'bed' ? i18n.t('panel.tools.beds') : i18n.t('panel.tools.chambers')
+  }
+  return props.type === 'bed'
+    ? i18n.t('panel.tools.bed', [''])
+    : i18n.t('panel.tools.chamber', [''])
+})
 
 async function allHeatersClick() {
-    if (disabled.value) {
-        return;
-    }
+  if (disabled.value) {
+    return
+  }
 
-    // Get valid indices
-    const heaters = (props.type === "bed") ? useMachinesModelStore().heat.bedHeaters : useMachinesModelStore().heat.chamberHeaters;
-    const indices: Array<number> = [];
-    for (let index = 0; index < heaters.length; index++) {
-        const heaterIndex = heaters[index];
-        if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length) {
-            const bedHeater = useMachinesModelStore().heat.heaters[heaterIndex];
-            if (bedHeater !== null) {
-                indices.push(index);
+  // Get valid indices
+  const heaters =
+    props.type === 'bed'
+      ? useMachinesModelStore().heat.bedHeaters
+      : useMachinesModelStore().heat.chamberHeaters
+  const indices: Array<number> = []
+  for (let index = 0; index < heaters.length; index++) {
+    const heaterIndex = heaters[index]
+    if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length) {
+      const bedHeater = useMachinesModelStore().heat.heaters[heaterIndex]
+      if (bedHeater !== null) {
+        indices.push(index)
 
-                // Since there is no dedicate facility for resetting heater faults, check all bed heaters here
-                if (bedHeater.state === HeaterState.fault) {
-                    emit("resetHeaterFault", heaterIndex);
-                    return;
-                }
-            }
+        // Since there is no dedicate facility for resetting heater faults, check all bed heaters here
+        if (bedHeater.state === HeaterState.fault) {
+          emit('resetHeaterFault', heaterIndex)
+          return
         }
+      }
     }
+  }
 
-    // Control heaters depending on the state of the first heater
-    if (firstHeater.value !== null) {
-        if (props.type === "bed") {
-            switch (firstHeater.value.state) {
-                case HeaterState.off:		// Off -> Active
-                    await useMachinesStore().sendCode( indices.map(index => `M140 P${index} S${firstHeater.value!.active}`).join('\n'));
-                    break;
+  // Control heaters depending on the state of the first heater
+  if (firstHeater.value !== null) {
+    if (props.type === 'bed') {
+      switch (firstHeater.value.state) {
+        case HeaterState.off: // Off -> Active
+          await useMachinesStore().sendCode(
+            indices.map((index) => `M140 P${index} S${firstHeater.value!.active}`).join('\n'),
+          )
+          break
 
-                case HeaterState.standby:	// Standby -> Off
-                    await useMachinesStore().sendCode(indices.map(index => `M140 P${index} S-273.15`).join('\n'));
-                    break;
+        case HeaterState.standby: // Standby -> Off
+          await useMachinesStore().sendCode(
+            indices.map((index) => `M140 P${index} S-273.15`).join('\n'),
+          )
+          break
 
-                case HeaterState.active:	// Active -> Standby
-                    await useMachinesStore().sendCode( indices.map(index => `M144 P${index}\n`).join('\n'));
-                    break;
+        case HeaterState.active: // Active -> Standby
+          await useMachinesStore().sendCode(indices.map((index) => `M144 P${index}\n`).join('\n'))
+          break
 
-                // Faults are handled before we get here
-            }
-        } else {
-            switch (firstHeater.value.state) {
-                case HeaterState.off:		// Off -> Active
-                    await useMachinesStore().sendCode( indices.map(index => `M141 P${index} S${firstHeater.value!.active}`).join('\n'));
-                    break;
+        // Faults are handled before we get here
+      }
+    } else {
+      switch (firstHeater.value.state) {
+        case HeaterState.off: // Off -> Active
+          await useMachinesStore().sendCode(
+            indices.map((index) => `M141 P${index} S${firstHeater.value!.active}`).join('\n'),
+          )
+          break
 
-                // Standby mode for chambers is not officially supported yet (there is no code for standby control)
+        // Standby mode for chambers is not officially supported yet (there is no code for standby control)
 
-                default:	// Active -> Off
-                    await useMachinesStore().sendCode( indices.map(index => `M141 P${index} S-273.15`).join('\n'));
-                    break;
+        default: // Active -> Off
+          await useMachinesStore().sendCode(
+            indices.map((index) => `M141 P${index} S-273.15`).join('\n'),
+          )
+          break
 
-                // Faults are handled before we get here
-            }
-        }
+        // Faults are handled before we get here
+      }
     }
+  }
 }
 
 // Individual heater control
 function getHeaterClasses(heater: number) {
-    const classes = [getHeaterColor(heater)];
-    if (disabled.value) {
-        classes.push("disabled-heater");
-    }
-    return classes;
+  const classes = [getHeaterColor(heater)]
+  if (disabled.value) {
+    classes.push('disabled-heater')
+  }
+  return classes
 }
 
 function getHeaterName(heater: Heater | null, heaterIndex: number) {
-    if ((heater !== null) && (heater.sensor >= 0) && (heater.sensor < useMachinesModelStore().sensors.analog.length)) {
-        const sensor = useMachinesModelStore().sensors.analog[heater.sensor];
-        if ((sensor !== null) && sensor.name) {
-            const matches = /(.*)\[(.*)\]$/.exec(sensor.name);
-            if (matches) {
-                return matches[1];
-            }
-            return sensor.name;
-        }
+  if (
+    heater !== null &&
+    heater.sensor >= 0 &&
+    heater.sensor < useMachinesModelStore().sensors.analog.length
+  ) {
+    const sensor = useMachinesModelStore().sensors.analog[heater.sensor]
+    if (sensor !== null && sensor.name) {
+      const matches = /(.*)\[(.*)\]$/.exec(sensor.name)
+      if (matches) {
+        return matches[1]
+      }
+      return sensor.name
     }
-    return i18n.t("panel.tools.heater", [heaterIndex]);
+  }
+  return i18n.t('panel.tools.heater', [heaterIndex])
 }
 
 function getHeaterValue(heater: Heater | null) {
-    if ((heater !== null) && (heater.sensor >= 0) && (heater.sensor < useMachinesModelStore().sensors.analog.length)) {
-        const sensor = useMachinesModelStore().sensors.analog[heater.sensor];
-        if (sensor !== null) {
-            return displaySensorValue(sensor);
-        }
+  if (
+    heater !== null &&
+    heater.sensor >= 0 &&
+    heater.sensor < useMachinesModelStore().sensors.analog.length
+  ) {
+    const sensor = useMachinesModelStore().sensors.analog[heater.sensor]
+    if (sensor !== null) {
+      return displaySensorValue(sensor)
     }
-    return i18n.t("generic.noValue");
+  }
+  return i18n.t('generic.noValue')
 }
 
 async function heaterClick(index: number, heater: Heater | null) {
-    if (disabled.value || !heater) {
-        return;
+  if (disabled.value || !heater) {
+    return
+  }
+
+  if (props.type === 'bed') {
+    switch (heater.state) {
+      case HeaterState.off: // Off -> Active
+        await useMachinesStore().sendCode(`M140 P${index} S${heater.active}`)
+        break
+
+      case HeaterState.standby: // Standby -> Off
+        await useMachinesStore().sendCode(`M140 P${index} S-273.15`)
+        break
+
+      case HeaterState.active: // Active -> Standby
+        await useMachinesStore().sendCode(`M144 P${index}`)
+        break
+
+      case HeaterState.fault: // Fault -> Ask for reset
+        emit('resetHeaterFault', useMachinesModelStore().heat.heaters.indexOf(heater))
+        break
     }
+  } else {
+    switch (heater.state) {
+      case HeaterState.off: // Off -> Active
+        await useMachinesStore().sendCode(`M141 P${index} S${heater.active}`)
+        break
 
-    if (props.type === "bed") {
-        switch (heater.state) {
-            case HeaterState.off:		// Off -> Active
-                await useMachinesStore().sendCode( `M140 P${index} S${heater.active}`);
-                break;
+      // Standby mode for chambers is not officially supported yet (there is no code for standby control)
 
-            case HeaterState.standby:	// Standby -> Off
-                await useMachinesStore().sendCode( `M140 P${index} S-273.15`);
-                break;
+      case HeaterState.fault: // Fault -> Ask for reset
+        emit('resetHeaterFault', useMachinesModelStore().heat.heaters.indexOf(heater))
+        break
 
-            case HeaterState.active:	// Active -> Standby
-                await useMachinesStore().sendCode( `M144 P${index}`);
-                break;
-
-            case HeaterState.fault:		// Fault -> Ask for reset
-                emit("resetHeaterFault", useMachinesModelStore().heat.heaters.indexOf(heater));
-                break;
-        }
-    } else {
-        switch (heater.state) {
-            case HeaterState.off:		// Off -> Active
-                await useMachinesStore().sendCode( `M141 P${index} S${heater.active}`);
-                break;
-
-            // Standby mode for chambers is not officially supported yet (there is no code for standby control)
-
-            case HeaterState.fault:		// Fault -> Ask for reset
-                emit("resetHeaterFault", useMachinesModelStore().heat.heaters.indexOf(heater));
-                break;
-
-            default:	// Active -> Off
-                await useMachinesStore().sendCode( `M141 P${index} S-273.15`);
-                break;
-        }
+      default: // Active -> Off
+        await useMachinesStore().sendCode(`M141 P${index} S-273.15`)
+        break
     }
+  }
 }
 </script>
 
 <style scoped>
 .disabled {
-    color: inherit;
-    cursor: default;
+  color: inherit;
+  cursor: default;
 }
 
 .disabled-heater {
-    cursor: default;
+  cursor: default;
 }
 
 .disabled:hover,
 .disabled-heater {
-    text-decoration: none;
+  text-decoration: none;
 }
 </style>

@@ -1,27 +1,18 @@
 <template>
   <v-card class="d-flex flex-column flex-grow-1">
     <v-card-title class="pt-2 pb-0">
-      <v-icon class="mr-1">
-        mdi-chart-timeline-variant
-      </v-icon>
-      {{ $t("chart.temperature.caption") }}
+      <v-icon class="mr-1"> mdi-chart-timeline-variant </v-icon>
+      {{ $t('chart.temperature.caption') }}
     </v-card-title>
 
-    <v-card-text
-      v-show="hasTemperaturesToDisplay"
-      class="content flex-grow-1 px-2 py-0"
-    >
+    <v-card-text v-show="hasTemperaturesToDisplay" class="content flex-grow-1 px-2 py-0">
       <canvas ref="chart" />
     </v-card-text>
     <template v-if="!hasTemperaturesToDisplay">
       <v-spacer />
       <v-card-text class="pa-0">
-        <v-alert
-          :value="true"
-          type="info"
-          class="mb-0"
-        >
-          {{ $t("chart.temperature.noData") }}
+        <v-alert :value="true" type="info" class="mb-0">
+          {{ $t('chart.temperature.noData') }}
         </v-alert>
       </v-card-text>
     </template>
@@ -29,81 +20,84 @@
 </template>
 
 <script lang="ts">
-import { Chart, ChartDataset, Legend, LinearScale, LineController, LineElement, PointElement, TickOptions, TimeScale, Tooltip } from "chart.js";
-import dateFnsLocale from "date-fns/locale/en-US";
-import { AnalogSensor } from "@duet3d/objectmodel";
-import Vue from "vue";
-
-import i18n from "@/i18n";
-
-import { getRealHeaterColor } from "@/utils/colors";
-import Events from "@/utils/events";
-import { defaultMachine } from "@/stores/misc";
-import { useMachinesSettingsStore } from "@/stores/machineSettings";
-import { useRootStore } from "@/stores";
-import { useSettingsStore } from "@/stores/settings";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useMachinesStore } from "@/stores/machines";
-
-// Register required components and scales
-Chart.register(
+import {
+  Chart,
+  ChartDataset,
+  Legend,
+  LinearScale,
   LineController,
   LineElement,
   PointElement,
-  LinearScale,
+  TickOptions,
   TimeScale,
-  Legend
-);
+  Tooltip,
+} from 'chart.js'
+import dateFnsLocale from 'date-fns/locale/en-US'
+import { AnalogSensor } from '@duet3d/objectmodel'
+import Vue from 'vue'
+
+import i18n from '@/i18n'
+
+import { getRealHeaterColor } from '@/utils/colors'
+import Events from '@/utils/events'
+import { defaultMachine } from '@/stores/misc'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { useRootStore } from '@/stores'
+import { useSettingsStore } from '@/stores/settings'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+
+// Register required components and scales
+Chart.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Legend)
 /**
  * Specifies the interval at which temperature samples are recorded
  */
-const sampleInterval = 1000;
-
+const sampleInterval = 1000
 
 /**
  * Default maximum minimum in case it cannot be determined from the object model (in C)
  */
-const defaultMinTemperature = 0;
+const defaultMinTemperature = 0
 
 /**
  * Default maximum temperature in case it cannot be determined from the object model (in C)
  */
-const defaultMaxTemperature = 300;
+const defaultMaxTemperature = 300
 
 /**
  * Maximum time to save sample data (in ms, defaults to 10min)
  */
-const maxSampleTime = 600000;
+const maxSampleTime = 600000
 
 /**
  * Extra values for Chart.JS dataset values
  */
 interface ExtraDatasetValues {
-	/**
-	 * Index of the sensor
-	 */
-	index: number;
+  /**
+   * Index of the sensor
+   */
+  index: number
 
-	/**
-	 * Whether this is an extra sensor
-	 */
-	extra: boolean;
+  /**
+   * Whether this is an extra sensor
+   */
+  extra: boolean
 
-	/**
-	 * Locale used when rendering
-	 */
-	locale: string;
+  /**
+   * Locale used when rendering
+   */
+  locale: string
 
-	/**
-	 * Raw label of this dataset (equal to to sensor.name)
-	 */
-	rawLabel: string | null;
+  /**
+   * Raw label of this dataset (equal to to sensor.name)
+   */
+  rawLabel: string | null
 }
 
 /**
  * Type used for chart datasets in this component
  */
-type TempChartDataset = ChartDataset & ExtraDatasetValues & { showLine: boolean };
+type TempChartDataset = ChartDataset & ExtraDatasetValues & { showLine: boolean }
 
 /**
  * Make a new dataset to render temperature data
@@ -112,43 +106,48 @@ type TempChartDataset = ChartDataset & ExtraDatasetValues & { showLine: boolean 
  * @param label Label of this sensor
  * @param numSamples Number of current samples to generate for the resulting datset
  */
-function makeDataset(index: number, extra: boolean, label: string, numSamples: number): TempChartDataset {
-	const color = getRealHeaterColor(index, extra);
-	return {
-		index,
-		extra,
-		label,
-		fill: false,
-		backgroundColor: color,
-		borderColor: color,
-		borderDash: extra ? [10, 5] : undefined,
-		borderWidth: 2,
-		data: (new Array<number>(numSamples)).fill(NaN),
-		locale: i18n.locale,
-		pointRadius: 0,
-		pointHitRadius: 0,
-		rawLabel: null,
-		showLine: true
-	};
+function makeDataset(
+  index: number,
+  extra: boolean,
+  label: string,
+  numSamples: number,
+): TempChartDataset {
+  const color = getRealHeaterColor(index, extra)
+  return {
+    index,
+    extra,
+    label,
+    fill: false,
+    backgroundColor: color,
+    borderColor: color,
+    borderDash: extra ? [10, 5] : undefined,
+    borderWidth: 2,
+    data: new Array<number>(numSamples).fill(NaN),
+    locale: i18n.locale,
+    pointRadius: 0,
+    pointHitRadius: 0,
+    rawLabel: null,
+    showLine: true,
+  }
 }
 
 /**
  * Temperature samples to save per connected machine
  */
 interface TempSampleData {
-	times: Array<number>,
-	temps: TempChartDataset[]
+  times: Array<number>
+  temps: TempChartDataset[]
 }
 
 /**
  * Collection of machines vs. collected temp samples
  */
 const tempSamples: Record<string, TempSampleData> = {
-	[defaultMachine]: {
-		times: [],
-		temps: []
-	}
-};
+  [defaultMachine]: {
+    times: [],
+    temps: [],
+  },
+}
 
 /**
  * Push sensor data of a given machine to the dataset
@@ -158,286 +157,308 @@ const tempSamples: Record<string, TempSampleData> = {
  * @param sensor Sensor item
  */
 function pushSeriesData(machine: string, index: number, extra: boolean, sensor: AnalogSensor) {
-	// Get series from dataset
-	const machineData = tempSamples[machine];
-	let dataset = machineData.temps.find((item) => {
-		if (item.index === index && item.extra === extra) {
-			return item;
-		}
-	});
+  // Get series from dataset
+  const machineData = tempSamples[machine]
+  let dataset = machineData.temps.find((item) => {
+    if (item.index === index && item.extra === extra) {
+      return item
+    }
+  })
 
-	// Check if the dataset has to be created first
-	if (!dataset || dataset.locale !== i18n.locale || dataset.rawLabel !== sensor.name) {
-		let name;
-		if (sensor.name) {
-			const matches = /(.*)\[(.*)\]$/.exec(sensor.name);
-			name = matches ? matches[1] : sensor.name;
-		} else if (extra) {
-			name = i18n.t("chart.temperature.sensor", [index]);
-		} else {
-			name = i18n.t("chart.temperature.heater", [index]);
-		}
+  // Check if the dataset has to be created first
+  if (!dataset || dataset.locale !== i18n.locale || dataset.rawLabel !== sensor.name) {
+    let name
+    if (sensor.name) {
+      const matches = /(.*)\[(.*)\]$/.exec(sensor.name)
+      name = matches ? matches[1] : sensor.name
+    } else if (extra) {
+      name = i18n.t('chart.temperature.sensor', [index])
+    } else {
+      name = i18n.t('chart.temperature.heater', [index])
+    }
 
-		if (dataset) {
-			dataset.rawLabel = sensor.name;
-			dataset.label = name;
-			dataset.locale = i18n.locale;
-		} else {
-			dataset = makeDataset(index, extra, name, tempSamples[machine].times.length);
-			machineData.temps.push(dataset);
-		}
-	}
+    if (dataset) {
+      dataset.rawLabel = sensor.name
+      dataset.label = name
+      dataset.locale = i18n.locale
+    } else {
+      dataset = makeDataset(index, extra, name, tempSamples[machine].times.length)
+      machineData.temps.push(dataset)
+    }
+  }
 
-	// Add new sample
-	dataset.data!.push((sensor.lastReading !== null) ? sensor.lastReading : NaN);
+  // Add new sample
+  dataset.data!.push(sensor.lastReading !== null ? sensor.lastReading : NaN)
 }
 
-let storeSubscribed = false, instances: Array<{ update: () => void }> = []
+let storeSubscribed = false,
+  instances: Array<{ update: () => void }> = []
 
 export default Vue.extend({
-	data() {
-		return {
-			chart: {} as Chart,
-			lastUpdate: 0
-		}
-	},
-	computed: {
-		darkTheme(): boolean { return useSettingsStore().darkTheme; },
-		selectedMachine(): string { return useRootStore().selectedMachine; },
-		hasTemperaturesToDisplay(): boolean { return useMachinesStore().hasTemperaturesToDisplay },
-		minConfiguredTemperature(): number {
-			let minTemperature = 0;
-			for (const bedTemp of useMachinesSettingsStore().temperatures.bed.active) {
-				if (bedTemp < minTemperature) {
-					minTemperature = bedTemp;
-				}
-			}
-			for (const bedTemp of useMachinesSettingsStore().temperatures.bed.standby) {
-				if (bedTemp < minTemperature) {
-					minTemperature = bedTemp;
-				}
-			}
-			for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
-				if (chamberTemp < minTemperature) {
-					minTemperature = chamberTemp;
-				}
-			}
-			for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
-				if (chamberTemp < minTemperature) {
-					minTemperature = chamberTemp;
-				}
-			}
-			for (const toolTemp of useMachinesSettingsStore().temperatures.tool.active) {
-				if (toolTemp < minTemperature) {
-					minTemperature = toolTemp;
-				}
-			}
-			for (const toolTemp of useMachinesSettingsStore().temperatures.tool.standby) {
-				if (toolTemp < minTemperature) {
-					minTemperature = toolTemp;
-				}
-			}
-			return minTemperature;
-		},
-		minHeaterTemperature(): number | null { return useMachinesModelStore().minHeaterTemperature() },
-		maxHeaterTemperature(): number | null { return useMachinesModelStore().maxHeaterTemperature() },
-	},
-	watch: {
-		darkTheme(to: boolean) {
-			this.applyDarkTheme(to);
-		},
-		selectedMachine(machine: string) {
-			// Each chart instance is fixed to the currently selected machine
-			// Reassign the corresponding dataset whenever the selected machine changes
-			this.chart.config.data = {
-				labels: tempSamples[machine].times,
-				datasets: tempSamples[machine].temps
-			};
-			this.update();
-		}
-	},
-	mounted() {
-		// Create the dataset if necessary
-		if (!tempSamples[this.selectedMachine]) {
-			tempSamples[this.selectedMachine] = {
-				times: [],
-				temps: []
-			};
-		}
+  data() {
+    return {
+      chart: {} as Chart,
+      lastUpdate: 0,
+    }
+  },
+  computed: {
+    darkTheme(): boolean {
+      return useSettingsStore().darkTheme
+    },
+    selectedMachine(): string {
+      return useRootStore().selectedMachine
+    },
+    hasTemperaturesToDisplay(): boolean {
+      return useMachinesStore().hasTemperaturesToDisplay
+    },
+    minConfiguredTemperature(): number {
+      let minTemperature = 0
+      for (const bedTemp of useMachinesSettingsStore().temperatures.bed.active) {
+        if (bedTemp < minTemperature) {
+          minTemperature = bedTemp
+        }
+      }
+      for (const bedTemp of useMachinesSettingsStore().temperatures.bed.standby) {
+        if (bedTemp < minTemperature) {
+          minTemperature = bedTemp
+        }
+      }
+      for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
+        if (chamberTemp < minTemperature) {
+          minTemperature = chamberTemp
+        }
+      }
+      for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
+        if (chamberTemp < minTemperature) {
+          minTemperature = chamberTemp
+        }
+      }
+      for (const toolTemp of useMachinesSettingsStore().temperatures.tool.active) {
+        if (toolTemp < minTemperature) {
+          minTemperature = toolTemp
+        }
+      }
+      for (const toolTemp of useMachinesSettingsStore().temperatures.tool.standby) {
+        if (toolTemp < minTemperature) {
+          minTemperature = toolTemp
+        }
+      }
+      return minTemperature
+    },
+    minHeaterTemperature(): number | null {
+      return useMachinesModelStore().minHeaterTemperature()
+    },
+    maxHeaterTemperature(): number | null {
+      return useMachinesModelStore().maxHeaterTemperature()
+    },
+  },
+  watch: {
+    darkTheme(to: boolean) {
+      this.applyDarkTheme(to)
+    },
+    selectedMachine(machine: string) {
+      // Each chart instance is fixed to the currently selected machine
+      // Reassign the corresponding dataset whenever the selected machine changes
+      this.chart.config.data = {
+        labels: tempSamples[machine].times,
+        datasets: tempSamples[machine].temps,
+      }
+      this.update()
+    },
+  },
+  mounted() {
+    // Create the dataset if necessary
+    if (!tempSamples[this.selectedMachine]) {
+      tempSamples[this.selectedMachine] = {
+        times: [],
+        temps: [],
+      }
+    }
 
-		// Create the chart
-		this.chart = new Chart(this.$refs.chart as HTMLCanvasElement, {
-			type: "line",
-			options: {
-				animation: {
-					duration: 0					// general animation time
-				},
-				elements: {
-					line: {
-						tension: 0				// disable bezier curves
-					}
-				},
-				plugins: {
-					legend: {
-						labels: {
-							filter: (legendItem, data) => (data.datasets![legendItem.datasetIndex!] as TempChartDataset).showLine,
-							font: {
-								family: "Roboto,sans-serif"
-							}, 
-						}
-					},
-				},
-				maintainAspectRatio: false,
-				responsive: true,
-				scales: {
-					x: {
-						min: (new Date()).getTime() - maxSampleTime,
-						max: (new Date()).getTime(),
-						type: "time",
-						adapters: {
-						date: {
-							locale: dateFnsLocale
-						}
-						},
-						grid: {
-							display: true
-						},
-						time: {
-							unit: "minute",
-							displayFormats: {
-								minute: "HH:mm"
-							}
-						},
-						ticks: {
-							
-							font: {
-								family: "Roboto,sans-serif"
-							}
-						}
-					},
-					y: {
-						min: 0,
-						max: defaultMaxTemperature,
-						grid: {
-							display: true
-						},
-						ticks: {
-							
-							stepSize: 50,
-							font: {
-								family: "Roboto,sans-serif"
-							}
-						}
-					}
-				}
-			},
-			data: {
-				labels: tempSamples[this.selectedMachine].times,
-				datasets: tempSamples[this.selectedMachine].temps
-			}
-		});
-		this.applyDarkTheme(this.darkTheme);
+    // Create the chart
+    this.chart = new Chart(this.$refs.chart as HTMLCanvasElement, {
+      type: 'line',
+      options: {
+        animation: {
+          duration: 0, // general animation time
+        },
+        elements: {
+          line: {
+            tension: 0, // disable bezier curves
+          },
+        },
+        plugins: {
+          legend: {
+            labels: {
+              filter: (legendItem, data) =>
+                (data.datasets![legendItem.datasetIndex!] as TempChartDataset).showLine,
+              font: {
+                family: 'Roboto,sans-serif',
+              },
+            },
+          },
+        },
+        maintainAspectRatio: false,
+        responsive: true,
+        scales: {
+          x: {
+            min: new Date().getTime() - maxSampleTime,
+            max: new Date().getTime(),
+            type: 'time',
+            adapters: {
+              date: {
+                locale: dateFnsLocale,
+              },
+            },
+            grid: {
+              display: true,
+            },
+            time: {
+              unit: 'minute',
+              displayFormats: {
+                minute: 'HH:mm',
+              },
+            },
+            ticks: {
+              font: {
+                family: 'Roboto,sans-serif',
+              },
+            },
+          },
+          y: {
+            min: 0,
+            max: defaultMaxTemperature,
+            grid: {
+              display: true,
+            },
+            ticks: {
+              stepSize: 50,
+              font: {
+                family: 'Roboto,sans-serif',
+              },
+            },
+          },
+        },
+      },
+      data: {
+        labels: tempSamples[this.selectedMachine].times,
+        datasets: tempSamples[this.selectedMachine].temps,
+      },
+    })
+    this.applyDarkTheme(this.darkTheme)
 
-		// Keep track of updates
-		instances.push(this);
-		if (!storeSubscribed) {
-			this.$root.$on(Events.machineAdded, (hostname: string) => {
-				tempSamples[hostname] = {
-					times: [],
-					temps: []
-				};
-			});
-			this.$root.$on(Events.machineRemoved, (hostname: string) => {
-				delete tempSamples[hostname];
-			});
+    // Keep track of updates
+    instances.push(this)
+    if (!storeSubscribed) {
+      this.$root.$on(Events.machineAdded, (hostname: string) => {
+        tempSamples[hostname] = {
+          times: [],
+          temps: [],
+        }
+      })
+      this.$root.$on(Events.machineRemoved, (hostname: string) => {
+        delete tempSamples[hostname]
+      })
 
-			this.$root.$on(Events.machineModelUpdated, (hostname: string) => {
-				const dataset = tempSamples[hostname], now = (new Date()).getTime();
-				if (dataset.times.length === 0 || now - dataset.times[dataset.times.length - 1] > sampleInterval) {
-					// Record sensor temperatures
-					useMachinesModelStore().sensors.analog.forEach((sensor, sensorIndex) => {
-						if (sensor !== null) {
-							const heaters: Array<{ sensor: number } | null> = useMachinesModelStore().heat.heaters;
-							const heaterIndex: number = heaters.findIndex((heater: { sensor: number } | null, idx: number) => (heater !== null) && (heater.sensor === sensorIndex));
-							if (heaterIndex !== -1) {
-								pushSeriesData(hostname, heaterIndex, false, sensor);
-							} else {
-								pushSeriesData(hostname, sensorIndex, true, sensor);
-							}
-						}
-					});
+      this.$root.$on(Events.machineModelUpdated, (hostname: string) => {
+        const dataset = tempSamples[hostname],
+          now = new Date().getTime()
+        if (
+          dataset.times.length === 0 ||
+          now - dataset.times[dataset.times.length - 1] > sampleInterval
+        ) {
+          // Record sensor temperatures
+          useMachinesModelStore().sensors.analog.forEach((sensor, sensorIndex) => {
+            if (sensor !== null) {
+              const heaters: Array<{ sensor: number } | null> = useMachinesModelStore().heat.heaters
+              const heaterIndex: number = heaters.findIndex(
+                (heater: { sensor: number } | null, idx: number) =>
+                  heater !== null && heater.sensor === sensorIndex,
+              )
+              if (heaterIndex !== -1) {
+                pushSeriesData(hostname, heaterIndex, false, sensor)
+              } else {
+                pushSeriesData(hostname, sensorIndex, true, sensor)
+              }
+            }
+          })
 
-					// Record time and deal wih expired temperature samples
-					while (dataset.times.length && now - dataset.times[0] > maxSampleTime) {
-						dataset.times.shift();
-						dataset.temps.forEach(data => data.data!.shift());
-					}
-					dataset.times.push(now);
+          // Record time and deal wih expired temperature samples
+          while (dataset.times.length && now - dataset.times[0] > maxSampleTime) {
+            dataset.times.shift()
+            dataset.temps.forEach((data) => data.data!.shift())
+          }
+          dataset.times.push(now)
 
-					// Deal with visibility and tell chart instances to update
-					dataset.temps.forEach((dataset) => {
-						dataset.showLine = !dataset.extra || (useMachinesSettingsStore().displayedExtraTemperatures.includes(dataset.index));
-					}, this);
-					instances.forEach(instance => instance.update());
-				}
-			});
+          // Deal with visibility and tell chart instances to update
+          dataset.temps.forEach((dataset) => {
+            dataset.showLine =
+              !dataset.extra ||
+              useMachinesSettingsStore().displayedExtraTemperatures.includes(dataset.index)
+          }, this)
+          instances.forEach((instance) => instance.update())
+        }
+      })
 
-			storeSubscribed = true;
-		}
-	},
-	beforeDestroy() {
-		// Don't update this instance any more...
-		instances = instances.filter(instance => instance !== this, this);
-	},
-	methods: {
-		update() {
-			const now = (new Date()).getTime();
-			if (now - this.lastUpdate >= 1000) {
+      storeSubscribed = true
+    }
+  },
+  beforeDestroy() {
+    // Don't update this instance any more...
+    instances = instances.filter((instance) => instance !== this, this)
+  },
+  methods: {
+    update() {
+      const now = new Date().getTime()
+      if (now - this.lastUpdate >= 1000) {
+        // this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
+        // this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
+        // this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
+        // this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
+        this.chart.config.options!.scales!.y!.min = Math.min(
+          this.minConfiguredTemperature,
+          this.minHeaterTemperature !== null ? this.minHeaterTemperature : defaultMinTemperature,
+        )
+        this.chart.config.options!.scales!.y!.max =
+          this.maxHeaterTemperature !== null ? this.maxHeaterTemperature : defaultMaxTemperature
+        const now = new Date().getTime()
+        this.chart.config.options!.scales!.x!.min = now - maxSampleTime
+        this.chart.config.options!.scales!.x!.max = now
 
-				// this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
-				// this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
-				// this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
-				// this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
-				this.chart.config.options!.scales!.y!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
-				this.chart.config.options!.scales!.y!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
-				const now = (new Date()).getTime();
-				this.chart.config.options!.scales!.x!.min = now - maxSampleTime;
-				this.chart.config.options!.scales!.x!.max = now;
+        this.chart.update()
+        this.lastUpdate = now
+      }
+    },
+    applyDarkTheme(active: boolean) {
+      const ticksColor = active ? '#FFF' : '#666'
+      this.chart.config.options!.plugins!.legend!.labels!.color = ticksColor
 
-				this.chart.update();
-				this.lastUpdate = now;
-			}
-		},
-		applyDarkTheme(active: boolean) {
-			const ticksColor = active ? "#FFF" : "#666";
-			this.chart.config.options!.plugins!.legend!.labels!.color = ticksColor;
+      this.chart.config.options!.scales!.x!.ticks!.color = ticksColor
+      this.chart.config.options!.scales!.y!.ticks!.color = ticksColor
 
-			this.chart.config.options!.scales!.x!.ticks!.color = ticksColor;
-			this.chart.config.options!.scales!.y!.ticks!.color = ticksColor;
+      const gridLineColor = active ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+      this.chart.config.options!.scales!.x!.grid!.color = gridLineColor
+      this.chart.config.options!.scales!.y!.grid!.color = gridLineColor
+      // zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
 
-			const gridLineColor = active ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
-			this.chart.config.options!.scales!.x!.grid!.color = gridLineColor;
-			this.chart.config.options!.scales!.y!.grid!.color = gridLineColor;
-			// zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
-
-			this.chart.update();
-		}
-	}
-});
+      this.chart.update()
+    },
+  },
+})
 </script>
 
 <style scoped>
 .card {
-	display: flex;
-	flex-direction: column;
-	width: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .content {
-	position: relative;
+  position: relative;
 }
 
 .content > canvas {
-	position: absolute;
+  position: absolute;
 }
 </style>

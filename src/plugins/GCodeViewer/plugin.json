@@ -1,6 +1,6 @@
 {
-    "id": "GCodeViewer",
-    "name": "G-Code Viewer",
-    "author": "Juan Rosario",
-    "version": "auto"
+  "id": "GCodeViewer",
+  "name": "G-Code Viewer",
+  "author": "Juan Rosario",
+  "version": "auto"
 }

@@ -1,12 +1,6 @@
 <template>
   <v-row :dense="$vuetify.breakpoint.mobile">
-    <v-col
-      cols="12"
-      sm="8"
-      md="8"
-      lg="9"
-      xl="9"
-    >
+    <v-col cols="12" sm="8" md="8" lg="9" xl="9">
       <movement-panel class="mb-2" />
 
       <v-row v-if="isFFForUnset">
@@ -19,13 +13,7 @@
           <extrude-panel />
         </v-col>
 
-        <v-col
-          v-if="showATXPanel"
-          md="3"
-          lg="3"
-          xl="2"
-          align-self="center"
-        >
+        <v-col v-if="showATXPanel" md="3" lg="3" xl="2" align-self="center">
           <atx-panel />
         </v-col>
       </v-row>
@@ -40,52 +28,49 @@
           <fan-panel />
         </v-col>
 
-        <v-col
-          v-if="!isFFForUnset && showATXPanel"
-          md="3"
-          lg="3"
-          xl="2"
-          align-self="center"
-        >
+        <v-col v-if="!isFFForUnset && showATXPanel" md="3" lg="3" xl="2" align-self="center">
           <atx-panel />
         </v-col>
       </v-row>
     </v-col>
 
-    <v-col
-      class="hidden-xs-only"
-      sm="4"
-      md="4"
-      lg="3"
-      xl="3"
-    >
+    <v-col class="hidden-xs-only" sm="4" md="4" lg="3" xl="3">
       <macro-list />
     </v-col>
   </v-row>
 </template>
 
 <script lang="ts">
-import { useRootStore } from '@/stores';
-import { useMachinesModelStore } from '@/stores/machineModel';
-import { MachineMode, Tool } from '@duet3d/objectmodel';
-import Vue from "vue";
-
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { MachineMode, Tool } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
 export default Vue.extend({
-	computed: {
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		currentTool(): Tool | null { return useMachinesModelStore().currentTool() },
-		isFFForUnset(): boolean {
-			return !useMachinesModelStore().state.machineMode || (useMachinesModelStore().state.machineMode === MachineMode.fff);
-		},
-		showATXPanel(): boolean {
-			return (useMachinesModelStore().state.atxPower !== null);
-		},
-		showFansPanel(): boolean {
-			return ((this.currentTool !== null) && (this.currentTool.fans.length > 0)) ||
-				useMachinesModelStore().fans.some(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0));
-		}
-	}
-});
+  computed: {
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+    currentTool(): Tool | null {
+      return useMachinesModelStore().currentTool()
+    },
+    isFFForUnset(): boolean {
+      return (
+        !useMachinesModelStore().state.machineMode ||
+        useMachinesModelStore().state.machineMode === MachineMode.fff
+      )
+    },
+    showATXPanel(): boolean {
+      return useMachinesModelStore().state.atxPower !== null
+    },
+    showFansPanel(): boolean {
+      return (
+        (this.currentTool !== null && this.currentTool.fans.length > 0) ||
+        useMachinesModelStore().fans.some(
+          (fan) => fan !== null && fan.thermostatic.sensors.length === 0,
+        )
+      )
+    },
+  },
+})
 </script>

@@ -1,45 +1,39 @@
 <template>
-  <v-dialog
-    v-model="innerShown"
-    persistent
-    width="360"
-    @keydown.escape="hide"
-  >
+  <v-dialog v-model="innerShown" persistent width="360" @keydown.escape="hide">
     <v-card>
       <v-card-title class="headline">
         <!-- TODO this seems genuinely wrong, idk what to replace it with -->
-        {{ $t(tool ? (tool.filamentExtruder ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }}
+        {{
+          $t(
+            tool
+              ? tool.filamentExtruder
+                ? 'dialog.filament.titleChange'
+                : 'dialog.filament.titleLoad'
+              : 'generic.noValue',
+          )
+        }}
         <!-- {{ $t(tool ? (tool.filament ? "dialog.filament.titleChange" : "dialog.filament.titleLoad") : "generic.noValue") }} -->
       </v-card-title>
 
       <v-card-text>
-        {{ $t(filaments.length > 0 ? "dialog.filament.prompt" : "dialog.filament.noFilaments") }}
+        {{ $t(filaments.length > 0 ? 'dialog.filament.prompt' : 'dialog.filament.noFilaments') }}
 
-        <v-progress-linear
-          v-if="loading"
-          indeterminate
-        />
+        <v-progress-linear v-if="loading" indeterminate />
         <v-list v-if="!loading">
           <v-list-item
             v-for="filament in filaments"
             :key="filament"
             @click="filamentClick(filament)"
           >
-            <v-icon class="mr-1">
-              mdi-radiobox-marked
-            </v-icon> {{ filament }}
+            <v-icon class="mr-1"> mdi-radiobox-marked </v-icon> {{ filament }}
           </v-list-item>
         </v-list>
       </v-card-text>
 
       <v-card-actions>
         <v-spacer />
-        <v-btn
-          color="blue darken-1"
-          text
-          @click="hide"
-        >
-          {{ $t("generic.cancel") }}
+        <v-btn color="blue darken-1" text @click="hide">
+          {{ $t('generic.cancel') }}
         </v-btn>
         <v-spacer />
       </v-card-actions>
@@ -48,108 +42,113 @@
 </template>
 
 <script lang="ts">
-import { FileListItem } from "@duet3d/connectors";
-import { Tool } from "@duet3d/objectmodel";
-import Vue from "vue";
+import { FileListItem } from '@duet3d/connectors'
+import { Tool } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
-
-
-import { DisconnectedError, getErrorMessage } from "@/utils/errors"
-import { LogType } from "@/utils/logging";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useSettingsStore } from "@/stores/settings";
-import { useMachinesStore } from "@/stores/machines";
+import { DisconnectedError, getErrorMessage } from '@/utils/errors'
+import { LogType } from '@/utils/logging'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useSettingsStore } from '@/stores/settings'
+import { useMachinesStore } from '@/stores/machines'
 
 export default Vue.extend({
-	props: {
-		runMacros: {
-			type: Boolean,
-			default: true
-		},
-		shown: {
-			type: Boolean,
-			required: true
-		},
-		tool: {
-			type: Tool,
-			default: null
-		}
-	},
-	data() {
-		return {
-			filaments: new Array<string>(),
-			innerShown: this.shown,
-			loading: false
-		}
-	},
-	computed: {
-		currentTool(): Tool { return useMachinesModelStore().currentTool()! }
-	},
-	watch: {
-		shown(to: boolean) {
-			if (this.innerShown !== to) {
-				this.innerShown = to;
-			}
-			if (to) {
-				// Load filaments when this dialog is shown
-				this.loadFilaments();
-			}
-		},
-		
-		innerShown(to: boolean) {
-			if (this.shown !== to) {
-				this.$emit("update:shown", to);
-			}
-		},
-	},
-	methods: {
-		async loadFilaments() {
-			if (this.loading) {
-				return;
-			}
+  props: {
+    runMacros: {
+      type: Boolean,
+      default: true,
+    },
+    shown: {
+      type: Boolean,
+      required: true,
+    },
+    tool: {
+      type: Tool,
+      default: null,
+    },
+  },
+  data() {
+    return {
+      filaments: new Array<string>(),
+      innerShown: this.shown,
+      loading: false,
+    }
+  },
+  computed: {
+    currentTool(): Tool {
+      return useMachinesModelStore().currentTool()!
+    },
+  },
+  watch: {
+    shown(to: boolean) {
+      if (this.innerShown !== to) {
+        this.innerShown = to
+      }
+      if (to) {
+        // Load filaments when this dialog is shown
+        this.loadFilaments()
+      }
+    },
 
-			this.loading = true
-			try {
-				const response: Array<FileListItem> = await useMachinesStore().getFileList(useMachinesModelStore().directories.filaments);
-				const filaments = response.filter(item => item.isDirectory).map(item => item.name);
-				filaments.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-				this.filaments = filaments;
-			} catch (e) {
-				if (!(e instanceof DisconnectedError)) {
-					console.warn(e);
-					this.$log(LogType.error, this.$t("error.filamentsLoadFailed"), getErrorMessage(e));
-				}
-				this.hide();
-			}
-			this.loading = false;
-		},
-		async filamentClick(filament: string) {
-			this.hide();
+    innerShown(to: boolean) {
+      if (this.shown !== to) {
+        this.$emit('update:shown', to)
+      }
+    },
+  },
+  methods: {
+    async loadFilaments() {
+      if (this.loading) {
+        return
+      }
 
-			let code = "";
-			if (this.currentTool !== this.tool) {
-				// Select tool first
-				code = `T${this.tool!.number}\n`;
-			}
+      this.loading = true
+      try {
+        const response: Array<FileListItem> = await useMachinesStore().getFileList(
+          useMachinesModelStore().directories.filaments,
+        )
+        const filaments = response.filter((item) => item.isDirectory).map((item) => item.name)
+        filaments.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+        this.filaments = filaments
+      } catch (e) {
+        if (!(e instanceof DisconnectedError)) {
+          console.warn(e)
+          this.$log(LogType.error, this.$t('error.filamentsLoadFailed'), getErrorMessage(e))
+        }
+        this.hide()
+      }
+      this.loading = false
+    },
+    async filamentClick(filament: string) {
+      this.hide()
 
-			if (this.tool!.filamentExtruder >= 0 && this.tool!.filamentExtruder < useMachinesModelStore().move.extruders.length &&
-				useMachinesModelStore().move.extruders[this.tool!.filamentExtruder].filament) {
-				// Unload current filament if it is still loaded
-				code += this.runMacros ? "M702\n" : "M702 P0\n";
+      let code = ''
+      if (this.currentTool !== this.tool) {
+        // Select tool first
+        code = `T${this.tool!.number}\n`
+      }
 
-				// Show message box between unload/load if required
-				if (this.runMacros && useSettingsStore().behaviour.promptDuringFilamentChange) {
-					code += `M400 M291 P"${this.$t("dialog.filament.changePrompt.message")}" R"${this.$t("dialog.filament.changePrompt.title")}" S2\n`;
-				}
-			}
+      if (
+        this.tool!.filamentExtruder >= 0 &&
+        this.tool!.filamentExtruder < useMachinesModelStore().move.extruders.length &&
+        useMachinesModelStore().move.extruders[this.tool!.filamentExtruder].filament
+      ) {
+        // Unload current filament if it is still loaded
+        code += this.runMacros ? 'M702\n' : 'M702 P0\n'
 
-			// Run load sequence and configure current tool for it
-			code += this.runMacros ? `M701 S"${filament}"\nM703` : `M701 P0 S"${filament}"\nM703`;
-			await useMachinesStore().sendCode(code);
-		},
-		hide() {
-			this.innerShown = false;
-		}
-	}
-});
+        // Show message box between unload/load if required
+        if (this.runMacros && useSettingsStore().behaviour.promptDuringFilamentChange) {
+          code += `M400 M291 P"${this.$t('dialog.filament.changePrompt.message')}" R"${this.$t('dialog.filament.changePrompt.title')}" S2\n`
+        }
+      }
+
+      // Run load sequence and configure current tool for it
+      code += this.runMacros ? `M701 S"${filament}"\nM703` : `M701 P0 S"${filament}"\nM703`
+      await useMachinesStore().sendCode(code)
+    },
+    hide() {
+      this.innerShown = false
+    },
+  },
+})
 </script>

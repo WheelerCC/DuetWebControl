@@ -1,9 +1,5 @@
 <template>
-  <a
-    v-if="!active"
-    href="javascript:void(0)"
-    @click="$emit('click', $event)"
-  >
+  <a v-if="!active" href="javascript:void(0)" @click="$emit('click', $event)">
     <slot />
   </a>
   <span v-else>
@@ -12,17 +8,17 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
 export default Vue.extend({
-	props: {
-		active: Boolean
-	}
-});
+  props: {
+    active: Boolean,
+  },
+})
 </script>
 
 <style scoped>
 span {
-	cursor: default;
+  cursor: default;
 }
 </style>

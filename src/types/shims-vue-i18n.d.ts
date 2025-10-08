@@ -1,6 +1,4 @@
-import {
-	Path, Values, Locale
-} from 'vue-i18n/types'
+import { Path, Values, Locale } from 'vue-i18n/types'
 import { VueI18n } from './vue-i18n'
 
 /**
@@ -8,20 +6,20 @@ import { VueI18n } from './vue-i18n'
  * @see https://github.com/kazupon/vue-i18n/issues/410
  */
 declare module './vue-i18n' {
-	interface VueI18n {
-		t(key: Path, locale: Locale, values?: Values): string
-		t(key: Path, values?: Values): string
-	}
+  interface VueI18n {
+    t(key: Path, locale: Locale, values?: Values): string
+    t(key: Path, values?: Values): string
+  }
 }
 
 declare module 'vue/types/vue' {
-	interface Vue {
-		$t: typeof VueI18n.prototype.t
-	}
+  interface Vue {
+    $t: typeof VueI18n.prototype.t
+  }
 
-	interface VueConstructor<V extends Vue = Vue> {
-		i18n: typeof VueI18n.prototype
-	}
+  interface VueConstructor<V extends Vue = Vue> {
+    i18n: typeof VueI18n.prototype
+  }
 }
 
 export default VueI18n

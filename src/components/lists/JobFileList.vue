@@ -1,11 +1,7 @@
 <template>
   <div>
     <v-toolbar>
-      <sd-card-btn
-        v-if="volumes.length > 1"
-        v-model="volume"
-        class="hidden-sm-and-down"
-      />
+      <sd-card-btn v-if="volumes.length > 1" v-model="volume" class="hidden-sm-and-down" />
       <directory-breadcrumbs v-model="directory" />
 
       <v-spacer />
@@ -16,9 +12,7 @@
         :elevation="1"
         @click="showNewDirectory = true"
       >
-        <v-icon class="mr-1">
-          mdi-folder-plus
-        </v-icon> {{ $t("button.newDirectory.caption") }}
+        <v-icon class="mr-1"> mdi-folder-plus </v-icon> {{ $t('button.newDirectory.caption') }}
       </v-btn>
       <v-btn
         class="hidden-sm-and-down mr-3"
@@ -28,9 +22,7 @@
         :elevation="1"
         @click="refresh"
       >
-        <v-icon class="mr-1">
-          mdi-refresh
-        </v-icon> {{ $t("button.refresh.caption") }}
+        <v-icon class="mr-1"> mdi-refresh </v-icon> {{ $t('button.refresh.caption') }}
       </v-btn>
       <upload-btn
         class="hidden-sm-and-down"
@@ -69,7 +61,7 @@
       <template #file="{ item }">
         <div :class="{ 'list-icon mr-2': hasThumbnails, 'mr-1': !hasThumbnails }">
           <v-icon v-if="!(item.thumbnails instanceof Array) || !getSmallThumbnail(item.thumbnails)">
-            {{ (item.thumbnails instanceof Array) ? "mdi-file" : "mdi-asterisk" }}
+            {{ item.thumbnails instanceof Array ? 'mdi-file' : 'mdi-asterisk' }}
           </v-icon>
           <v-menu
             v-else
@@ -81,16 +73,8 @@
             :min-width="16"
           >
             <template #activator="{ on, attrs }">
-              <div
-                v-bind="attrs"
-                tabindex="0"
-                v-on="on"
-                @click.stop=""
-              >
-                <thumbnail-img
-                  :thumbnail="getSmallThumbnail(item.thumbnails)"
-                  icon
-                />
+              <div v-bind="attrs" tabindex="0" v-on="on" @click.stop="">
+                <thumbnail-img :thumbnail="getSmallThumbnail(item.thumbnails)" icon />
               </div>
             </template>
 
@@ -103,21 +87,11 @@
       </template>
 
       <template #context-menu>
-        <v-list-item
-          v-show="isFile && !isPrinting"
-          @click="start"
-        >
-          <v-icon class="mr-1">
-            mdi-play
-          </v-icon> {{ $t("list.jobs.start") }}
+        <v-list-item v-show="isFile && !isPrinting" @click="start">
+          <v-icon class="mr-1"> mdi-play </v-icon> {{ $t('list.jobs.start') }}
         </v-list-item>
-        <v-list-item
-          v-show="isFile && !isPrinting"
-          @click="simulate"
-        >
-          <v-icon class="mr-1">
-            mdi-fast-forward
-          </v-icon> {{ $t("list.jobs.simulate") }}
+        <v-list-item v-show="isFile && !isPrinting" @click="simulate">
+          <v-icon class="mr-1"> mdi-fast-forward </v-icon> {{ $t('list.jobs.simulate') }}
         </v-list-item>
         <v-list-item
           v-for="(menuItem, index) in contextMenuItems"
@@ -127,7 +101,8 @@
         >
           <v-icon class="mr-1">
             {{ menuItem.icon }}
-          </v-icon> {{ menuItem.name }}
+          </v-icon>
+          {{ menuItem.name }}
         </v-list-item>
       </template>
     </base-file-list>
@@ -142,26 +117,13 @@
       class="hidden-md-and-up"
     >
       <template #activator>
-        <v-btn
-          v-model="fab"
-          dark
-          color="primary"
-          fab
-        >
-          <v-icon v-if="fab">
-            mdi-close
-          </v-icon>
-          <v-icon v-else>
-            mdi-dots-vertical
-          </v-icon>
+        <v-btn v-model="fab" dark color="primary" fab>
+          <v-icon v-if="fab"> mdi-close </v-icon>
+          <v-icon v-else> mdi-dots-vertical </v-icon>
         </v-btn>
       </template>
 
-      <v-btn
-        fab
-        :disabled="uiFrozen"
-        @click="showNewDirectory = true"
-      >
+      <v-btn fab :disabled="uiFrozen" @click="showNewDirectory = true">
         <v-icon>mdi-folder-plus</v-icon>
       </v-btn>
 
@@ -175,21 +137,12 @@
         <v-icon>mdi-refresh</v-icon>
       </v-btn>
 
-      <upload-btn
-        fab
-        dark
-        :directory="directory"
-        target="gcodes"
-        color="primary"
-      >
+      <upload-btn fab dark :directory="directory" target="gcodes" color="primary">
         <v-icon>mdi-cloud-upload</v-icon>
       </upload-btn>
     </v-speed-dial>
 
-    <new-directory-dialog
-      :shown.sync="showNewDirectory"
-      :directory="directory"
-    />
+    <new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
     <confirm-dialog
       :shown.sync="startJobDialog.shown"
       :title="startJobDialog.title"
@@ -200,294 +153,333 @@
 </template>
 
 <script lang="ts">
-import { ThumbnailInfo, Volume } from "@duet3d/objectmodel";
-import Vue from "vue";
+import { ThumbnailInfo, Volume } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
-import i18n from "@/i18n";
+import i18n from '@/i18n'
 
-import { isPrinting } from "@/utils/enums";
-import { DisconnectedError, getErrorMessage, InvalidPasswordError } from "@/utils/errors";
-import { LogType } from "@/utils/logging";
-import Path, { escapeFilename } from "@/utils/path";
+import { isPrinting } from '@/utils/enums'
+import { DisconnectedError, getErrorMessage, InvalidPasswordError } from '@/utils/errors'
+import { LogType } from '@/utils/logging'
+import Path, { escapeFilename } from '@/utils/path'
 
-import { BaseFileListHeader, BaseFileListItem } from "./BaseFileList.vue";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { ContextMenuItem, useUIInjectionStore } from "@/stores/uiInjection";
-import { useRootStore } from "@/stores";
-import { useMachinesCacheStore } from "@/stores/machineCache";
-import { useMachinesStore } from "@/stores/machines";
+import { BaseFileListHeader, BaseFileListItem } from './BaseFileList.vue'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { ContextMenuItem, useUIInjectionStore } from '@/stores/uiInjection'
+import { useRootStore } from '@/stores'
+import { useMachinesCacheStore } from '@/stores/machineCache'
+import { useMachinesStore } from '@/stores/machines'
 
 interface JobListItemProperties {
-	height?: number | null;
-	layerHeight?: number | null;
-	filament?: Array<number> | null;
-	generatedBy?: string | null;
-	printTime?: number | bigint | null;
-	simulatedTime: number | bigint | null;
-	thumbnails?: Array<ThumbnailInfo> | null;
+  height?: number | null
+  layerHeight?: number | null
+  filament?: Array<number> | null
+  generatedBy?: string | null
+  printTime?: number | bigint | null
+  simulatedTime: number | bigint | null
+  thumbnails?: Array<ThumbnailInfo> | null
 }
 
-type JobListItem = BaseFileListItem & JobListItemProperties;
+type JobListItem = BaseFileListItem & JobListItemProperties
 
 export default Vue.extend({
-	data() {
-		return {
-			directory: Path.gCodes,
-			selection: new Array<JobListItem>,
-			hasThumbnails: false,
-			filelist: new Array<JobListItem>,
-			loadingValue: false,
-			fileinfoDirectory: null as string | null,
-			fileinfoProgress: -1,
-			startJobDialog: {
-				title: "",
-				prompt: "",
-				item: null as JobListItem | null,
-				shown: false
-			},
-			showNewDirectory: false,
-			fab: false
-		}
-	},
-	computed: {
-		isConnected(): boolean { return useRootStore().isConnected; },
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		contextMenuItems(): Array<ContextMenuItem> { return useUIInjectionStore().contextMenuItems.jobFileList; },
-		gcodesDirectory(): string { return useMachinesModelStore().directories.gCodes; },
-		lastJobFile(): string | null { return useMachinesModelStore().job.lastFileName; },
-		volumes(): Array<Volume> { return useMachinesModelStore().volumes; },
-		headers(): Array<BaseFileListHeader> {
-			return [
-				{
-					class: "pl-0",
-					cellClass: "pl-0",
-					text: i18n.t("list.baseFileList.fileName"),
-					value: "name"
-				},
-				{
-					text: i18n.t("list.baseFileList.size"),
-					value: "size",
-					unit: "bytes"
-				},
-				{
-					text: i18n.t("list.baseFileList.lastModified"),
-					value: "lastModified",
-					unit: "date"
-				},
-				{
-					text: i18n.t("list.jobs.height"),
-					value: "height",
-					precision: 2,
-					unit: "mm"
-				},
-				{
-					text: i18n.t("list.jobs.layerHeight"),
-					value: "layerHeight",
-					precision: 2,
-					unit: "mm"
-				},
-				{
-					text: i18n.t("list.jobs.filament"),
-					value: "filament",
-					unit: "filaments"
-				},
-				{
-					text: i18n.t("list.jobs.printTime"),
-					value: "printTime",
-					unit: "time"
-				},
-				{
-					text: i18n.t("list.jobs.simulatedTime"),
-					value: "simulatedTime",
-					unit: "time"
-				},
-				{
-					text: i18n.t("list.jobs.generatedBy"),
-					value: "generatedBy"
-				}
-			];
-		},
-		isFile(): boolean {
-			return (this.selection.length === 1) && !this.selection[0].isDirectory;
-		},
-		isPrinting(): boolean {
-			return isPrinting(useMachinesModelStore().state.status);
-		},
-		loading: {
-			get(): boolean { return this.loadingValue || this.fileinfoProgress !== -1; },
-			set(value: boolean) { this.loadingValue = value; }
-		},
-		volume: {
-			get(): number { return Path.getVolume(this.directory); },
-			set(value: number) { this.directory = (value === Path.getVolume(this.gcodesDirectory)) ? this.gcodesDirectory : `${value}:`; }
-		}
-	},
-	watch: {
-		gCodesDirectory(to: string, from: string) {
-			if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
-				this.directory = to;
-			}
-		},
-		lastJobFile(to: string | null) {
-			if (to !== null && Path.equals(this.directory, Path.extractDirectory(to))) {
-				// Refresh the filelist after a short moment so DSF and RRF can update the simulation time first
-				setTimeout((this.$refs.filelist as any).refresh.bind(this), 2000);
-			}
-		}
-	},
-	mounted() {
-		this.directory = this.gcodesDirectory;
-	},
-	methods: {
-		getBigThumbnail(thumbnails: Array<ThumbnailInfo>) {
-			let biggestThumbnail: ThumbnailInfo | null = null;
-			for (const thumbnail of thumbnails) {
-				if (thumbnail.data !== null && (!biggestThumbnail || thumbnail.height > biggestThumbnail.height)) {
-					biggestThumbnail = thumbnail;
-				}
-			}
-			return biggestThumbnail;
-		},
-		getSmallThumbnail(thumbnails: Array<ThumbnailInfo>) {
-			let smallestThumbnail: ThumbnailInfo | null = null;
-			for (const thumbnail of thumbnails) {
-				if (thumbnail.data !== null && (!smallestThumbnail || Math.abs(48 - thumbnail.height) < Math.abs(48 - smallestThumbnail.height))) {
-					smallestThumbnail = thumbnail;
-				}
-			}
-			return smallestThumbnail;
-		},
-		refresh() {
-			useMachinesCacheStore().clearFileInfo(this.directory);
-			(this.$refs.filelist as any).refresh();
-		},
-		async requestFileInfo(directory: string, fileIndex: number, fileCount: number) {
-			if (fileIndex === 0) {
-				this.hasThumbnails = false;
-			}
+  data() {
+    return {
+      directory: Path.gCodes,
+      selection: new Array<JobListItem>(),
+      hasThumbnails: false,
+      filelist: new Array<JobListItem>(),
+      loadingValue: false,
+      fileinfoDirectory: null as string | null,
+      fileinfoProgress: -1,
+      startJobDialog: {
+        title: '',
+        prompt: '',
+        item: null as JobListItem | null,
+        shown: false,
+      },
+      showNewDirectory: false,
+      fab: false,
+    }
+  },
+  computed: {
+    isConnected(): boolean {
+      return useRootStore().isConnected
+    },
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+    contextMenuItems(): Array<ContextMenuItem> {
+      return useUIInjectionStore().contextMenuItems.jobFileList
+    },
+    gcodesDirectory(): string {
+      return useMachinesModelStore().directories.gCodes
+    },
+    lastJobFile(): string | null {
+      return useMachinesModelStore().job.lastFileName
+    },
+    volumes(): Array<Volume> {
+      return useMachinesModelStore().volumes
+    },
+    headers(): Array<BaseFileListHeader> {
+      return [
+        {
+          class: 'pl-0',
+          cellClass: 'pl-0',
+          text: i18n.t('list.baseFileList.fileName'),
+          value: 'name',
+        },
+        {
+          text: i18n.t('list.baseFileList.size'),
+          value: 'size',
+          unit: 'bytes',
+        },
+        {
+          text: i18n.t('list.baseFileList.lastModified'),
+          value: 'lastModified',
+          unit: 'date',
+        },
+        {
+          text: i18n.t('list.jobs.height'),
+          value: 'height',
+          precision: 2,
+          unit: 'mm',
+        },
+        {
+          text: i18n.t('list.jobs.layerHeight'),
+          value: 'layerHeight',
+          precision: 2,
+          unit: 'mm',
+        },
+        {
+          text: i18n.t('list.jobs.filament'),
+          value: 'filament',
+          unit: 'filaments',
+        },
+        {
+          text: i18n.t('list.jobs.printTime'),
+          value: 'printTime',
+          unit: 'time',
+        },
+        {
+          text: i18n.t('list.jobs.simulatedTime'),
+          value: 'simulatedTime',
+          unit: 'time',
+        },
+        {
+          text: i18n.t('list.jobs.generatedBy'),
+          value: 'generatedBy',
+        },
+      ]
+    },
+    isFile(): boolean {
+      return this.selection.length === 1 && !this.selection[0].isDirectory
+    },
+    isPrinting(): boolean {
+      return isPrinting(useMachinesModelStore().state.status)
+    },
+    loading: {
+      get(): boolean {
+        return this.loadingValue || this.fileinfoProgress !== -1
+      },
+      set(value: boolean) {
+        this.loadingValue = value
+      },
+    },
+    volume: {
+      get(): number {
+        return Path.getVolume(this.directory)
+      },
+      set(value: number) {
+        this.directory =
+          value === Path.getVolume(this.gcodesDirectory) ? this.gcodesDirectory : `${value}:`
+      },
+    },
+  },
+  watch: {
+    gCodesDirectory(to: string, from: string) {
+      if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
+        this.directory = to
+      }
+    },
+    lastJobFile(to: string | null) {
+      if (to !== null && Path.equals(this.directory, Path.extractDirectory(to))) {
+        // Refresh the filelist after a short moment so DSF and RRF can update the simulation time first
+        setTimeout((this.$refs.filelist as any).refresh.bind(this), 2000)
+      }
+    },
+  },
+  mounted() {
+    this.directory = this.gcodesDirectory
+  },
+  methods: {
+    getBigThumbnail(thumbnails: Array<ThumbnailInfo>) {
+      let biggestThumbnail: ThumbnailInfo | null = null
+      for (const thumbnail of thumbnails) {
+        if (
+          thumbnail.data !== null &&
+          (!biggestThumbnail || thumbnail.height > biggestThumbnail.height)
+        ) {
+          biggestThumbnail = thumbnail
+        }
+      }
+      return biggestThumbnail
+    },
+    getSmallThumbnail(thumbnails: Array<ThumbnailInfo>) {
+      let smallestThumbnail: ThumbnailInfo | null = null
+      for (const thumbnail of thumbnails) {
+        if (
+          thumbnail.data !== null &&
+          (!smallestThumbnail ||
+            Math.abs(48 - thumbnail.height) < Math.abs(48 - smallestThumbnail.height))
+        ) {
+          smallestThumbnail = thumbnail
+        }
+      }
+      return smallestThumbnail
+    },
+    refresh() {
+      useMachinesCacheStore().clearFileInfo(this.directory)
+      ;(this.$refs.filelist as any).refresh()
+    },
+    async requestFileInfo(directory: string, fileIndex: number, fileCount: number) {
+      if (fileIndex === 0) {
+        this.hasThumbnails = false
+      }
 
-			if (this.fileinfoDirectory === directory) {
-				if (this.isConnected && fileIndex < fileCount) {
-					// Update progress
-					this.fileinfoProgress = fileIndex;
+      if (this.fileinfoDirectory === directory) {
+        if (this.isConnected && fileIndex < fileCount) {
+          // Update progress
+          this.fileinfoProgress = fileIndex
 
-					// Try to get file info for the next file
-					const file = this.filelist[fileIndex];
-					if (file && !file.isDirectory) {
-						let gotFileInfo = false;
-						try {
-							// Check if it is possible to parse this file
-							const filename = Path.combine(directory, file.name);
-							if (Path.isGCodePath(file.name, this.gcodesDirectory)) {
-								// Get the fileinfo either from our cache or from the Duet
-								let fileInfo = useMachinesCacheStore().fileInfos[filename];
-								if (!fileInfo) {
-									fileInfo = await useMachinesStore().getFileInfo({ filename, readThumbnailContent: true })
-									useMachinesCacheStore().setFileInfo({ filename, fileInfo })
-								}
+          // Try to get file info for the next file
+          const file = this.filelist[fileIndex]
+          if (file && !file.isDirectory) {
+            let gotFileInfo = false
+            try {
+              // Check if it is possible to parse this file
+              const filename = Path.combine(directory, file.name)
+              if (Path.isGCodePath(file.name, this.gcodesDirectory)) {
+                // Get the fileinfo either from our cache or from the Duet
+                let fileInfo = useMachinesCacheStore().fileInfos[filename]
+                if (!fileInfo) {
+                  fileInfo = await useMachinesStore().getFileInfo({
+                    filename,
+                    readThumbnailContent: true,
+                  })
+                  useMachinesCacheStore().setFileInfo({ filename, fileInfo })
+                }
 
-								// Start again if the number of files has changed
-								if (fileCount !== this.filelist.length) {
-									fileIndex = -1;
-									fileCount = this.filelist.length;
-									this.requestFileInfo(directory, fileIndex, fileCount);
-									return;
-								}
+                // Start again if the number of files has changed
+                if (fileCount !== this.filelist.length) {
+                  fileIndex = -1
+                  fileCount = this.filelist.length
+                  this.requestFileInfo(directory, fileIndex, fileCount)
+                  return
+                }
 
-								console.log(fileInfo)
-								// Set file info
-								gotFileInfo = true;
-								file.height = fileInfo.height;
-								file.layerHeight = fileInfo.layerHeight;
-								file.filament = fileInfo.filament;
-								file.generatedBy = fileInfo.generatedBy;
-								file.printTime = fileInfo.printTime ? fileInfo.printTime : null;
-								file.simulatedTime = fileInfo.simulatedTime ? fileInfo.simulatedTime : null;
-								file.thumbnails = fileInfo.thumbnails ? fileInfo.thumbnails : [];
-								if (fileInfo.thumbnails && fileInfo.thumbnails.length !== 0) {
-									this.hasThumbnails = true;
-								}
-							}
-						} catch (e) {
-							// Deal with the error. If the connection has been terminated, the next call will invalidate everything
-							if (!(e instanceof DisconnectedError) && !(e instanceof InvalidPasswordError)) {
-								console.warn(e);
-								this.$log(LogType.error, this.$t("error.fileinfoRequestFailed", [file.name]), getErrorMessage(e));
-							}
-						}
+                console.log(fileInfo)
+                // Set file info
+                gotFileInfo = true
+                file.height = fileInfo.height
+                file.layerHeight = fileInfo.layerHeight
+                file.filament = fileInfo.filament
+                file.generatedBy = fileInfo.generatedBy
+                file.printTime = fileInfo.printTime ? fileInfo.printTime : null
+                file.simulatedTime = fileInfo.simulatedTime ? fileInfo.simulatedTime : null
+                file.thumbnails = fileInfo.thumbnails ? fileInfo.thumbnails : []
+                if (fileInfo.thumbnails && fileInfo.thumbnails.length !== 0) {
+                  this.hasThumbnails = true
+                }
+              }
+            } catch (e) {
+              // Deal with the error. If the connection has been terminated, the next call will invalidate everything
+              if (!(e instanceof DisconnectedError) && !(e instanceof InvalidPasswordError)) {
+                console.warn(e)
+                this.$log(
+                  LogType.error,
+                  this.$t('error.fileinfoRequestFailed', [file.name]),
+                  getErrorMessage(e),
+                )
+              }
+            }
 
-						// Remove loading state from the items if no info could be found
-						if (!gotFileInfo) {
-							file.height = null;
-							file.layerHeight = null;
-							file.filament = [];
-							file.generatedBy = null;
-							file.printTime = null;
-							file.simulatedTime = null;
-							file.thumbnails = null;
-						}
-					}
+            // Remove loading state from the items if no info could be found
+            if (!gotFileInfo) {
+              file.height = null
+              file.layerHeight = null
+              file.filament = []
+              file.generatedBy = null
+              file.printTime = null
+              file.simulatedTime = null
+              file.thumbnails = null
+            }
+          }
 
-					// Move on to the next item
-					this.requestFileInfo(directory, fileIndex + 1, fileCount);
-				} else {
-					// No longer connected or finished
-					this.fileinfoProgress = -1;
-					this.fileinfoDirectory = null;
-				}
-			}
-		},
-		async directoryLoaded(directory: string) {
-			if (this.fileinfoDirectory !== directory) {
-				this.fileinfoDirectory = directory;
-				for (const item of this.filelist) {
-					if (item.isDirectory) {
-						item.height = null;
-						item.layerHeight = null;
-						item.filament = null;
-						item.generatedBy = null;
-						item.printTime = null;
-						item.simulatedTime = null;
-						item.thumbnails = null;
-					}
-				}
+          // Move on to the next item
+          this.requestFileInfo(directory, fileIndex + 1, fileCount)
+        } else {
+          // No longer connected or finished
+          this.fileinfoProgress = -1
+          this.fileinfoDirectory = null
+        }
+      }
+    },
+    async directoryLoaded(directory: string) {
+      if (this.fileinfoDirectory !== directory) {
+        this.fileinfoDirectory = directory
+        for (const item of this.filelist) {
+          if (item.isDirectory) {
+            item.height = null
+            item.layerHeight = null
+            item.filament = null
+            item.generatedBy = null
+            item.printTime = null
+            item.simulatedTime = null
+            item.thumbnails = null
+          }
+        }
 
-				await this.requestFileInfo(directory, 0, this.filelist.length);
-			}
-		},
-		fileClicked(item: JobListItem) {
-			if (!this.isPrinting) {
-				this.startJobDialog.title = this.$t("dialog.startJob.title", [item.name]);
-				this.startJobDialog.prompt = this.$t("dialog.startJob.prompt", [item.name]);
-				this.startJobDialog.item = item;
-				this.startJobDialog.shown = true;
-			}
-		},
-		async start(item: JobListItem | null) {
-			if (item !== null) {
-				await useMachinesStore().sendCode(`M32 "${escapeFilename(Path.combine(this.directory, (item && item.name) ? item.name : this.selection[0].name))}"`);
-			}
-		},
-		async simulate(item: JobListItem) {
-			await useMachinesStore().sendCode(`M37 P"${escapeFilename(Path.combine(this.directory, (item && item.name) ? item.name : this.selection[0].name))}"`);
-		},
-		async contextMenuAction(menuItem: ContextMenuItem) {
-			let path = Path.combine(this.directory, this.selection[0].name);
-			if (menuItem.path) {
-				await this.$router.push(menuItem.path);
-			}
-			this.$root.$emit(menuItem.action, path);
-		}
-	}
-});
+        await this.requestFileInfo(directory, 0, this.filelist.length)
+      }
+    },
+    fileClicked(item: JobListItem) {
+      if (!this.isPrinting) {
+        this.startJobDialog.title = this.$t('dialog.startJob.title', [item.name])
+        this.startJobDialog.prompt = this.$t('dialog.startJob.prompt', [item.name])
+        this.startJobDialog.item = item
+        this.startJobDialog.shown = true
+      }
+    },
+    async start(item: JobListItem | null) {
+      if (item !== null) {
+        await useMachinesStore().sendCode(
+          `M32 "${escapeFilename(Path.combine(this.directory, item && item.name ? item.name : this.selection[0].name))}"`,
+        )
+      }
+    },
+    async simulate(item: JobListItem) {
+      await useMachinesStore().sendCode(
+        `M37 P"${escapeFilename(Path.combine(this.directory, item && item.name ? item.name : this.selection[0].name))}"`,
+      )
+    },
+    async contextMenuAction(menuItem: ContextMenuItem) {
+      let path = Path.combine(this.directory, this.selection[0].name)
+      if (menuItem.path) {
+        await this.$router.push(menuItem.path)
+      }
+      this.$root.$emit(menuItem.action, path)
+    },
+  },
+})
 </script>
 
 <style scoped>
 .list-icon {
-	display: flex;
-	flex-shrink: 0;
-	align-content: center;
-	justify-content: center;
-	width: 48px;
+  display: flex;
+  flex-shrink: 0;
+  align-content: center;
+  justify-content: center;
+  width: 48px;
 }
 </style>

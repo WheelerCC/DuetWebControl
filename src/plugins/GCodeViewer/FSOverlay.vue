@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="overlay"
-    class="container"
-  >
+  <div ref="overlay" class="container">
     <!--  Print Progress -->
     <div :class="viewgcode ? 'axes-container-viewgcode' : 'axes-container'">
       <v-card class="axes">
@@ -30,7 +27,7 @@
         <v-card-text>
           <strong>Temperatures</strong>
           <!-- Tools -->
-          <template v-for="tool in tools.filter(tool => !!tool)">
+          <template v-for="tool in tools.filter((tool) => !!tool)">
             <v-row
               v-for="(heaterIdx, idx) in tool.heaters"
               :key="'Tool ' + tool.number * 10 + idx"
@@ -39,10 +36,7 @@
               justify="center"
             >
               <template v-if="heaterIdx >= 0">
-                <v-col
-                  cols="12"
-                  :data="(heater = getHeaterInfo(heaterIdx))"
-                >
+                <v-col cols="12" :data="heater = getHeaterInfo(heaterIdx)">
                   <template v-if="heater">
                     <gcodeviewer-gauge
                       class="gauges"
@@ -69,10 +63,7 @@
             justify="center"
           >
             <template v-if="heaterIdx >= 0">
-              <v-col
-                cols="12"
-                :data="(heater = getHeaterInfo(heaterIdx))"
-              >
+              <v-col cols="12" :data="heater = getHeaterInfo(heaterIdx)">
                 <template v-if="heater">
                   <gcodeviewer-gauge
                     class="gauges"
@@ -97,10 +88,7 @@
             justify="center"
           >
             <template v-if="heaterIdx >= 0">
-              <v-col
-                cols="12"
-                :data="(heater = getHeaterInfo(heaterIdx))"
-              >
+              <v-col cols="12" :data="heater = getHeaterInfo(heaterIdx)">
                 <template v-if="heater">
                   <gcodeviewer-gauge
                     class="gauges"
@@ -122,103 +110,99 @@
   </div>
 </template>
 
-
 <script>
 'use strict'
 
-import { mapState } from 'vuex';
+import { mapState } from 'vuex'
 
 export default {
-    props: {
-        viewgcode: {
-            type: Boolean,
-            default: false
-        }  
+  props: {
+    viewgcode: {
+      type: Boolean,
+      default: false,
     },
-	data: function () {
-		return {};
+  },
+  data: function () {
+    return {}
   },
   computed: {
-		...mapState('machine/model', ['file', 'move', 'heat', 'tools']),
-		visibleAxes() {
-			return this.move.axes.filter(axis => axis.visible);
-		},
-	},
+    ...mapState('machine/model', ['file', 'move', 'heat', 'tools']),
+    visibleAxes() {
+      return this.move.axes.filter((axis) => axis.visible)
+    },
+  },
   mounted() {
     this.$window
   },
-  beforeDestroy() {
-    
-  },
-	methods: {
-		displayAxisPosition(axis) {
-			const position = axis.userPosition;
-			return axis.letter === 'Z' ? this.$displayZ(position, false) : this.$display(position, 1);
-		},
-		getHeaterInfo(heaterIdx) {
-			return this.heat.heaters[heaterIdx];
-		},
-		getToolLabel(tool, toolIdx) {
-			if (toolIdx === undefined) return '';
-			return tool.name === '' ? 'Tool ' + toolIdx : tool.name;
-		},
-		getBedLabel(bedIdx) {
-			return this.heat.bedHeaters.length <= 2 ? 'Bed' : 'Bed ' + bedIdx;
-		},
-		getChamberLabel(chamberIdx) {
-			return this.heat.chamberHeaters.length <= 2 ? 'Chamber' : 'Chamber ' + chamberIdx;
-        },
+  beforeDestroy() {},
+  methods: {
+    displayAxisPosition(axis) {
+      const position = axis.userPosition
+      return axis.letter === 'Z' ? this.$displayZ(position, false) : this.$display(position, 1)
     },
-};
+    getHeaterInfo(heaterIdx) {
+      return this.heat.heaters[heaterIdx]
+    },
+    getToolLabel(tool, toolIdx) {
+      if (toolIdx === undefined) return ''
+      return tool.name === '' ? 'Tool ' + toolIdx : tool.name
+    },
+    getBedLabel(bedIdx) {
+      return this.heat.bedHeaters.length <= 2 ? 'Bed' : 'Bed ' + bedIdx
+    },
+    getChamberLabel(chamberIdx) {
+      return this.heat.chamberHeaters.length <= 2 ? 'Chamber' : 'Chamber ' + chamberIdx
+    },
+  },
+}
 </script>
 
 <style scoped>
 .container {
-    position: fixed;
-    top:0;
-    left:0;
-    right:0;
-    bottom:0;
-    width:100%;
-    height:100%;
-	z-index: 50;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
 }
 
 .axes-container {
-	position: fixed;
-	left: 50%;
+  position: fixed;
+  left: 50%;
 }
 
 .axes-container-viewgcode {
-	position: fixed;
-	right: 50% 
+  position: fixed;
+  right: 50%;
 }
 
 .heater-container {
-	position: fixed;
-	right: 0%;
-	top: 20%;
-	width:200px;
-	text-align: center;
-	font-size: large;
+  position: fixed;
+  right: 0%;
+  top: 20%;
+  width: 200px;
+  text-align: center;
+  font-size: large;
 }
 
 .heater-container-viewgcode {
-    position: fixed;
-	right: 30.5%;
-	top: 20%;
-	width:200px;
-	text-align: center;
-	font-size: large;
+  position: fixed;
+  right: 30.5%;
+  top: 20%;
+  width: 200px;
+  text-align: center;
+  font-size: large;
 }
 
 .axes {
-	position: relative;
-	top: 10px;
-	left: -50%;
-	text-align: center;
-	font-size: large;
-	width: 300px;
+  position: relative;
+  top: 10px;
+  left: -50%;
+  text-align: center;
+  font-size: large;
+  width: 300px;
 }
 </style>
-

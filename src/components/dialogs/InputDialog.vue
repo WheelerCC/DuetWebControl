@@ -1,15 +1,7 @@
 <template>
-  <v-dialog
-    v-model="innerShown"
-    persistent
-    no-click-animation
-    width="360"
-  >
+  <v-dialog v-model="innerShown" persistent no-click-animation width="360">
     <v-card>
-      <v-form
-        ref="form"
-        @submit.prevent="submit"
-      >
+      <v-form ref="form" @submit.prevent="submit">
         <v-card-title>
           <span class="headline">
             {{ title }}
@@ -19,29 +11,16 @@
         <v-card-text>
           {{ prompt }}
 
-          <v-text-field
-            v-model="input"
-            :rules="inputRules"
-            required
-            autofocus
-          />
+          <v-text-field v-model="input" :rules="inputRules" required autofocus />
         </v-card-text>
 
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            color="blue darken-1"
-            text
-            @click="hide"
-          >
-            {{ $t("generic.cancel") }}
+          <v-btn color="blue darken-1" text @click="hide">
+            {{ $t('generic.cancel') }}
           </v-btn>
-          <v-btn
-            color="blue darken-1"
-            text
-            type="submit"
-          >
-            {{ $t("generic.ok") }}
+          <v-btn color="blue darken-1" text type="submit">
+            {{ $t('generic.ok') }}
           </v-btn>
         </v-card-actions>
       </v-form>
@@ -50,66 +29,67 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
 export default Vue.extend({
-	props: {
-		shown: {
-			type: Boolean,
-			required: true
-		},
-		title: {
-			type: String,
-			required: true
-		},
-		prompt: {
-			type: String,
-			required: true
-		},
-		isNumericValue: Boolean,
-		preset: {
-			type: [String, Number],
-			default: ""
-		}
-	},
-	data() {
-		return {
-			input: "",
-			// Not sure 
-			innerShown: this.shown,
-			inputRules: [
-				(v: string) => !v ? this.$t("dialog.inputRequired") : true,
-				(v: string) => !this.isNumericValue || isFinite(parseFloat(v)) || this.$t("dialog.numberRequired")
-			]
-		}
-	},
-	watch: {
-		shown(to: boolean) {
-			if (this.innerShown !== to) {
-				this.innerShown = to;
-			}
-			if (to) {
-				// Apply preset
-				this.input = this.preset ? this.preset.toString() : "";
-			}
-		},
-		innerShown(to: boolean) {
-			if (this.shown !== to) {
-				this.$emit("update:shown", to);
-			}
-		},
-	},
-	methods: {
-		async submit() {
-			if ((this.$refs.form as HTMLFormElement).validate()) {
-				this.innerShown = false;
-				this.$emit("confirmed", this.isNumericValue ? parseFloat(this.input) : this.input);
-			}
-		},
-		hide() {
-			this.innerShown = false;
-			this.$emit("cancelled");
-		}
-	}
-});
+  props: {
+    shown: {
+      type: Boolean,
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    prompt: {
+      type: String,
+      required: true,
+    },
+    isNumericValue: Boolean,
+    preset: {
+      type: [String, Number],
+      default: '',
+    },
+  },
+  data() {
+    return {
+      input: '',
+      // Not sure
+      innerShown: this.shown,
+      inputRules: [
+        (v: string) => (!v ? this.$t('dialog.inputRequired') : true),
+        (v: string) =>
+          !this.isNumericValue || isFinite(parseFloat(v)) || this.$t('dialog.numberRequired'),
+      ],
+    }
+  },
+  watch: {
+    shown(to: boolean) {
+      if (this.innerShown !== to) {
+        this.innerShown = to
+      }
+      if (to) {
+        // Apply preset
+        this.input = this.preset ? this.preset.toString() : ''
+      }
+    },
+    innerShown(to: boolean) {
+      if (this.shown !== to) {
+        this.$emit('update:shown', to)
+      }
+    },
+  },
+  methods: {
+    async submit() {
+      if ((this.$refs.form as HTMLFormElement).validate()) {
+        this.innerShown = false
+        this.$emit('confirmed', this.isNumericValue ? parseFloat(this.input) : this.input)
+      }
+    },
+    hide() {
+      this.innerShown = false
+      this.$emit('cancelled')
+    },
+  },
+})
 </script>

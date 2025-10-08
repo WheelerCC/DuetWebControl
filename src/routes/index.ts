@@ -1,210 +1,210 @@
-import { MachineMode } from "@duet3d/objectmodel";
-import Vue, { Component } from "vue";
-import VueRouter, { RouteConfig } from "vue-router";
+import { MachineMode } from '@duet3d/objectmodel'
+import Vue, { Component } from 'vue'
+import VueRouter, { RouteConfig } from 'vue-router'
 
+import Status from './Control/StatusComponent.vue'
+import Dashboard from './Control/DashboardComponent.vue'
+import Console from './Control/ConsoleComponent.vue'
 
+import Filaments from './Files/FilamentsComponent.vue'
+import Jobs from './Files/JobsComponent.vue'
+import Macros from './Files/MacrosComponent.vue'
+import System from './Files/SystemComponent.vue'
 
-import Status from "./Control/StatusComponent.vue";
-import Dashboard from "./Control/DashboardComponent.vue";
-import Console from "./Control/ConsoleComponent.vue";
+import JobStatus from './Job/StatusComponent.vue'
+import Webcam from './Job/WebcamComponent.vue'
 
-import Filaments from "./Files/FilamentsComponent.vue";
-import Jobs from "./Files/JobsComponent.vue";
-import Macros from "./Files/MacrosComponent.vue";
-import System from "./Files/SystemComponent.vue";
+import General from './Settings/GeneralComponent.vue'
+import Machine from './Settings/MachineComponent.vue'
+import Plugins from './Settings/PluginsComponent.vue'
 
-import JobStatus from "./Job/StatusComponent.vue";
-import Webcam from "./Job/WebcamComponent.vue";
+import Page404 from './Page404Component.vue'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useSettingsStore } from '@/stores/settings'
 
-import General from "./Settings/GeneralComponent.vue";
-import Machine from "./Settings/MachineComponent.vue";
-import Plugins from "./Settings/PluginsComponent.vue";
-
-import Page404 from "./Page404Component.vue";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useSettingsStore } from "@/stores/settings";
-
-Vue.use(VueRouter);
+Vue.use(VueRouter)
 
 /**
  * Menu item
  */
 export interface MenuItem {
-	/**
-	 * Icon of the menu item
-	 */
-	icon: string;
+  /**
+   * Icon of the menu item
+   */
+  icon: string
 
-	/**
-	 * Caption of the menu item
-	 */
-	caption: string;
+  /**
+   * Caption of the menu item
+   */
+  caption: string
 
-	/**
-	 * Whether the menu caption is already translated (defaults to false)
-	 */
-	translated?: boolean;
+  /**
+   * Whether the menu caption is already translated (defaults to false)
+   */
+  translated?: boolean
 
-	/**
-	 * Path of the route to navigate to on click
-	 */
-	path: string;
+  /**
+   * Path of the route to navigate to on click
+   */
+  path: string
 
-	/**
-	 * Condition stating if the menu item is visible (defaults to true)
-	 */
-	condition?: boolean | (() => boolean);
+  /**
+   * Condition stating if the menu item is visible (defaults to true)
+   */
+  condition?: boolean | (() => boolean)
 
-	/**
-	 * Component to render on selection
-	 */
-	component: Component;
+  /**
+   * Component to render on selection
+   */
+  component: Component
 }
 
 /**
  * Menu category
  */
 export interface MenuCategory {
-	/**
-	 * Category icon
-	 */
-	icon: string;
-	
-	/**
-	 * Category caption
-	 */
-	caption: string;
+  /**
+   * Category icon
+   */
+  icon: string
 
-	/**
-	 * List of pages
-	 */
-	pages: Array<MenuItem>;
+  /**
+   * Category caption
+   */
+  caption: string
 
-	/**
-	 * Whether the category name is already translated
-	 */
-	translated: boolean;
+  /**
+   * List of pages
+   */
+  pages: Array<MenuItem>
+
+  /**
+   * Whether the category name is already translated
+   */
+  translated: boolean
 }
 
 /**
  * Actual menu structure (name vs. category descriptor)
  */
 export const Menu = Vue.observable<Record<string, MenuCategory>>({
-	Control: {
-		icon: "mdi-tune",
-		caption: "menu.control.caption",
-		pages: [
-			{
-				icon: "mdi-list-status",
-				caption: "menu.control.status",
-				condition: () => Vue.prototype.$vuetify && Vue.prototype.$vuetify.breakpoint.smAndDown,
-				path: "/Status",
-				component: Status
-			},
-			{
-				icon: "mdi-view-dashboard",
-				caption: "menu.control.dashboard",
-				path: "/",
-				component: Dashboard
-			},
-			{
-				icon: "mdi-code-tags",
-				caption: "menu.control.console",
-				path: "/Console",
-				component: Console
-			}
-		],
-		translated: false
-	},
-	Job: {
-		icon: "mdi-printer",
-		caption: "menu.job.caption",
-		pages: [
-			{
-				icon: "mdi-information",
-				caption: "menu.job.status",
-				path: "/Job/Status",
-				component: JobStatus
-			},
-			{
-				icon: "mdi-webcam",
-				caption: "menu.job.webcam",
-				path: "/Job/Webcam",
-				condition: () => useSettingsStore().webcam.enabled,
-				component: Webcam
-			}
-		],
-		translated: false
-	},
-	Files: {
-		icon: "mdi-sd",
-		caption: "menu.files.caption",
-		pages: [
-			{
-				icon: "mdi-database",
-				caption: "menu.files.filaments",
-				path: "/Files/Filaments",
-				condition: () => !useMachinesModelStore().state.machineMode || useMachinesModelStore().state.machineMode === MachineMode.fff,
-				component: Filaments
-			},
-			{
-				icon: "mdi-play",
-				caption: "menu.files.jobs",
-				path: "/Files/Jobs",
-				component: Jobs
-			},
-			{
-				icon: "mdi-polymer",
-				caption: "menu.files.macros",
-				path: "/Files/Macros",
-				component: Macros
-			},
-			{
-				icon: "mdi-cog",
-				caption: "menu.files.system",
-				path: "/Files/System",
-				component: System
-			}
-		],
-		translated: false
-	},
-	Settings: {
-		icon: "mdi-wrench",
-		caption: "menu.settings.caption",
-		pages: [
-			{
-				icon: "mdi-tune",
-				caption: "menu.settings.general",
-				path: "/Settings/General",
-				component: General
-			},
-			{
-				icon: "mdi-cogs",
-				caption: "menu.settings.machine",
-				path: "/Settings/Machine",
-				component: Machine
-			},
-			{
-				icon: "mdi-power-plug",
-				caption: "menu.plugins.caption",
-				path: "/Settings/Plugins",
-				component: Plugins
-			}
-		],
-		translated: false
-	},
-	Plugins: {
-		icon: "mdi-puzzle",
-		caption: "menu.plugins.caption",
-		pages: [],
-		translated: false
-	}
-});
+  Control: {
+    icon: 'mdi-tune',
+    caption: 'menu.control.caption',
+    pages: [
+      {
+        icon: 'mdi-list-status',
+        caption: 'menu.control.status',
+        condition: () => Vue.prototype.$vuetify && Vue.prototype.$vuetify.breakpoint.smAndDown,
+        path: '/Status',
+        component: Status,
+      },
+      {
+        icon: 'mdi-view-dashboard',
+        caption: 'menu.control.dashboard',
+        path: '/',
+        component: Dashboard,
+      },
+      {
+        icon: 'mdi-code-tags',
+        caption: 'menu.control.console',
+        path: '/Console',
+        component: Console,
+      },
+    ],
+    translated: false,
+  },
+  Job: {
+    icon: 'mdi-printer',
+    caption: 'menu.job.caption',
+    pages: [
+      {
+        icon: 'mdi-information',
+        caption: 'menu.job.status',
+        path: '/Job/Status',
+        component: JobStatus,
+      },
+      {
+        icon: 'mdi-webcam',
+        caption: 'menu.job.webcam',
+        path: '/Job/Webcam',
+        condition: () => useSettingsStore().webcam.enabled,
+        component: Webcam,
+      },
+    ],
+    translated: false,
+  },
+  Files: {
+    icon: 'mdi-sd',
+    caption: 'menu.files.caption',
+    pages: [
+      {
+        icon: 'mdi-database',
+        caption: 'menu.files.filaments',
+        path: '/Files/Filaments',
+        condition: () =>
+          !useMachinesModelStore().state.machineMode ||
+          useMachinesModelStore().state.machineMode === MachineMode.fff,
+        component: Filaments,
+      },
+      {
+        icon: 'mdi-play',
+        caption: 'menu.files.jobs',
+        path: '/Files/Jobs',
+        component: Jobs,
+      },
+      {
+        icon: 'mdi-polymer',
+        caption: 'menu.files.macros',
+        path: '/Files/Macros',
+        component: Macros,
+      },
+      {
+        icon: 'mdi-cog',
+        caption: 'menu.files.system',
+        path: '/Files/System',
+        component: System,
+      },
+    ],
+    translated: false,
+  },
+  Settings: {
+    icon: 'mdi-wrench',
+    caption: 'menu.settings.caption',
+    pages: [
+      {
+        icon: 'mdi-tune',
+        caption: 'menu.settings.general',
+        path: '/Settings/General',
+        component: General,
+      },
+      {
+        icon: 'mdi-cogs',
+        caption: 'menu.settings.machine',
+        path: '/Settings/Machine',
+        component: Machine,
+      },
+      {
+        icon: 'mdi-power-plug',
+        caption: 'menu.plugins.caption',
+        path: '/Settings/Plugins',
+        component: Plugins,
+      },
+    ],
+    translated: false,
+  },
+  Plugins: {
+    icon: 'mdi-puzzle',
+    caption: 'menu.plugins.caption',
+    pages: [],
+    translated: false,
+  },
+})
 
 /**
  * Registered routes
  */
-export const Routes: Array<RouteConfig> = [];
+export const Routes: Array<RouteConfig> = []
 
 /**
  * Register a new menu category
@@ -213,24 +213,29 @@ export const Routes: Array<RouteConfig> = [];
  * @param caption Caption to show in the menu
  * @param translated Whether the caption is already translated
  */
-export async function registerCategory(name: string, icon: string, caption: string | (() => string), translated = false) {
-	if (Menu[name] === undefined) {
-		const category: MenuCategory = {
-			caption: caption as string,
-			icon,
-			pages: [],
-			translated
-		};
+export async function registerCategory(
+  name: string,
+  icon: string,
+  caption: string | (() => string),
+  translated = false,
+) {
+  if (Menu[name] === undefined) {
+    const category: MenuCategory = {
+      caption: caption as string,
+      icon,
+      pages: [],
+      translated,
+    }
 
-		if (caption instanceof Function) {
-			Object.defineProperty(category, "caption", {
-				get: caption
-			});
-		}
+    if (caption instanceof Function) {
+      Object.defineProperty(category, 'caption', {
+        get: caption,
+      })
+    }
 
-		Vue.set(Menu, name, category);
-		await Vue.nextTick();			// wait for the DOM to be updated so that more routes can be added safely
-	}
+    Vue.set(Menu, name, category)
+    await Vue.nextTick() // wait for the DOM to be updated so that more routes can be added safely
+  }
 }
 
 /**
@@ -238,75 +243,85 @@ export async function registerCategory(name: string, icon: string, caption: stri
  * @param component Component to register
  * @param route Route element
  */
-export function registerRoute(component: Component, route: { [category: string]: { [name: string]: Omit<MenuItem, "component"> & { caption: string | (() => string)  } } }) {
-	const category = Object.keys(route)[0], menuCategory = Menu[category], routeCategory = route[category];
-	const name = Object.keys(routeCategory)[0], menuItem = route[category][name];
+export function registerRoute(
+  component: Component,
+  route: {
+    [category: string]: {
+      [name: string]: Omit<MenuItem, 'component'> & { caption: string | (() => string) }
+    }
+  },
+) {
+  const category = Object.keys(route)[0],
+    menuCategory = Menu[category],
+    routeCategory = route[category]
+  const name = Object.keys(routeCategory)[0],
+    menuItem = route[category][name]
 
-	// Make a new route item
-	const routeObj: MenuItem = {
-		...menuItem,
-		component
-	};
+  // Make a new route item
+  const routeObj: MenuItem = {
+    ...menuItem,
+    component,
+  }
 
-	// Prepare the actual route object
-	if (typeof routeObj.caption !== "string") {
-		Object.defineProperty(routeObj, "caption", {
-			get: menuItem.caption as (() => string)
-		});
-	}
+  // Prepare the actual route object
+  if (typeof routeObj.caption !== 'string') {
+    Object.defineProperty(routeObj, 'caption', {
+      get: menuItem.caption as () => string,
+    })
+  }
 
-	if (routeObj.condition === undefined) {
-		routeObj.condition = true;
-	} else if (routeObj.condition instanceof Function) {
-		Object.defineProperty(routeObj, "condition", {
-			get: menuItem.condition as (() => boolean)
-		});
-	}
+  if (routeObj.condition === undefined) {
+    routeObj.condition = true
+  } else if (routeObj.condition instanceof Function) {
+    Object.defineProperty(routeObj, 'condition', {
+      get: menuItem.condition as () => boolean,
+    })
+  }
 
-	if (routeObj.translated === undefined) {
-		routeObj.translated = false;
-	}
+  if (routeObj.translated === undefined) {
+    routeObj.translated = false
+  }
 
-	// Register the new route
-	menuCategory.pages.push(routeObj);
-	Routes.push(routeObj);
-	router.addRoute(routeObj);
+  // Register the new route
+  menuCategory.pages.push(routeObj)
+  Routes.push(routeObj)
+  router.addRoute(routeObj)
 }
 
 /**
  * Type of registered tab items
  */
 interface TabItem {
-	/**
-	 * Tab caption
-	 */
-	caption: string;
+  /**
+   * Tab caption
+   */
+  caption: string
 
-	/**
-	 * Optional tab icon
-	 */
-	icon?: string;
+  /**
+   * Optional tab icon
+   */
+  icon?: string
 
-	/**
-	 * Name of the Vue component
-	 */
-	component: string;
+  /**
+   * Name of the Vue component
+   */
+  component: string
 
-	/**
-	 * Whether the tab caption is already translated (defaults to false)
-	 */
-	translated: boolean;
+  /**
+   * Whether the tab caption is already translated (defaults to false)
+   */
+  translated: boolean
 }
 
 /**
  * Tab items in the general settings
  */
-export const GeneralSettingTabs = Vue.observable<Array<TabItem>>([]);
+export const GeneralSettingTabs = Vue.observable<Array<TabItem>>([])
 
 /**
  * Tab items in the machine settings
  */
-export const MachineSettingTabs = Vue.observable<Array<TabItem>>([]);
+export const MachineSettingTabs = Vue.observable<Array<TabItem>>([])
 
 /**
  * Register a new settings page and a Vue component
@@ -317,57 +332,62 @@ export const MachineSettingTabs = Vue.observable<Array<TabItem>>([]);
  * @param translated Whether the caption is already translated (defaults to false)
  * @param icon Optional icon for the tab caption
  */
-export function registerSettingTab(general: boolean, name: string, component: Component, caption: string | (() => string), translated = false, icon?: string) {
-	const tab: TabItem = {
-		caption: caption as string,
-		icon,
-		component: name,
-		translated
-	}
+export function registerSettingTab(
+  general: boolean,
+  name: string,
+  component: Component,
+  caption: string | (() => string),
+  translated = false,
+  icon?: string,
+) {
+  const tab: TabItem = {
+    caption: caption as string,
+    icon,
+    component: name,
+    translated,
+  }
 
-	if (caption instanceof Function) {
-		Object.defineProperty(tab, "caption", {
-			get: caption
-		});
-	}
+  if (caption instanceof Function) {
+    Object.defineProperty(tab, 'caption', {
+      get: caption,
+    })
+  }
 
-	Vue.component(name, component as any);
-	if (general) {
-		GeneralSettingTabs.push(tab);
-	} else {
-		MachineSettingTabs.push(tab);
-	}
+  Vue.component(name, component as any)
+  if (general) {
+    GeneralSettingTabs.push(tab)
+  } else {
+    MachineSettingTabs.push(tab)
+  }
 }
 
 /**
  * Router instance
  */
 const router = new VueRouter({
-	mode: "history",
-	base: process.env.BASE_URL,
-	routes: Routes
-});
+  mode: 'history',
+  base: process.env.BASE_URL,
+  routes: Routes,
+})
 
 for (const category in Menu) {
-	for (const page of Menu[category].pages) {
-		if (page.condition === undefined) {
-			page.condition = true;
-		} else if (page.condition instanceof Function) {
-			Object.defineProperty(page, "condition", {
-				get: page.condition as (() => boolean)
-			});
-		}
+  for (const page of Menu[category].pages) {
+    if (page.condition === undefined) {
+      page.condition = true
+    } else if (page.condition instanceof Function) {
+      Object.defineProperty(page, 'condition', {
+        get: page.condition as () => boolean,
+      })
+    }
 
-		router.addRoute(page);
-		Routes.push(page);
-	}
+    router.addRoute(page)
+    Routes.push(page)
+  }
 }
 
-router.addRoute(
-    {
-        path: "*",
-        component: Page404
-    }
-);
+router.addRoute({
+  path: '*',
+  component: Page404,
+})
 
-export default router;
+export default router

@@ -1,15 +1,12 @@
 <template>
   <v-card outlined>
     <v-card-title>
-      {{ $t("panel.settingsNotifications.caption") }}
+      {{ $t('panel.settingsNotifications.caption') }}
     </v-card-title>
 
     <v-card-text>
       <v-row>
-        <v-col
-          cols="6"
-          xs="12"
-        >
+        <v-col cols="6" xs="12">
           <v-switch
             v-model="notificationErrorsPersistent"
             class="mt-0 mb-3"
@@ -17,10 +14,7 @@
             hide-details
           />
         </v-col>
-        <v-col
-          cols="6"
-          xs="12"
-        >
+        <v-col cols="6" xs="12">
           <v-text-field
             v-model.number="notificationTimeout"
             type="number"
@@ -36,26 +30,35 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
-
-import { SettingsState, useSettingsStore } from "@/stores/settings";
+import { SettingsState, useSettingsStore } from '@/stores/settings'
 
 export default Vue.extend({
-	computed: {
-		notificationErrorsPersistent: {
-			get(): boolean { return useSettingsStore().notifications.errorsPersistent; },
-			set(value: boolean) { this.update({ errorsPersistent: value }); }
-		},
-		notificationTimeout: {
-			get(): number { return useSettingsStore().notifications.timeout; },
-			set(value: number) { if (isFinite(value) && value >= 0) { this.update({ timeout: value }); } }
-		}
-	},
-	methods: {
-    update(data: Partial<SettingsState["notifications"]>) {
+  computed: {
+    notificationErrorsPersistent: {
+      get(): boolean {
+        return useSettingsStore().notifications.errorsPersistent
+      },
+      set(value: boolean) {
+        this.update({ errorsPersistent: value })
+      },
+    },
+    notificationTimeout: {
+      get(): number {
+        return useSettingsStore().notifications.timeout
+      },
+      set(value: number) {
+        if (isFinite(value) && value >= 0) {
+          this.update({ timeout: value })
+        }
+      },
+    },
+  },
+  methods: {
+    update(data: Partial<SettingsState['notifications']>) {
       useSettingsStore().update({ notifications: data })
-		}
-	}
-});
+    },
+  },
+})
 </script>

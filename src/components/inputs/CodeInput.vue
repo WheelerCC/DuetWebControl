@@ -1,7 +1,7 @@
 <template>
   <v-row
     class="component flex-shrink-1"
-    :class="{ 'mt-2': solo, 'grow': grow }"
+    :class="{ 'mt-2': solo, grow: grow }"
     no-gutters
     align="center"
   >
@@ -12,7 +12,7 @@
         hide-details
         :disabled="uiFrozen"
         :placeholder="$t('input.code.placeholder')"
-        :search-input="(code instanceof Object) ? code.value : (code ?? '')"
+        :search-input="code instanceof Object ? code.value : (code ?? '')"
         :loading="doingCode"
         :items="displayedCodes"
         hide-selected
@@ -28,196 +28,215 @@
         <template #item="{ item }">
           <code>{{ item.text }}</code>
           <v-spacer />
-          <v-btn
-            icon
-            @click.prevent.stop="removeLastSentCode(item.value)"
-          >
+          <v-btn icon @click.prevent.stop="removeLastSentCode(item.value)">
             <v-icon>mdi-delete</v-icon>
           </v-btn>
         </template>
       </v-combobox>
     </v-col>
 
-    <v-col
-      class="ml-2 flex-shrink-1"
-      cols="auto"
-    >
-      <v-btn
-        color="info"
-        :disabled="uiFrozen"
-        :loading="doingCode"
-        @click="send"
-      >
-        <v-icon class="mr-2">
-          mdi-send
-        </v-icon> {{ $t("input.code.send") }}
+    <v-col class="ml-2 flex-shrink-1" cols="auto">
+      <v-btn color="info" :disabled="uiFrozen" :loading="doingCode" @click="send">
+        <v-icon class="mr-2"> mdi-send </v-icon> {{ $t('input.code.send') }}
       </v-btn>
     </v-col>
   </v-row>
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
+import { MessageBox } from '@duet3d/objectmodel'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useRootStore } from '@/stores'
+import { useSettingsStore } from '@/stores/settings'
+import { useMachinesStore } from '@/stores/machines'
+import { useMachinesCacheStore } from '@/stores/machineCache'
 
-import { MessageBox } from "@duet3d/objectmodel";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useRootStore } from "@/stores";
-import { useSettingsStore } from "@/stores/settings";
-import { useMachinesStore } from "@/stores/machines";
-import { useMachinesCacheStore } from "@/stores/machineCache";
-
-const conditionalKeywords = ["abort", "echo", "if", "elif", "else", "while", "break", "continue", "var", "global", "set"];
+const conditionalKeywords = [
+  'abort',
+  'echo',
+  'if',
+  'elif',
+  'else',
+  'while',
+  'break',
+  'continue',
+  'var',
+  'global',
+  'set',
+]
 
 export default Vue.extend({
-	props: {
-		grow: Boolean,
-		solo: Boolean
-	},
-	data() {
-		return {
-			code: "" as string | { value: string },
-			ignoreEnter: false,
-			wasFocused: false,
-			showItems: false,
-			sendPending: false,
-			doingCode: false
-		}
-	},
-	computed: {
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		displayedCodes(): Array<{ text: string, value: string }> {
-			if (this.showItems && !useSettingsStore().disableAutoComplete) {
-				const currentCode = ((this.code instanceof Object) ? this.code.value : (this.code ?? "")).toLowerCase();
-				return useMachinesCacheStore().lastSentCodes
-					.filter(code => (currentCode === "") || code.toLowerCase().includes(currentCode))
-					.map(code => ({ text: code, value: code }))
-					.reverse();
-			}
-			return [];
-		},
-		messageBox(): MessageBox | null { return useMachinesModelStore().state.messageBox; }
-	},
-	watch: {
-		code(to: string | { value: string }) {
-			if (typeof to === "string" && to.length >= 2) {
-				this.showItems = true;
-			}
-		},
-		messageBox(to: MessageBox | null) {
-			if (to) {
-				// Don't handle "Enter" immediately when returning from a message box
-				this.ignoreEnter = true;
-				setTimeout(() => this.ignoreEnter = false, 1000);
-			}
-		}
-	},
-	methods: {
-		click() {
-			if (this.wasFocused) {
-				this.showItems = !this.showItems;
-			} else {
-				this.wasFocused = true;
-			}
-		},
-		removeLastSentCode(code: string) {
-			useMachinesCacheStore().removeLastSentCode(code)
-		},
-		change(value: string | { value: string } | null) {
-			this.code = (value !== null) ? value : "";
-		},
-		hasUnprecedentedParameters: (code: string) => !code || /(M23|M28|M30|M32|M36|M117)[^0-9]/i.test(code),
-		async sendOnEnter() {
-			if (this.ignoreEnter) {
-				this.ignoreEnter = false;
-			} else {
-				await this.send();
-			}
-		},
-		async send() {
-			this.ignoreEnter = false;
-			this.showItems = false;
+  props: {
+    grow: Boolean,
+    solo: Boolean,
+  },
+  data() {
+    return {
+      code: '' as string | { value: string },
+      ignoreEnter: false,
+      wasFocused: false,
+      showItems: false,
+      sendPending: false,
+      doingCode: false,
+    }
+  },
+  computed: {
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+    displayedCodes(): Array<{ text: string; value: string }> {
+      if (this.showItems && !useSettingsStore().disableAutoComplete) {
+        const currentCode = (
+          this.code instanceof Object ? this.code.value : (this.code ?? '')
+        ).toLowerCase()
+        return useMachinesCacheStore()
+          .lastSentCodes.filter(
+            (code) => currentCode === '' || code.toLowerCase().includes(currentCode),
+          )
+          .map((code) => ({ text: code, value: code }))
+          .reverse()
+      }
+      return []
+    },
+    messageBox(): MessageBox | null {
+      return useMachinesModelStore().state.messageBox
+    },
+  },
+  watch: {
+    code(to: string | { value: string }) {
+      if (typeof to === 'string' && to.length >= 2) {
+        this.showItems = true
+      }
+    },
+    messageBox(to: MessageBox | null) {
+      if (to) {
+        // Don't handle "Enter" immediately when returning from a message box
+        this.ignoreEnter = true
+        setTimeout(() => (this.ignoreEnter = false), 1000)
+      }
+    },
+  },
+  methods: {
+    click() {
+      if (this.wasFocused) {
+        this.showItems = !this.showItems
+      } else {
+        this.wasFocused = true
+      }
+    },
+    removeLastSentCode(code: string) {
+      useMachinesCacheStore().removeLastSentCode(code)
+    },
+    change(value: string | { value: string } | null) {
+      this.code = value !== null ? value : ''
+    },
+    hasUnprecedentedParameters: (code: string) =>
+      !code || /(M23|M28|M30|M32|M36|M117)[^0-9]/i.test(code),
+    async sendOnEnter() {
+      if (this.ignoreEnter) {
+        this.ignoreEnter = false
+      } else {
+        await this.send()
+      }
+    },
+    async send() {
+      this.ignoreEnter = false
+      this.showItems = false
 
-			const code = (this.code instanceof Object) ? this.code.value : this.code;
-			if (code.trim() !== "" && !this.doingCode) {
-				let codeToSend = '', bareCode = "", inQuotes = false, inExpression = false, inWhiteSpace = false, inComment = false;
-				if (!this.hasUnprecedentedParameters(codeToSend) &&
-					!conditionalKeywords.some(keyword => code.trim().startsWith(keyword))) {
-					// Convert code to upper-case and remove comments
-					for (let i = 0; i < code.length; i++) {
-						const char = code[i];
-						if (inQuotes) {
-							if (i < code.length - 1 && char === '\\' && code[i + 1] === '"') {
-								codeToSend += '\\"';
-								i++;
-							} else {
-								if (char === '"') {
-									inQuotes = false;
-								}
-								codeToSend += char;
-							}
-						} else if (inExpression) {
-							codeToSend += char;
-							inExpression = (char !== '}');
-						} else if (inComment) {
-							codeToSend += char;
-							inComment = (char !== ')');
-						} else {
-							if (char === '"') {
-								// don't convert escaped strings
-								inQuotes = true;
-							} else if (char === ' ' || char === '\t') {
-								// remove duplicate white spaces
-								if (inWhiteSpace) {
-									continue;
-								}
-								inWhiteSpace = true;
-							} else if (char === ';') {
-								// stop when final comments start
-								break;
-							} else if (char === '(') {
-								// don't process chars from encapsulated comments
-								inComment = true;
-							} else if (char === '{') {
-								// don't process chars from expressions
-								inExpression = true;
-							}
-							inWhiteSpace = false;
-							codeToSend += char.toUpperCase();
-							bareCode += code.toUpperCase();
-						}
-					}
-				} else {
-					// Don't modify the user input
-					codeToSend = code;
-				}
+      const code = this.code instanceof Object ? this.code.value : this.code
+      if (code.trim() !== '' && !this.doingCode) {
+        let codeToSend = '',
+          bareCode = '',
+          inQuotes = false,
+          inExpression = false,
+          inWhiteSpace = false,
+          inComment = false
+        if (
+          !this.hasUnprecedentedParameters(codeToSend) &&
+          !conditionalKeywords.some((keyword) => code.trim().startsWith(keyword))
+        ) {
+          // Convert code to upper-case and remove comments
+          for (let i = 0; i < code.length; i++) {
+            const char = code[i]
+            if (inQuotes) {
+              if (i < code.length - 1 && char === '\\' && code[i + 1] === '"') {
+                codeToSend += '\\"'
+                i++
+              } else {
+                if (char === '"') {
+                  inQuotes = false
+                }
+                codeToSend += char
+              }
+            } else if (inExpression) {
+              codeToSend += char
+              inExpression = char !== '}'
+            } else if (inComment) {
+              codeToSend += char
+              inComment = char !== ')'
+            } else {
+              if (char === '"') {
+                // don't convert escaped strings
+                inQuotes = true
+              } else if (char === ' ' || char === '\t') {
+                // remove duplicate white spaces
+                if (inWhiteSpace) {
+                  continue
+                }
+                inWhiteSpace = true
+              } else if (char === ';') {
+                // stop when final comments start
+                break
+              } else if (char === '(') {
+                // don't process chars from encapsulated comments
+                inComment = true
+              } else if (char === '{') {
+                // don't process chars from expressions
+                inExpression = true
+              }
+              inWhiteSpace = false
+              codeToSend += char.toUpperCase()
+              bareCode += code.toUpperCase()
+            }
+          }
+        } else {
+          // Don't modify the user input
+          codeToSend = code
+        }
 
-				// Send the code and wait for completion
-				this.doingCode = true;
-				try {
-					const reply = await useMachinesStore().sendCode({
-						code: codeToSend,
-						fromInput: true
-					});
+        // Send the code and wait for completion
+        this.doingCode = true
+        try {
+          const reply = await useMachinesStore().sendCode({
+            code: codeToSend,
+            fromInput: true,
+          })
 
-					if (!inQuotes && !useSettingsStore().disableAutoComplete &&
-						!reply.startsWith("Error: ") && !reply.startsWith("Warning: ") &&
-						bareCode.indexOf("M587") === -1 && bareCode.indexOf("M589") === -1) {
-						// Automatically remember successful codes
-						useMachinesCacheStore().addLastSentCode(codeToSend.trim())
-					}
-				} catch {
-					// handled before we get here
-				}
-				this.doingCode = false;
-			}
-		}
-	}
-});
+          if (
+            !inQuotes &&
+            !useSettingsStore().disableAutoComplete &&
+            !reply.startsWith('Error: ') &&
+            !reply.startsWith('Warning: ') &&
+            bareCode.indexOf('M587') === -1 &&
+            bareCode.indexOf('M589') === -1
+          ) {
+            // Automatically remember successful codes
+            useMachinesCacheStore().addLastSentCode(codeToSend.trim())
+          }
+        } catch {
+          // handled before we get here
+        }
+        this.doingCode = false
+      }
+    },
+  },
+})
 </script>
 
 <style scoped>
 .grow {
-	flex-grow: 1;
+  flex-grow: 1;
 }
 </style>

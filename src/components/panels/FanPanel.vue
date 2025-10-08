@@ -1,35 +1,19 @@
 <template>
   <v-card>
     <v-card-title class="pb-0">
-      <v-icon
-        small
-        class="mr-1"
-      >
-        mdi-fan
-      </v-icon>
-      {{ $t("panel.fan.caption") }}
+      <v-icon small class="mr-1"> mdi-fan </v-icon>
+      {{ $t('panel.fan.caption') }}
     </v-card-title>
 
     <v-card-text class="py-0">
       <v-row align="start">
-        <v-col
-          cols="12"
-          sm="auto"
-          order="1"
-          order-sm="0"
-        >
+        <v-col cols="12" sm="auto" order="1" order-sm="0">
           <p class="mb-1">
-            {{ $t("panel.fan.selection") }}
+            {{ $t('panel.fan.selection') }}
           </p>
-          <v-btn-toggle
-            v-model="fan"
-            mandatory
-          >
-            <v-btn
-              v-if="currentTool && currentTool.fans.length > 0"
-              :value="-1"
-            >
-              {{ $t("panel.fan.toolFan") }}
+          <v-btn-toggle v-model="fan" mandatory>
+            <v-btn v-if="currentTool && currentTool.fans.length > 0" :value="-1">
+              {{ $t('panel.fan.toolFan') }}
             </v-btn>
 
             <template v-for="(_fan, index) in fans">
@@ -39,24 +23,14 @@
                 :value="index"
                 :disabled="uiFrozen"
               >
-                {{ _fan.name ? _fan.name : $t("panel.fan.fan", [index]) }}
+                {{ _fan.name ? _fan.name : $t('panel.fan.fan', [index]) }}
               </v-btn>
             </template>
           </v-btn-toggle>
         </v-col>
 
-        <v-col
-          cols="12"
-          sm="auto"
-          order="0"
-          order-sm="1"
-          class="flex-sm-grow-1"
-        >
-          <percentage-input
-            v-model="fanValue"
-            :max="maxFanValue"
-            :disabled="uiFrozen"
-          />
+        <v-col cols="12" sm="auto" order="0" order-sm="1" class="flex-sm-grow-1">
+          <percentage-input v-model="fanValue" :max="maxFanValue" :disabled="uiFrozen" />
         </v-col>
       </v-row>
     </v-card-text>
@@ -64,93 +38,111 @@
 </template>
 
 <script lang="ts">
-import { useRootStore } from "@/stores";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useMachinesStore } from "@/stores/machines";
-import { Fan, Tool } from "@duet3d/objectmodel";
-import Vue from "vue";
-
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { Fan, Tool } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
 export default Vue.extend({
-	data() {
-		return {
-			fan: -1
-		}
-	},
-	computed: {
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		fans(): Array<Fan | null> { return useMachinesModelStore().fans; },
-		currentTool(): Tool | null { return useMachinesModelStore().currentTool() },
-		fanValue: {
-			get(): number {
-				// Even though RRF allows multiple fans to be assigned to a tool,
-				// we assume they all share the same fan value if such a config is set
-				const fan = (this.fan === -1)
-					? ((this.currentTool && this.currentTool.fans.length > 0) ? this.currentTool.fans[0] : -1)
-					: this.fan;
-				return (fan >= 0) && (fan < this.fans.length) && (this.fans[fan] !== null) ? Math.round(this.fans[fan]!.requestedValue * 100) : 0;
-			},
-			set(value: number) {
-				value = Math.min(100, Math.max(0, value)) / 100;
-				if (this.fan === -1) {
-					useMachinesStore().sendCode(`M106 S${value.toFixed(2)}`)
-				} else {
-					useMachinesStore().sendCode(`M106 P${this.fan} S${value.toFixed(2)}`);
-				}
-			}
-		},
-		maxFanValue(): number {
-			const fan = (this.fan === -1)
-				? ((this.currentTool && this.currentTool.fans.length > 0) ? this.currentTool.fans[0] : -1)
-				: this.fan;
-			return (fan >= 0) && (fan < this.fans.length) && (this.fans[fan] !== null) ? Math.round(this.fans[fan]!.max * 100) : 100;
-		}
-	},
-	watch: {
-		currentTool() {
-			this.updateFanSelection();
-		},
-		fans: {
-			deep: true,
-			handler() {
-				this.updateFanSelection();
-			}
-		}
-	},
-	mounted() {
-		this.updateFanSelection();
-	},
-	methods: {
-		updateFanSelection() {
-			if (this.fan === -1) {
-				if (!this.currentTool) {
-					// Tool no longer selected, try to change to the first available fan
-					this.fan = this.fans.findIndex(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0));
-				}
-			} else {
-				const fan = (this.fan >= 0 && this.fan < this.fans.length) ? this.fans[this.fan] : null;
-				if (fan === null || fan.thermostatic.sensors.length > 0) {
-					// Previously elected fan is no longer controllable, try to change to another one
-					if (this.currentTool) {
-						this.fan = -1;
-					} else {
-						this.fan = this.fans.findIndex(fan => (fan !== null) && (fan.thermostatic.sensors.length === 0));
-					}
-				}
-			}
-		}
-	}
-});
+  data() {
+    return {
+      fan: -1,
+    }
+  },
+  computed: {
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+    fans(): Array<Fan | null> {
+      return useMachinesModelStore().fans
+    },
+    currentTool(): Tool | null {
+      return useMachinesModelStore().currentTool()
+    },
+    fanValue: {
+      get(): number {
+        // Even though RRF allows multiple fans to be assigned to a tool,
+        // we assume they all share the same fan value if such a config is set
+        const fan =
+          this.fan === -1
+            ? this.currentTool && this.currentTool.fans.length > 0
+              ? this.currentTool.fans[0]
+              : -1
+            : this.fan
+        return fan >= 0 && fan < this.fans.length && this.fans[fan] !== null
+          ? Math.round(this.fans[fan]!.requestedValue * 100)
+          : 0
+      },
+      set(value: number) {
+        value = Math.min(100, Math.max(0, value)) / 100
+        if (this.fan === -1) {
+          useMachinesStore().sendCode(`M106 S${value.toFixed(2)}`)
+        } else {
+          useMachinesStore().sendCode(`M106 P${this.fan} S${value.toFixed(2)}`)
+        }
+      },
+    },
+    maxFanValue(): number {
+      const fan =
+        this.fan === -1
+          ? this.currentTool && this.currentTool.fans.length > 0
+            ? this.currentTool.fans[0]
+            : -1
+          : this.fan
+      return fan >= 0 && fan < this.fans.length && this.fans[fan] !== null
+        ? Math.round(this.fans[fan]!.max * 100)
+        : 100
+    },
+  },
+  watch: {
+    currentTool() {
+      this.updateFanSelection()
+    },
+    fans: {
+      deep: true,
+      handler() {
+        this.updateFanSelection()
+      },
+    },
+  },
+  mounted() {
+    this.updateFanSelection()
+  },
+  methods: {
+    updateFanSelection() {
+      if (this.fan === -1) {
+        if (!this.currentTool) {
+          // Tool no longer selected, try to change to the first available fan
+          this.fan = this.fans.findIndex(
+            (fan) => fan !== null && fan.thermostatic.sensors.length === 0,
+          )
+        }
+      } else {
+        const fan = this.fan >= 0 && this.fan < this.fans.length ? this.fans[this.fan] : null
+        if (fan === null || fan.thermostatic.sensors.length > 0) {
+          // Previously elected fan is no longer controllable, try to change to another one
+          if (this.currentTool) {
+            this.fan = -1
+          } else {
+            this.fan = this.fans.findIndex(
+              (fan) => fan !== null && fan.thermostatic.sensors.length === 0,
+            )
+          }
+        }
+      }
+    },
+  },
+})
 </script>
 
 <style scoped>
 .v-btn-toggle {
-	display: flex;
+  display: flex;
 }
 
 .v-btn-toggle > button {
-	display: flex;
-	flex: 1 1 auto;
+  display: flex;
+  flex: 1 1 auto;
 }
 </style>

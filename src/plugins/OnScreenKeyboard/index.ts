@@ -1,4 +1,4 @@
-import { injectComponent } from "..";
-import OnScreenKeyboard from "./OnScreenKeyboard.vue"
+import { injectComponent } from '..'
+import OnScreenKeyboard from './OnScreenKeyboard.vue'
 
-injectComponent("on-screen-keyboard", OnScreenKeyboard);
+injectComponent('on-screen-keyboard', OnScreenKeyboard)

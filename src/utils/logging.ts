@@ -1,22 +1,21 @@
-import Vue from "vue";
+import Vue from 'vue'
 
-import i18n from "@/i18n";
+import i18n from '@/i18n'
 
-
-import { makeNotification } from "./notifications";
-import { defaultMachine } from "@/stores/misc";
-import { useMachinesStore } from "@/stores/machines";
-import { useRootStore } from "@/stores";
+import { makeNotification } from './notifications'
+import { defaultMachine } from '@/stores/misc'
+import { useMachinesStore } from '@/stores/machines'
+import { useRootStore } from '@/stores'
 
 /**
  * Possible logging types
  */
 export enum LogType {
-	success = "success",
-    info = "info",
-    primary = "primary",
-    warning = "warning",
-    error = "error"
+  success = 'success',
+  info = 'info',
+  primary = 'primary',
+  warning = 'warning',
+  error = 'error',
 }
 
 /**
@@ -26,9 +25,14 @@ export enum LogType {
  * @param message Actual message
  * @param hostname Hostname to log this message to
  */
-export function log(type: LogType, title: string, message: string | null = null, hostname?: string) {
-	makeNotification(type, title, message);
-	logToConsole(type, title, message, hostname)
+export function log(
+  type: LogType,
+  title: string,
+  message: string | null = null,
+  hostname?: string,
+) {
+  makeNotification(type, title, message)
+  logToConsole(type, title, message, hostname)
 }
 
 /**
@@ -38,8 +42,13 @@ export function log(type: LogType, title: string, message: string | null = null,
  * @param message Actual message
  * @param hostname Hostname to log this message to
  */
-export function logToConsole(type: LogType, title: string, message: string | null = null, hostname?: string) {
-	useMachinesStore().log({ date: new Date(), type, title, message }, hostname);
+export function logToConsole(
+  type: LogType,
+  title: string,
+  message: string | null = null,
+  hostname?: string,
+) {
+  useMachinesStore().log({ date: new Date(), type, title, message }, hostname)
 }
 
 /**
@@ -49,42 +58,47 @@ export function logToConsole(type: LogType, title: string, message: string | nul
  * @param hostname Hostname of the machine that produced the reply
  */
 export function logCode(code: string | null, reply: string, hostname?: string) {
-	if (!code && !reply) {
-		// Make sure there is something to log...
-		return;
-	}
+  if (!code && !reply) {
+    // Make sure there is something to log...
+    return
+  }
 
-	// Determine type
-	let type = LogType.info, toLog = reply;
-	if (reply.startsWith("Error: ")) {
-		type = LogType.error;
-	} else if (reply.startsWith("Warning: ")) {
-		type = LogType.warning;
-	} else if (reply === "") {
-		type = LogType.success;
-	}
+  // Determine type
+  let type = LogType.info,
+    toLog = reply
+  if (reply.startsWith('Error: ')) {
+    type = LogType.error
+  } else if (reply.startsWith('Warning: ')) {
+    type = LogType.warning
+  } else if (reply === '') {
+    type = LogType.success
+  }
 
-	let rootStore = useRootStore()
-	// Log it
-	const responseLines = toLog.split('\n')
-	if (hostname === rootStore.selectedMachine && !rootStore.hideCodeReplyNotifications) {
-		let title = code || "", message = responseLines.join("<br>");
-		if (responseLines.length > 3 || toLog.length > 128) {
-			title = (!code) ? i18n.t("notification.responseTooLong") : code;
-			message = (!code) ? "" : i18n.t("notification.responseTooLong");
-		} else if (!code) {
-			title = responseLines[0];
-			message = responseLines.slice(1).join("<br>");
-		}
+  let rootStore = useRootStore()
+  // Log it
+  const responseLines = toLog.split('\n')
+  if (hostname === rootStore.selectedMachine && !rootStore.hideCodeReplyNotifications) {
+    let title = code || '',
+      message = responseLines.join('<br>')
+    if (responseLines.length > 3 || toLog.length > 128) {
+      title = !code ? i18n.t('notification.responseTooLong') : code
+      message = !code ? '' : i18n.t('notification.responseTooLong')
+    } else if (!code) {
+      title = responseLines[0]
+      message = responseLines.slice(1).join('<br>')
+    }
 
-		makeNotification(type, title, message, null, "/Console");
-	}
-	useMachinesStore().log({
-		date: new Date(),
-		type,
-		title: code ?? '',
-		message: reply
-	}, hostname)
+    makeNotification(type, title, message, null, '/Console')
+  }
+  useMachinesStore().log(
+    {
+      date: new Date(),
+      type,
+      title: code ?? '',
+      message: reply,
+    },
+    hostname,
+  )
 }
 
 /**
@@ -94,16 +108,16 @@ export function logCode(code: string | null, reply: string, hostname?: string) {
  * @param message Message content
  */
 export function logGlobal(type: LogType, title: string, message: string | null = null) {
-	if (useRootStore().selectedMachine !== defaultMachine) {
-		log(type, title, message);
-	} else {
-		makeNotification(type, title, message);
-	}
-	useMachinesStore().log({ date: new Date(), type, title, message });
+  if (useRootStore().selectedMachine !== defaultMachine) {
+    log(type, title, message)
+  } else {
+    makeNotification(type, title, message)
+  }
+  useMachinesStore().log({ date: new Date(), type, title, message })
 }
 
 // Register extensions
-Vue.prototype.$log = log;
-Vue.prototype.$logToConsole = logToConsole;
-Vue.prototype.$logCode = logCode;
-Vue.prototype.$logGlobal = logGlobal;
+Vue.prototype.$log = log
+Vue.prototype.$logToConsole = logToConsole
+Vue.prototype.$logCode = logCode
+Vue.prototype.$logGlobal = logGlobal

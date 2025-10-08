@@ -1,7 +1,7 @@
 /**
  * Flags if local storage is supported at all
  */
-export const localStorageSupported = typeof localStorage !== "undefined";
+export const localStorageSupported = typeof localStorage !== 'undefined'
 
 /**
  * Attempt to get a value from local storage
@@ -10,16 +10,19 @@ export const localStorageSupported = typeof localStorage !== "undefined";
  * @returns Retrieved or default value
  */
 export function getLocalSetting(key: string, defaultValue?: any): any {
-	if (!localStorageSupported) {
-		return defaultValue;
-	}
+  if (!localStorageSupported) {
+    return defaultValue
+  }
 
-	let value = localStorage.getItem(key);
-	if (value === null || value.length === 0 ||
-		(defaultValue !== undefined && value.constructor !== defaultValue.constructor)) {
-		return defaultValue;
-	}
-	return JSON.parse(value);
+  let value = localStorage.getItem(key)
+  if (
+    value === null ||
+    value.length === 0 ||
+    (defaultValue !== undefined && value.constructor !== defaultValue.constructor)
+  ) {
+    return defaultValue
+  }
+  return JSON.parse(value)
 }
 
 /**
@@ -29,15 +32,15 @@ export function getLocalSetting(key: string, defaultValue?: any): any {
  * @returns True on success, false otherwise
  */
 export function setLocalSetting(key: string, value: any) {
-	if (localStorageSupported) {
-		try {
-			localStorage.setItem(key, JSON.stringify(value));
-			return true;
-		} catch (e) {
-			console.warn("Failed to save value in local storage, it may be full", e);
-		}
-	}
-	return false;
+  if (localStorageSupported) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value))
+      return true
+    } catch (e) {
+      console.warn('Failed to save value in local storage, it may be full', e)
+    }
+  }
+  return false
 }
 
 /**
@@ -45,7 +48,7 @@ export function setLocalSetting(key: string, value: any) {
  * @param key Key to delete
  */
 export function removeLocalSetting(key: string) {
-	if (localStorageSupported) {
-		localStorage.removeItem(key);
-	}
+  if (localStorageSupported) {
+    localStorage.removeItem(key)
+  }
 }

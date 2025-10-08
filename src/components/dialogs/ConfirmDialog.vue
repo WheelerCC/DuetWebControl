@@ -1,10 +1,5 @@
 <template>
-  <v-dialog
-    v-model="internalShown"
-    persistent
-    width="480"
-    @keydown.escape="dismissed"
-  >
+  <v-dialog v-model="internalShown" persistent width="480" @keydown.escape="dismissed">
     <v-card>
       <v-card-title>
         <span class="headline">
@@ -18,18 +13,10 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn
-          color="blue darken-1"
-          text
-          @click="dismissed"
-        >
+        <v-btn color="blue darken-1" text @click="dismissed">
           {{ $t('generic.no') }}
         </v-btn>
-        <v-btn
-          color="blue darken-1"
-          text
-          @click="confirmed"
-        >
+        <v-btn color="blue darken-1" text @click="confirmed">
           {{ $t('generic.yes') }}
         </v-btn>
       </v-card-actions>
@@ -38,44 +25,46 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
 export default Vue.extend({
-	props: {
-		title: {
-			type: String,
-			required: true
-		},
-		prompt: {
-			type: String,
-			required: true
-		},
-		shown: {
-			type: Boolean,
-			required: true
-		}
-	},
-	computed: {
-		internalShown: {
-			get(): boolean { return this.shown; },
-			set(value: boolean) {
-				if (value) {
-					this.confirmed();
-				} else {
-					this.dismissed();
-				}
-			}
-		}
-	},
-	methods: {
-		confirmed() {
-			this.$emit("confirmed");
-			this.$emit("update:shown", false);
-		},
-		dismissed() {
-			this.$emit("dismissed");
-			this.$emit("update:shown", false);
-		}
-	}
-});
+  props: {
+    title: {
+      type: String,
+      required: true,
+    },
+    prompt: {
+      type: String,
+      required: true,
+    },
+    shown: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  computed: {
+    internalShown: {
+      get(): boolean {
+        return this.shown
+      },
+      set(value: boolean) {
+        if (value) {
+          this.confirmed()
+        } else {
+          this.dismissed()
+        }
+      },
+    },
+  },
+  methods: {
+    confirmed() {
+      this.$emit('confirmed')
+      this.$emit('update:shown', false)
+    },
+    dismissed() {
+      this.$emit('dismissed')
+      this.$emit('update:shown', false)
+    },
+  },
+})
 </script>

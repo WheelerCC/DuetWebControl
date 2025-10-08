@@ -1,11 +1,7 @@
 <!-- eslint-disable vue/no-v-html -->
 <!-- TODO prefer to not need this waiver -->
 <template>
-  <v-dialog
-    v-model="shown"
-    :no-click-animation="isPersistent"
-    :persistent="isPersistent"
-  >
+  <v-dialog v-model="shown" :no-click-animation="isPersistent" :persistent="isPersistent">
     <v-card>
       <v-card-title class="justify-center">
         <span class="headline">
@@ -22,11 +18,7 @@
         />
 
         <!-- Jog control -->
-        <v-row
-          v-for="axis in displayedAxes"
-          :key="axis.letter"
-          dense
-        >
+        <v-row v-for="axis in displayedAxes" :key="axis.letter" dense>
           <!-- Decreasing movements -->
           <v-col>
             <v-row no-gutters>
@@ -51,10 +43,7 @@
           </v-col>
 
           <!-- Current position -->
-          <v-col
-            cols="auto"
-            class="d-flex align-center px-3"
-          >
+          <v-col cols="auto" class="d-flex align-center px-3">
             <strong>
               {{ axis.letter + ' = ' + displayAxisPosition(axis) }}
             </strong>
@@ -85,10 +74,7 @@
         </v-row>
 
         <!-- Inputs-->
-        <form
-          v-if="needsNumberInput || needsStringInput"
-          @submit.prevent="ok"
-        >
+        <form v-if="needsNumberInput || needsStringInput" @submit.prevent="ok">
           <v-text-field
             v-if="needsNumberInput"
             v-model.number="numberInput"
@@ -113,10 +99,7 @@
         </form>
       </v-card-text>
 
-      <v-card-actions
-        v-if="hasButtons"
-        class="flex-wrap justify-center"
-      >
+      <v-card-actions v-if="hasButtons" class="flex-wrap justify-center">
         <template v-if="isMultipleChoice">
           <v-btn
             v-for="(choice, index) in messageBox.choices"
@@ -127,194 +110,215 @@
           >
             {{ choice }}
           </v-btn>
-          <v-btn
-            v-if="messageBox.cancelButton"
-            color="blue darken-1"
-            text
-            @click="cancel"
-          >
-            {{ $t("generic.cancel") }}
+          <v-btn v-if="messageBox.cancelButton" color="blue darken-1" text @click="cancel">
+            {{ $t('generic.cancel') }}
           </v-btn>
         </template>
         <template v-else>
-          <v-btn
-            color="blue darken-1"
-            text
-            :disabled="!canConfirm"
-            @click="ok"
-          >
-            {{ $t(isPersistent ? "generic.ok" : "generic.close") }}
+          <v-btn color="blue darken-1" text :disabled="!canConfirm" @click="ok">
+            {{ $t(isPersistent ? 'generic.ok' : 'generic.close') }}
           </v-btn>
-          <v-btn
-            v-if="messageBox.cancelButton"
-            color="blue darken-1"
-            text
-            @click="cancel"
-          >
-            {{ $t("generic.cancel") }}
+          <v-btn v-if="messageBox.cancelButton" color="blue darken-1" text @click="cancel">
+            {{ $t('generic.cancel') }}
           </v-btn>
         </template>
       </v-card-actions>
     </v-card>
 
-    <div
-      v-if="showEmergencyStop"
-      class="persistent d-flex justify-end pe-4 pt-3"
-    >
+    <div v-if="showEmergencyStop" class="persistent d-flex justify-end pe-4 pt-3">
       <emergency-btn />
     </div>
   </v-dialog>
 </template>
 
 <script lang="ts">
-import { Axis, AxisLetter, MessageBox, MessageBoxMode } from "@duet3d/objectmodel";
-import Vue from "vue";
+import { Axis, AxisLetter, MessageBox, MessageBoxMode } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
-
-import { isNumber } from "@/utils/numbers";
-import { log } from "@/utils/logging";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useMachinesSettingsStore } from "@/stores/machineSettings";
-import { useMachinesStore } from "@/stores/machines";
+import { isNumber } from '@/utils/numbers'
+import { log } from '@/utils/logging'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { useMachinesStore } from '@/stores/machines'
 
 export default Vue.extend({
-	data() {
-		return {
-			messageBox: new MessageBox(),
-			numberInput: 0,
-			shown: false,
-			showEmergencyStop: false,
-			stringInput: ""
-		}
-	},
-	computed: {
-		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)) },
-		numMoveSteps(): number { return useMachinesSettingsStore().numMoveSteps() },
-		isReconnecting(): boolean { return useMachinesStore().isReconnecting; },
-		currentMessageBox(): MessageBox | null { return useMachinesModelStore().state.messageBox; },
-		canConfirm(): boolean {
-			if (this.needsNumberInput) {
-				let canConfirm;
-				if (this.messageBox.mode === MessageBoxMode.intInput) {
-					canConfirm = isNumber(this.numberInput) && this.numberInput === Math.round(this.numberInput);
-				} else {
-					canConfirm = isNumber(this.numberInput);
-				}
-				return canConfirm && ((this.messageBox.min === null) || (this.numberInput >= this.messageBox.min)) && ((this.messageBox.max === null) || (this.numberInput <= this.messageBox.max));
-			}
+  data() {
+    return {
+      messageBox: new MessageBox(),
+      numberInput: 0,
+      shown: false,
+      showEmergencyStop: false,
+      stringInput: '',
+    }
+  },
+  computed: {
+    moveSteps(): (axisLetter: AxisLetter) => Array<number> {
+      return (axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)
+    },
+    numMoveSteps(): number {
+      return useMachinesSettingsStore().numMoveSteps()
+    },
+    isReconnecting(): boolean {
+      return useMachinesStore().isReconnecting
+    },
+    currentMessageBox(): MessageBox | null {
+      return useMachinesModelStore().state.messageBox
+    },
+    canConfirm(): boolean {
+      if (this.needsNumberInput) {
+        let canConfirm
+        if (this.messageBox.mode === MessageBoxMode.intInput) {
+          canConfirm =
+            isNumber(this.numberInput) && this.numberInput === Math.round(this.numberInput)
+        } else {
+          canConfirm = isNumber(this.numberInput)
+        }
+        return (
+          canConfirm &&
+          (this.messageBox.min === null || this.numberInput >= this.messageBox.min) &&
+          (this.messageBox.max === null || this.numberInput <= this.messageBox.max)
+        )
+      }
 
-			if (this.needsStringInput) {
-				return ((this.messageBox.min === null) || (this.stringInput.length >= this.messageBox.min)) && ((this.messageBox.max === null) || (this.stringInput.length <= this.messageBox.max));
-			}
+      if (this.needsStringInput) {
+        return (
+          (this.messageBox.min === null || this.stringInput.length >= this.messageBox.min) &&
+          (this.messageBox.max === null || this.stringInput.length <= this.messageBox.max)
+        )
+      }
 
-			return true;
-		},
-		displayedAxes(): Array<Axis> {
-			const axisControls = (this.messageBox && this.messageBox.axisControls !== null) ? this.messageBox.axisControls : 0;
-			return useMachinesModelStore().move.axes.filter((axis, index) => axis.visible && ((axisControls & (1 << index)) !== 0));
-		},
-		hasButtons(): boolean {
-			return this.messageBox.mode !== MessageBoxMode.noButtons;
-		},
-		isMultipleChoice(): boolean {
-			return this.messageBox.mode === MessageBoxMode.multipleChoice;
-		},
-		isPersistent(): boolean {
-			return this.messageBox.mode >= MessageBoxMode.okOnly;
-		},
-		needsIntInput(): boolean {
-			return this.messageBox.mode === MessageBoxMode.intInput;
-		},
-		needsNumberInput(): boolean {
-			return (this.messageBox.mode === MessageBoxMode.intInput) || (this.messageBox.mode === MessageBoxMode.floatInput);
-		},
-		needsStringInput(): boolean {
-			return this.messageBox.mode === MessageBoxMode.stringInput;
-		}
-	},
-	watch: {
-		isReconnecting(to: boolean) {
-			if (to) {
-				this.shown = false;
-			}
-		},
-		currentMessageBox: {
-			deep: true,
-			handler(to: MessageBox | null) {
-				if (to && to.mode !== null) {
-					this.numberInput = (typeof to.default === "number") ? to.default : 0;
-					this.stringInput = (typeof to.default === "string") ? to.default : "";
-					this.messageBox = JSON.parse(JSON.stringify(to));		// FIXME remove this after upgrading to Vue 3
-					this.shown = true;
-				} else {
-					this.shown = false;
-				}
-			}
-		},
-		shown(to) {
-			if (to && this.isPersistent) {
-				setTimeout(() => this.showEmergencyStop = true, 500);
-			} else {
-				this.showEmergencyStop = false;
-			}
-		}
-	},
-	methods: {
-		canMove(axis: Axis): boolean {
-			return axis.homed || !useMachinesModelStore().move.noMovesBeforeHoming;
-		},
-		displayAxisPosition(axis: Axis): string {
-			if (axis.userPosition === null) {
-				return this.$t("generic.noValue");
-			}
-			return (axis.letter === AxisLetter.Z) ? this.$displayZ(axis.userPosition, false) : this.$display(axis.userPosition, 1);
-		},
-		getMoveCellClass(index: number): string {
-			let classes = "";
-			if (index === 0 || index === 5) {
-				classes += "hidden-lg-and-down";
-			}
-			if (index > 1 && index < 4 && index % 2 === 1) {
-				classes += "hidden-md-and-down";
-			}
-			return classes;
-		},
-		getMoveCode(axis: Axis, index: number, decrementing: boolean): string {
-			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`;
-		},
-		showSign: (value: number): string => (value > 0) ? `+${value}` : value.toString(),
-		// NOTE: The following calls use noWait because we don't want M292 replies to be logged.
-		// This option will become obsolete in 3.7 or 3.8 when RRF is able to return G-code replies for each G-code request
-		async ok() {
-			this.shown = false;
-			if ([MessageBoxMode.closeOnly, MessageBoxMode.okOnly, MessageBoxMode.okCancel].includes(this.messageBox.mode)) {
-				await useMachinesStore().sendCode({ code: `M292 S${this.messageBox.seq}`, noWait: true });
-			} else if (this.messageBox.mode === MessageBoxMode.intInput || this.messageBox.mode === MessageBoxMode.floatInput) {
-				await useMachinesStore().sendCode({ code: `M292 R{${this.numberInput}} S${this.messageBox.seq}`, noWait: true });
+      return true
+    },
+    displayedAxes(): Array<Axis> {
+      const axisControls =
+        this.messageBox && this.messageBox.axisControls !== null ? this.messageBox.axisControls : 0
+      return useMachinesModelStore().move.axes.filter(
+        (axis, index) => axis.visible && (axisControls & (1 << index)) !== 0,
+      )
+    },
+    hasButtons(): boolean {
+      return this.messageBox.mode !== MessageBoxMode.noButtons
+    },
+    isMultipleChoice(): boolean {
+      return this.messageBox.mode === MessageBoxMode.multipleChoice
+    },
+    isPersistent(): boolean {
+      return this.messageBox.mode >= MessageBoxMode.okOnly
+    },
+    needsIntInput(): boolean {
+      return this.messageBox.mode === MessageBoxMode.intInput
+    },
+    needsNumberInput(): boolean {
+      return (
+        this.messageBox.mode === MessageBoxMode.intInput ||
+        this.messageBox.mode === MessageBoxMode.floatInput
+      )
+    },
+    needsStringInput(): boolean {
+      return this.messageBox.mode === MessageBoxMode.stringInput
+    },
+  },
+  watch: {
+    isReconnecting(to: boolean) {
+      if (to) {
+        this.shown = false
+      }
+    },
+    currentMessageBox: {
+      deep: true,
+      handler(to: MessageBox | null) {
+        if (to && to.mode !== null) {
+          this.numberInput = typeof to.default === 'number' ? to.default : 0
+          this.stringInput = typeof to.default === 'string' ? to.default : ''
+          this.messageBox = JSON.parse(JSON.stringify(to)) // FIXME remove this after upgrading to Vue 3
+          this.shown = true
+        } else {
+          this.shown = false
+        }
+      },
+    },
+    shown(to) {
+      if (to && this.isPersistent) {
+        setTimeout(() => (this.showEmergencyStop = true), 500)
+      } else {
+        this.showEmergencyStop = false
+      }
+    },
+  },
+  methods: {
+    canMove(axis: Axis): boolean {
+      return axis.homed || !useMachinesModelStore().move.noMovesBeforeHoming
+    },
+    displayAxisPosition(axis: Axis): string {
+      if (axis.userPosition === null) {
+        return this.$t('generic.noValue')
+      }
+      return axis.letter === AxisLetter.Z
+        ? this.$displayZ(axis.userPosition, false)
+        : this.$display(axis.userPosition, 1)
+    },
+    getMoveCellClass(index: number): string {
+      let classes = ''
+      if (index === 0 || index === 5) {
+        classes += 'hidden-lg-and-down'
+      }
+      if (index > 1 && index < 4 && index % 2 === 1) {
+        classes += 'hidden-md-and-down'
+      }
+      return classes
+    },
+    getMoveCode(axis: Axis, index: number, decrementing: boolean): string {
+      return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? "'" : ''}${axis.letter}${decrementing ? '-' : ''}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`
+    },
+    showSign: (value: number): string => (value > 0 ? `+${value}` : value.toString()),
+    // NOTE: The following calls use noWait because we don't want M292 replies to be logged.
+    // This option will become obsolete in 3.7 or 3.8 when RRF is able to return G-code replies for each G-code request
+    async ok() {
+      this.shown = false
+      if (
+        [MessageBoxMode.closeOnly, MessageBoxMode.okOnly, MessageBoxMode.okCancel].includes(
+          this.messageBox.mode,
+        )
+      ) {
+        await useMachinesStore().sendCode({ code: `M292 S${this.messageBox.seq}`, noWait: true })
+      } else if (
+        this.messageBox.mode === MessageBoxMode.intInput ||
+        this.messageBox.mode === MessageBoxMode.floatInput
+      ) {
+        await useMachinesStore().sendCode({
+          code: `M292 R{${this.numberInput}} S${this.messageBox.seq}`,
+          noWait: true,
+        })
       } else if (this.messageBox.mode === MessageBoxMode.stringInput) {
-        await useMachinesStore().sendCode({ code: `M292 R{"${this.stringInput.replace(/"/g, '""').replace(/'/g, "''")}"} S${this.messageBox.seq}`, noWait: true })
-			}
-		},
-		async accept(choice: number) {
-			this.shown = false;
-			if (this.messageBox.mode >= MessageBoxMode.multipleChoice) {
-				await useMachinesStore().sendCode({ code: `M292 R{${choice}} S${this.messageBox.seq}`, noWait: true });
-			}
-		},
-		async cancel() {
-			this.shown = false;
-			if (this.messageBox.cancelButton) {
-				await useMachinesStore().sendCode({ code: `M292 P1 S${this.messageBox.seq}`, noWait: true });
-			}
-		}
-	}
-});
+        await useMachinesStore().sendCode({
+          code: `M292 R{"${this.stringInput.replace(/"/g, '""').replace(/'/g, "''")}"} S${this.messageBox.seq}`,
+          noWait: true,
+        })
+      }
+    },
+    async accept(choice: number) {
+      this.shown = false
+      if (this.messageBox.mode >= MessageBoxMode.multipleChoice) {
+        await useMachinesStore().sendCode({
+          code: `M292 R{${choice}} S${this.messageBox.seq}`,
+          noWait: true,
+        })
+      }
+    },
+    async cancel() {
+      this.shown = false
+      if (this.messageBox.cancelButton) {
+        await useMachinesStore().sendCode({ code: `M292 P1 S${this.messageBox.seq}`, noWait: true })
+      }
+    },
+  },
+})
 </script>
 
 <style scoped>
 .persistent {
-	position: absolute;
-	top: 0px;
-	right: 0px;
+  position: absolute;
+  top: 0px;
+  right: 0px;
 }
 </style>

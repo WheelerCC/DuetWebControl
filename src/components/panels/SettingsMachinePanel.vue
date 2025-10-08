@@ -1,15 +1,12 @@
 <template>
   <v-card outlined>
     <v-card-title class="pb-0">
-      {{ $t("panel.settingsMachine.caption") }}
+      {{ $t('panel.settingsMachine.caption') }}
     </v-card-title>
 
     <v-card-text>
       <v-row :dense="$vuetify.breakpoint.mobile">
-        <v-col
-          cols="12"
-          lg="6"
-        >
+        <v-col cols="12" lg="6">
           <v-text-field
             v-model.number="babystepAmount"
             type="number"
@@ -26,10 +23,7 @@
             hide-details
           />
         </v-col>
-        <v-col
-          cols="12"
-          lg="6"
-        >
+        <v-col cols="12" lg="6">
           <v-text-field
             v-model.number="moveFeedrate"
             type="number"
@@ -89,67 +83,102 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
-
-import { MachineSettingsState, ToolChangeMacro, useMachinesSettingsStore } from "@/stores/machineSettings";
+import {
+  MachineSettingsState,
+  ToolChangeMacro,
+  useMachinesSettingsStore,
+} from '@/stores/machineSettings'
 
 export default Vue.extend({
-	data() {
-		return {
-			toolChangeMacroList: [
-				{
-					text: 'tfree.g',
-					value: ToolChangeMacro.free
-				},
-				{
-					text: 'tpre.g',
-					value: ToolChangeMacro.pre
-				},
-				{
-					text: 'tpost.g',
-					value: ToolChangeMacro.post
-				}
-			]
-		}
-	},
-	computed: {
-		babystepAmount: {
-			get(): number { return useMachinesSettingsStore().babystepAmount; },
-			set(value: number) { if (isFinite(value) && value > 0) { this.update({ babystepAmount: value }); } }
-		},
-		checkVersions: {
-			get(): boolean { return useMachinesSettingsStore().checkVersions; },
-			set(value: boolean) { this.update({ checkVersions: value }); }
-		},
-		moveFeedrate: {
-			get(): number { return useMachinesSettingsStore().moveFeedrate; },
-			set(value: number) { if (isFinite(value) && value > 0) { this.update({ moveFeedrate: value }); } }
-		},
-		toolChangeMacros: {
-			get(): Array<ToolChangeMacro> { return useMachinesSettingsStore().toolChangeMacros; },
-			set(value: Array<ToolChangeMacro>) { this.update({ toolChangeMacros: value }); }
-		},
-		groupTools: {
-			get(): boolean { return useMachinesSettingsStore().groupTools; },
-			set(value: boolean) { this.update({ groupTools: value }); }
-		},
-		singleBedControl: {
-			get(): boolean { return useMachinesSettingsStore().singleBedControl; },
-			set(value: boolean) { this.update({ singleBedControl: value }); }
-		},
-		singleChamberControl: {
-			get(): boolean { return useMachinesSettingsStore().singleChamberControl; },
-			set(value: boolean) { this.update({ singleChamberControl: value }); }
-		}
-	},
-	methods: {
+  data() {
+    return {
+      toolChangeMacroList: [
+        {
+          text: 'tfree.g',
+          value: ToolChangeMacro.free,
+        },
+        {
+          text: 'tpre.g',
+          value: ToolChangeMacro.pre,
+        },
+        {
+          text: 'tpost.g',
+          value: ToolChangeMacro.post,
+        },
+      ],
+    }
+  },
+  computed: {
+    babystepAmount: {
+      get(): number {
+        return useMachinesSettingsStore().babystepAmount
+      },
+      set(value: number) {
+        if (isFinite(value) && value > 0) {
+          this.update({ babystepAmount: value })
+        }
+      },
+    },
+    checkVersions: {
+      get(): boolean {
+        return useMachinesSettingsStore().checkVersions
+      },
+      set(value: boolean) {
+        this.update({ checkVersions: value })
+      },
+    },
+    moveFeedrate: {
+      get(): number {
+        return useMachinesSettingsStore().moveFeedrate
+      },
+      set(value: number) {
+        if (isFinite(value) && value > 0) {
+          this.update({ moveFeedrate: value })
+        }
+      },
+    },
+    toolChangeMacros: {
+      get(): Array<ToolChangeMacro> {
+        return useMachinesSettingsStore().toolChangeMacros
+      },
+      set(value: Array<ToolChangeMacro>) {
+        this.update({ toolChangeMacros: value })
+      },
+    },
+    groupTools: {
+      get(): boolean {
+        return useMachinesSettingsStore().groupTools
+      },
+      set(value: boolean) {
+        this.update({ groupTools: value })
+      },
+    },
+    singleBedControl: {
+      get(): boolean {
+        return useMachinesSettingsStore().singleBedControl
+      },
+      set(value: boolean) {
+        this.update({ singleBedControl: value })
+      },
+    },
+    singleChamberControl: {
+      get(): boolean {
+        return useMachinesSettingsStore().singleChamberControl
+      },
+      set(value: boolean) {
+        this.update({ singleChamberControl: value })
+      },
+    },
+  },
+  methods: {
     update(data: Partial<MachineSettingsState>) {
       useMachinesSettingsStore().update(data)
-		},
-		removeToolChangeMacro(item: ToolChangeMacro) {
-			this.toolChangeMacros = this.toolChangeMacros.filter(macro => macro !== item);
-		}
-	}
-});
+    },
+    removeToolChangeMacro(item: ToolChangeMacro) {
+      this.toolChangeMacros = this.toolChangeMacros.filter((macro) => macro !== item)
+    },
+  },
+})
 </script>

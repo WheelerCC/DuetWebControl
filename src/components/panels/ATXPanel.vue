@@ -1,20 +1,11 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-icon
-        small
-        class="mr-1"
-      >
-        mdi-power
-      </v-icon> {{ $t('panel.atx.caption') }}
+      <v-icon small class="mr-1"> mdi-power </v-icon> {{ $t('panel.atx.caption') }}
     </v-card-title>
 
     <v-card-text class="pt-0">
-      <v-btn-toggle
-        :value="atxPower"
-        mandatory
-        @change="toggleAtxPower"
-      >
+      <v-btn-toggle :value="atxPower" mandatory @change="toggleAtxPower">
         <v-btn
           text
           :value="true"
@@ -39,46 +30,48 @@
 </template>
 
 <script lang="ts">
-import { useRootStore } from "@/stores";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useMachinesStore } from "@/stores/machines";
-import Vue from "vue";
-
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import Vue from 'vue'
 
 export default Vue.extend({
-	data() {
-		return {
-			sendingCode: false
-		}
-	},
-	computed: {
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		atxPower(): boolean | null { return useMachinesModelStore().state.atxPower; }
-	},
-	methods: {
-		async toggleAtxPower(value: boolean) {
-			if (!this.sendingCode) {
-				this.sendingCode = true;
-				try {
-					await useMachinesStore().sendCode(value ? "M80" : "M81");
-				} catch (e) {
-					// handled before we get here
-				}
-				this.sendingCode = false;
-			}
-		}
-	}
-});
+  data() {
+    return {
+      sendingCode: false,
+    }
+  },
+  computed: {
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+    atxPower(): boolean | null {
+      return useMachinesModelStore().state.atxPower
+    },
+  },
+  methods: {
+    async toggleAtxPower(value: boolean) {
+      if (!this.sendingCode) {
+        this.sendingCode = true
+        try {
+          await useMachinesStore().sendCode(value ? 'M80' : 'M81')
+        } catch (e) {
+          // handled before we get here
+        }
+        this.sendingCode = false
+      }
+    },
+  },
+})
 </script>
 
 <style scoped>
 .v-btn-toggle {
-	display: flex;
+  display: flex;
 }
 
-.v-btn-toggle>button {
-	display: flex;
-	flex: 1 1 auto;
+.v-btn-toggle > button {
+  display: flex;
+  flex: 1 1 auto;
 }
 </style>

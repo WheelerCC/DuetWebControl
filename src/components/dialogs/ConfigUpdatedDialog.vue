@@ -9,36 +9,24 @@
     <v-card>
       <v-card-title>
         <span class="headline">
-          {{ $t("dialog.configUpdated.title") }}
+          {{ $t('dialog.configUpdated.title') }}
         </span>
       </v-card-title>
 
       <v-card-text>
-        {{ $t("dialog.configUpdated.prompt") }}
+        {{ $t('dialog.configUpdated.prompt') }}
       </v-card-text>
 
       <v-card-actions>
         <v-spacer />
-        <v-btn
-          color="blue darken-1"
-          text
-          @click="cancel"
-        >
-          {{ $t("generic.cancel") }}
+        <v-btn color="blue darken-1" text @click="cancel">
+          {{ $t('generic.cancel') }}
         </v-btn>
-        <v-btn
-          color="blue darken-1"
-          text
-          @click="reset"
-        >
-          {{ $t("dialog.configUpdated.reset") }}
+        <v-btn color="blue darken-1" text @click="reset">
+          {{ $t('dialog.configUpdated.reset') }}
         </v-btn>
-        <v-btn
-          color="blue darken-1"
-          text
-          @click="runConfig"
-        >
-          {{ $t("dialog.configUpdated.runConfig") }}
+        <v-btn color="blue darken-1" text @click="runConfig">
+          {{ $t('dialog.configUpdated.runConfig') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -46,30 +34,28 @@
 </template>
 
 <script lang="ts">
-import { useMachinesStore } from "@/stores/machines";
-import Vue from "vue";
-
-
+import { useMachinesStore } from '@/stores/machines'
+import Vue from 'vue'
 
 export default Vue.extend({
-	props: {
-		shown: {
-			type: Boolean,
-			required: true
-		}
-	},
-	methods: {
-		cancel() {
-			this.$emit("update:shown", false);
-		},
-		async reset() {
-			this.$emit("update:shown", false);
-			await useMachinesStore().sendCode("M999");
-		},
-		async runConfig() {
-			this.$emit("update:shown", false);
-			await useMachinesStore().sendCode("M98 P\"config.g\"");
-		}
-	}
-});
+  props: {
+    shown: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  methods: {
+    cancel() {
+      this.$emit('update:shown', false)
+    },
+    async reset() {
+      this.$emit('update:shown', false)
+      await useMachinesStore().sendCode('M999')
+    },
+    async runConfig() {
+      this.$emit('update:shown', false)
+      await useMachinesStore().sendCode('M98 P"config.g"')
+    },
+  },
+})
 </script>

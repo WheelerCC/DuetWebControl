@@ -6,23 +6,24 @@
 </template>
 
 <script lang="ts">
-import { useRootStore } from "@/stores";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { DashboardMode, useSettingsStore } from "@/stores/settings";
-import { MachineMode } from "@duet3d/objectmodel";
-import Vue from "vue";
-
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { DashboardMode, useSettingsStore } from '@/stores/settings'
+import { MachineMode } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
 export default Vue.extend({
-	computed: {
-		isFFForUnset() {
-			let settingsStore = useSettingsStore();
-			if (settingsStore.dashboardMode === DashboardMode.default) {
-				return !settingsStore.dashboardMode || useMachinesModelStore().state.machineMode === MachineMode.fff;
-			}
-			return settingsStore.dashboardMode === DashboardMode.fff;
-		}
-	}
-});
+  computed: {
+    isFFForUnset() {
+      let settingsStore = useSettingsStore()
+      if (settingsStore.dashboardMode === DashboardMode.default) {
+        return (
+          !settingsStore.dashboardMode ||
+          useMachinesModelStore().state.machineMode === MachineMode.fff
+        )
+      }
+      return settingsStore.dashboardMode === DashboardMode.fff
+    },
+  },
+})
 </script>

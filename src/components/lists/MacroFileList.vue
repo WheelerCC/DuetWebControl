@@ -11,10 +11,8 @@
         :elevation="1"
         @click="showNewFile = true"
       >
-        <v-icon class="mr-1">
-          mdi-file-plus
-        </v-icon>
-        {{ $t("button.newFile.caption") }}
+        <v-icon class="mr-1"> mdi-file-plus </v-icon>
+        {{ $t('button.newFile.caption') }}
       </v-btn>
       <v-btn
         class="hidden-sm-and-down mr-3"
@@ -22,10 +20,8 @@
         :elevation="1"
         @click="showNewDirectory = true"
       >
-        <v-icon class="mr-1">
-          mdi-folder-plus
-        </v-icon>
-        {{ $t("button.newDirectory.caption") }}
+        <v-icon class="mr-1"> mdi-folder-plus </v-icon>
+        {{ $t('button.newDirectory.caption') }}
       </v-btn>
       <v-btn
         class="hidden-sm-and-down mr-3"
@@ -35,10 +31,8 @@
         :elevation="1"
         @click="refresh"
       >
-        <v-icon class="mr-1">
-          mdi-refresh
-        </v-icon>
-        {{ $t("button.refresh.caption") }}
+        <v-icon class="mr-1"> mdi-refresh </v-icon>
+        {{ $t('button.refresh.caption') }}
       </v-btn>
       <upload-btn
         class="hidden-sm-and-down"
@@ -59,14 +53,9 @@
       @fileClicked="fileClicked"
     >
       <template #context-menu>
-        <v-list-item
-          v-show="isFile"
-          @click="runFile(selection[0].name)"
-        >
-          <v-icon class="mr-1">
-            mdi-play
-          </v-icon>
-          {{ $t("list.macro.run") }}
+        <v-list-item v-show="isFile" @click="runFile(selection[0].name)">
+          <v-icon class="mr-1"> mdi-play </v-icon>
+          {{ $t('list.macro.run') }}
         </v-list-item>
       </template>
     </base-file-list>
@@ -81,68 +70,31 @@
       class="hidden-md-and-up"
     >
       <template #activator>
-        <v-btn
-          v-model="fab"
-          dark
-          color="primary"
-          fab
-        >
-          <v-icon v-if="fab">
-            mdi-close
-          </v-icon>
-          <v-icon v-else>
-            mdi-dots-vertical
-          </v-icon>
+        <v-btn v-model="fab" dark color="primary" fab>
+          <v-icon v-if="fab"> mdi-close </v-icon>
+          <v-icon v-else> mdi-dots-vertical </v-icon>
         </v-btn>
       </template>
 
-      <v-btn
-        fab
-        :disabled="uiFrozen"
-        @click="showNewFile = true"
-      >
-        <v-icon class="mr-1">
-          mdi-file-plus
-        </v-icon>
+      <v-btn fab :disabled="uiFrozen" @click="showNewFile = true">
+        <v-icon class="mr-1"> mdi-file-plus </v-icon>
       </v-btn>
 
-      <v-btn
-        fab
-        :disabled="uiFrozen"
-        @click="showNewDirectory = true"
-      >
+      <v-btn fab :disabled="uiFrozen" @click="showNewDirectory = true">
         <v-icon>mdi-folder-plus</v-icon>
       </v-btn>
 
-      <v-btn
-        fab
-        color="info"
-        :loading="loading"
-        :disabled="uiFrozen"
-        @click="refresh"
-      >
+      <v-btn fab color="info" :loading="loading" :disabled="uiFrozen" @click="refresh">
         <v-icon>mdi-refresh</v-icon>
       </v-btn>
 
-      <upload-btn
-        fab
-        dark
-        :directory="directory"
-        target="macros"
-        color="primary"
-      >
+      <upload-btn fab dark :directory="directory" target="macros" color="primary">
         <v-icon>mdi-cloud-upload</v-icon>
       </upload-btn>
     </v-speed-dial>
 
-    <new-directory-dialog
-      :shown.sync="showNewDirectory"
-      :directory="directory"
-    />
-    <new-file-dialog
-      :shown.sync="showNewFile"
-      :directory="directory"
-    />
+    <new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
+    <new-file-dialog :shown.sync="showNewFile" :directory="directory" />
     <confirm-dialog
       :shown.sync="runMacroDialog.shown"
       :title="runMacroDialog.title"
@@ -153,61 +105,68 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
+import Path, { escapeFilename } from '@/utils/path'
 
-import Path, { escapeFilename } from "@/utils/path"
-
-import { BaseFileListItem } from "./BaseFileList.vue";
-import { useMachinesModelStore } from "@/stores/machineModel";
-import { useRootStore } from "@/stores";
-import { useMachinesStore } from "@/stores/machines";
+import { BaseFileListItem } from './BaseFileList.vue'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useRootStore } from '@/stores'
+import { useMachinesStore } from '@/stores/machines'
 
 export default Vue.extend({
-	data() {
-		return {
-			directory: Path.macros,
-			loading: false,
-			selection: new Array<BaseFileListItem>,
-			runMacroDialog: {
-				title: "",
-				prompt: "",
-				filename: "",
-				shown: false
-			},
-			showNewDirectory: false,
-			showNewFile: false,
-			fab: false
-		}
-	},
-	computed: {
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		macrosDirectory(): string { return useMachinesModelStore().directories.macros; },
-		isFile(): boolean { return (this.selection.length === 1) && !this.selection[0].isDirectory; }
-	},
-	watch: {
-		macrosDirectory(to: string, from: string) {
-			if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
-				this.directory = to;
-			}
-		}
-	},
-	mounted() {
-		this.directory = this.macrosDirectory;
-	},
-	methods: {
-		refresh() {
-			(this.$refs.filelist as any).refresh();
-		},
-		fileClicked(item: BaseFileListItem) {
-			this.runMacroDialog.title = this.$t("dialog.runMacro.title", [item.name]);
-			this.runMacroDialog.prompt = this.$t("dialog.runMacro.prompt", [item.name]);
-			this.runMacroDialog.filename = item.name;
-			this.runMacroDialog.shown = true;
-		},
-		async runFile(filename: string) {
-			await useMachinesStore().sendCode(`M98 P"${escapeFilename(Path.combine(this.directory, filename))}"`);
-		}
-	}
-});
+  data() {
+    return {
+      directory: Path.macros,
+      loading: false,
+      selection: new Array<BaseFileListItem>(),
+      runMacroDialog: {
+        title: '',
+        prompt: '',
+        filename: '',
+        shown: false,
+      },
+      showNewDirectory: false,
+      showNewFile: false,
+      fab: false,
+    }
+  },
+  computed: {
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+    macrosDirectory(): string {
+      return useMachinesModelStore().directories.macros
+    },
+    isFile(): boolean {
+      return this.selection.length === 1 && !this.selection[0].isDirectory
+    },
+  },
+  watch: {
+    macrosDirectory(to: string, from: string) {
+      if (Path.equals(this.directory, from) || !Path.startsWith(this.directory, to)) {
+        this.directory = to
+      }
+    },
+  },
+  mounted() {
+    this.directory = this.macrosDirectory
+  },
+  methods: {
+    refresh() {
+      ;(this.$refs.filelist as any).refresh()
+    },
+    fileClicked(item: BaseFileListItem) {
+      this.runMacroDialog.title = this.$t('dialog.runMacro.title', [item.name])
+      this.runMacroDialog.prompt = this.$t('dialog.runMacro.prompt', [item.name])
+      this.runMacroDialog.filename = item.name
+      this.runMacroDialog.shown = true
+    },
+    async runFile(filename: string) {
+      await useMachinesStore().sendCode(
+        `M98 P"${escapeFilename(Path.combine(this.directory, filename))}"`,
+      )
+    },
+  },
+})
 </script>

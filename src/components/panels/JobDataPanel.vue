@@ -1,20 +1,15 @@
 <template>
   <v-card>
     <v-card-title class="pb-1">
-      <v-icon
-        small
-        class="mr-1"
-      >
-        mdi-dots-horizontal
-      </v-icon> 
-      {{ $t("panel.jobData.caption") }}
+      <v-icon small class="mr-1"> mdi-dots-horizontal </v-icon>
+      {{ $t('panel.jobData.caption') }}
     </v-card-title>
 
     <v-card-text class="text-center pb-2">
       <v-row dense>
         <v-col class="d-flex flex-column">
           <strong>
-            {{ $t("panel.jobData.warmUpDuration") }}
+            {{ $t('panel.jobData.warmUpDuration') }}
           </strong>
           <span>
             {{ $displayTime(warmUpDuration) }}
@@ -23,7 +18,7 @@
 
         <v-col class="d-flex flex-column">
           <strong>
-            {{ $t("panel.jobData.currentLayerTime") }}
+            {{ $t('panel.jobData.currentLayerTime') }}
           </strong>
           <span>
             {{ $displayTime(layerTime) }}
@@ -32,7 +27,7 @@
 
         <v-col class="d-flex flex-column">
           <strong>
-            {{ $t("panel.jobData.lastLayerTime") }}
+            {{ $t('panel.jobData.lastLayerTime') }}
           </strong>
           <span>
             {{ $displayTime(lastLayerTime) }}
@@ -41,7 +36,7 @@
 
         <v-col class="d-flex flex-column">
           <strong>
-            {{ $t("panel.jobData.jobDuration") }}
+            {{ $t('panel.jobData.jobDuration') }}
           </strong>
           <span>
             {{ $displayTime(jobDuration) }}
@@ -53,29 +48,33 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue'
 
-
-import { isPrinting } from "@/utils/enums";
-import { useMachinesModelStore } from "@/stores/machineModel";
+import { isPrinting } from '@/utils/enums'
+import { useMachinesModelStore } from '@/stores/machineModel'
 
 export default Vue.extend({
-	computed: {
-		warmUpDuration(): number | null {
-			return isPrinting(useMachinesModelStore().state.status) ? useMachinesModelStore().job.warmUpDuration : useMachinesModelStore().job.lastWarmUpDuration;
-		},
-		layerTime(): number | null {
-			return useMachinesModelStore().job.layerTime;
-		},
-		lastLayerTime(): number | null {
-			if (useMachinesModelStore().job.layers.length === 0) {
-				return null;
-			}
-			return useMachinesModelStore().job.layers[useMachinesModelStore().job.layers.length - 1].duration;
-		},
-		jobDuration(): number | null {
-			return isPrinting(useMachinesModelStore().state.status) ? useMachinesModelStore().job.duration : useMachinesModelStore().job.lastDuration;
-		}
-	}
-});
+  computed: {
+    warmUpDuration(): number | null {
+      return isPrinting(useMachinesModelStore().state.status)
+        ? useMachinesModelStore().job.warmUpDuration
+        : useMachinesModelStore().job.lastWarmUpDuration
+    },
+    layerTime(): number | null {
+      return useMachinesModelStore().job.layerTime
+    },
+    lastLayerTime(): number | null {
+      if (useMachinesModelStore().job.layers.length === 0) {
+        return null
+      }
+      return useMachinesModelStore().job.layers[useMachinesModelStore().job.layers.length - 1]
+        .duration
+    },
+    jobDuration(): number | null {
+      return isPrinting(useMachinesModelStore().state.status)
+        ? useMachinesModelStore().job.duration
+        : useMachinesModelStore().job.lastDuration
+    },
+  },
+})
 </script>

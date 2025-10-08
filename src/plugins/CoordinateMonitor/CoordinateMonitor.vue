@@ -1,131 +1,126 @@
-
 <script lang="ts">
-
-import { useRootStore } from '@/stores';
-import { useMachinesModelStore } from '@/stores/machineModel';
-import { useMachinesStore } from '@/stores/machines';
-import { useMachinesSettingsStore } from '@/stores/machineSettings';
-import { Axis, AxisLetter } from '@duet3d/objectmodel';
-import Vue from "vue";
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { Axis, AxisLetter } from '@duet3d/objectmodel'
+import Vue from 'vue'
 
 export default Vue.extend({
-	data() {
-		return {
-			showMeshEditDialog: false,
-			moveStepDialog: {
-				shown: false,
-				axis: AxisLetter.X,
-				index: 0,
-				preset: 0
-			},
-			currentWorkplace: 0
-		};
-	},
-	computed: {
-		moveSteps(): (axisLetter: AxisLetter) => Array<number> { return ((axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)); },
-			
-		numMoveSteps(): number { return useMachinesSettingsStore().numMoveSteps() },
-		move() {
-			return useMachinesModelStore().move
-		}, 
-		tools() {
-			return useMachinesModelStore().tools
-		},
-		endstops() {
-			return  useMachinesModelStore().sensors.endstops
-		},
-		currentTool() {
-			return  useMachinesModelStore().state.currentTool
-		},
-		currentWorkOffset() {
-			return  useMachinesModelStore().move.workplaceNumber
-		},
-		visibleAxes() {
-			return useMachinesModelStore().move.axes.filter(axis => axis.visible);
-		},
-		
-		workpieceOffsets() {
-			// Aggregate all axes' workplaceOffsets into one table by index
-			const numOffsets = 9;
-			const offsets: any[][] = Array.from({ length: numOffsets }, () => [null, null, null]);
+  data() {
+    return {
+      showMeshEditDialog: false,
+      moveStepDialog: {
+        shown: false,
+        axis: AxisLetter.X,
+        index: 0,
+        preset: 0,
+      },
+      currentWorkplace: 0,
+    }
+  },
+  computed: {
+    moveSteps(): (axisLetter: AxisLetter) => Array<number> {
+      return (axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)
+    },
 
-			this.visibleAxes!.forEach((axis, axisIndex) => {
-				for (let i = 0; i < numOffsets; i++) {
-					offsets[i][axisIndex] = axis.workplaceOffsets?.[i] ?? null;
-				}
-			});
-			return offsets;
-		},
-		uiFrozen(): boolean { return useRootStore().uiFrozen; },
-		
-	},
-	
-	methods: {
-		getMoveCellClass(index: number) {
-			let classes = "";
-			if (index === 0 || index === 5) {
-				classes += "hidden-lg-and-down";
-			}
-			if (index > 1 && index < 4 && index % 2 === 1) {
-				classes += "hidden-md-and-down";
-			}
-			return classes;
-		},
-		workpieceLabel(index: number) {
-			// G54–G59.3
-			if (index < 6) return `G5${4 + index}`;
-			return `G59.${index - 5}`;
-		},
-		axisSpanClasses(axisIndex: number) {
-			const classList: Array<string> = [];
+    numMoveSteps(): number {
+      return useMachinesSettingsStore().numMoveSteps()
+    },
+    move() {
+      return useMachinesModelStore().move
+    },
+    tools() {
+      return useMachinesModelStore().tools
+    },
+    endstops() {
+      return useMachinesModelStore().sensors.endstops
+    },
+    currentTool() {
+      return useMachinesModelStore().state.currentTool
+    },
+    currentWorkOffset() {
+      return useMachinesModelStore().move.workplaceNumber
+    },
+    visibleAxes() {
+      return useMachinesModelStore().move.axes.filter((axis) => axis.visible)
+    },
 
-			classList.push("large-font-height");
+    workpieceOffsets() {
+      // Aggregate all axes' workplaceOffsets into one table by index
+      const numOffsets = 9
+      const offsets: any[][] = Array.from({ length: numOffsets }, () => [null, null, null])
 
-			return classList;
-		},
-		getMoveCode(axis: Axis, index: number, decrementing: boolean) {
-			return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? '\'' : ""}${axis.letter}${decrementing ? '-' : ""}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`;
-		},
-		showMoveStepDialog(axis: AxisLetter, index: number) {
-			this.moveStepDialog.axis = axis;
-			this.moveStepDialog.index = index;
-			this.moveStepDialog.preset = this.moveSteps(this.moveStepDialog.axis)[this.moveStepDialog.index];
-			this.moveStepDialog.shown = true;
-		},
-		showSign: (value: number) => (value > 0 ? `+${value}` : value),
-		async setWorkplaceAxisZero(axes: Axis[]) {
-			let axesString = axes.map(axis=>`${axis.letter}0`).join(' ')
-			let code = `G10 L20 P${this.currentWorkplace} ${axesString}`;
-			await useMachinesStore().sendCode(`${code}`);
-		},
-		async resetWorkplaceAxisZero(axes: Axis[]) {
-			let axesString = axes.map(axis=>`${axis.letter}0`).join(' ')
-			let code = `G10 L2 P${this.currentWorkplace} ${axesString}`;
-			await useMachinesStore().sendCode(`${code}`);
-		},
-		async selectWorkplaceOffset(index: number) {
-			let code = this.workpieceLabel(index);
-			await useMachinesStore().sendCode(`${code}`);
-		},
-	}
+      this.visibleAxes!.forEach((axis, axisIndex) => {
+        for (let i = 0; i < numOffsets; i++) {
+          offsets[i][axisIndex] = axis.workplaceOffsets?.[i] ?? null
+        }
+      })
+      return offsets
+    },
+    uiFrozen(): boolean {
+      return useRootStore().uiFrozen
+    },
+  },
+
+  methods: {
+    getMoveCellClass(index: number) {
+      let classes = ''
+      if (index === 0 || index === 5) {
+        classes += 'hidden-lg-and-down'
+      }
+      if (index > 1 && index < 4 && index % 2 === 1) {
+        classes += 'hidden-md-and-down'
+      }
+      return classes
+    },
+    workpieceLabel(index: number) {
+      // G54–G59.3
+      if (index < 6) return `G5${4 + index}`
+      return `G59.${index - 5}`
+    },
+    axisSpanClasses(axisIndex: number) {
+      const classList: Array<string> = []
+
+      classList.push('large-font-height')
+
+      return classList
+    },
+    getMoveCode(axis: Axis, index: number, decrementing: boolean) {
+      return `M120\nG91\nG1 ${/[a-z]/.test(axis.letter) ? "'" : ''}${axis.letter}${decrementing ? '-' : ''}${this.moveSteps(axis.letter)[index]} F${useMachinesSettingsStore().moveFeedrate}\nM121`
+    },
+    showMoveStepDialog(axis: AxisLetter, index: number) {
+      this.moveStepDialog.axis = axis
+      this.moveStepDialog.index = index
+      this.moveStepDialog.preset = this.moveSteps(this.moveStepDialog.axis)[
+        this.moveStepDialog.index
+      ]
+      this.moveStepDialog.shown = true
+    },
+    showSign: (value: number) => (value > 0 ? `+${value}` : value),
+    async setWorkplaceAxisZero(axes: Axis[]) {
+      let axesString = axes.map((axis) => `${axis.letter}0`).join(' ')
+      let code = `G10 L20 P${this.currentWorkplace} ${axesString}`
+      await useMachinesStore().sendCode(`${code}`)
+    },
+    async resetWorkplaceAxisZero(axes: Axis[]) {
+      let axesString = axes.map((axis) => `${axis.letter}0`).join(' ')
+      let code = `G10 L2 P${this.currentWorkplace} ${axesString}`
+      await useMachinesStore().sendCode(`${code}`)
+    },
+    async selectWorkplaceOffset(index: number) {
+      let code = this.workpieceLabel(index)
+      await useMachinesStore().sendCode(`${code}`)
+    },
+  },
 })
 </script>
 
 <template>
   <div>
-    <v-row
-      v-for="(axis, axisIndex) in visibleAxes"
-      :key="axisIndex"
-      dense
-    >
+    <v-row v-for="(axis, axisIndex) in visibleAxes" :key="axisIndex" dense>
       <!-- Regular home buttons -->
-      <v-col
-        cols="2"
-        order="1"
-        sm="4"
-        md="1"
-        order-md="1"
-      >
+      <v-col cols="2" order="1" sm="4" md="1" order-md="1">
         <v-row dense>
           <v-col>
             <code-btn
@@ -133,29 +128,24 @@ export default Vue.extend({
               block
               :color="axis.homed ? 'primary' : 'warning'"
               :disabled="uiFrozen"
-              :title="$t('button.home.title', [/[a-z]/.test(axis.letter) ? `'${axis.letter}` : axis.letter])"
+              :title="
+                $t('button.home.title', [
+                  /[a-z]/.test(axis.letter) ? `'${axis.letter}` : axis.letter,
+                ])
+              "
               :code="`G28 ${/[a-z]/.test(axis.letter) ? '\'' : ''}${axis.letter}`"
               class="move-btn"
             >
-              {{ $t("button.home.caption", [axis.letter]) }}
+              {{ $t('button.home.caption', [axis.letter]) }}
             </code-btn>
           </v-col>
         </v-row>
       </v-col>
 
       <!-- Decreasing movements -->
-      <v-col
-        cols="6"
-        order="3"
-        md="5"
-        order-md="2"
-      >
+      <v-col cols="6" order="3" md="5" order-md="2">
         <v-row dense>
-          <v-col
-            v-for="index in numMoveSteps"
-            :key="index"
-            :class="getMoveCellClass(index - 1)"
-          >
+          <v-col v-for="index in numMoveSteps" :key="index" :class="getMoveCellClass(index - 1)">
             <code-btn
               :code="getMoveCode(axis, index - 1, true)"
               no-wait
@@ -172,12 +162,7 @@ export default Vue.extend({
       </v-col>
 
       <!-- Increasing movements -->
-      <v-col
-        cols="6"
-        order="4"
-        md="5"
-        order-md="3"
-      >
+      <v-col cols="6" order="4" md="5" order-md="3">
         <v-row dense>
           <v-col
             v-for="index in numMoveSteps"
@@ -200,16 +185,7 @@ export default Vue.extend({
       </v-col>
 
       <!-- Set axis-->
-      <v-col
-        cols="2"
-        order="2"
-        offset="8"
-        sm="4"
-        offset-sm="4"
-        md="1"
-        order-md="4"
-        offset-md="0"
-      >
+      <v-col cols="2" order="2" offset="8" sm="4" offset-sm="4" md="1" order-md="4" offset-md="0">
         <v-row dense>
           <v-col>
             <code-btn
@@ -219,20 +195,18 @@ export default Vue.extend({
               :code="`G10 L20 P${currentWorkplace} ${axis.letter}0`"
               class="move-btn"
             >
-              {{ $t("panel.movement.set", [axis.letter]) }}
+              {{ $t('panel.movement.set', [axis.letter]) }}
             </code-btn>
           </v-col>
         </v-row>
       </v-col>
     </v-row>
-		
+
     <v-row>
       <v-col>
         <v-card>
           <v-card-title class="py-2">
-            <strong>
-              Tool Offsets
-            </strong>
+            <strong> Tool Offsets </strong>
           </v-card-title>
           <v-card-text>
             <v-row>
@@ -240,14 +214,8 @@ export default Vue.extend({
                 <v-simple-table>
                   <thead>
                     <tr>
-                      <th class="text-left">
-                        Tool
-                      </th>
-                      <th 
-                        v-for="(axis, index) in visibleAxes"
-                        :key="index" 
-                        class=""
-                      >
+                      <th class="text-left">Tool</th>
+                      <th v-for="(axis, index) in visibleAxes" :key="index" class="">
                         {{ axis.letter }}
                       </th>
                     </tr>
@@ -256,13 +224,13 @@ export default Vue.extend({
                     <tr
                       v-for="tool in tools"
                       :key="tool?.number"
-                      :class="{ selected: tool?.number === currentTool , notselected: tool?.number !== currentTool }"
+                      :class="{
+                        selected: tool?.number === currentTool,
+                        notselected: tool?.number !== currentTool,
+                      }"
                     >
                       <td>{{ `T${tool?.number}` }}</td>
-                      <td 
-                        v-for="(axis, index) in visibleAxes"
-                        :key="index" 
-                      >
+                      <td v-for="(axis, index) in visibleAxes" :key="index">
                         {{ tool?.offsets[index]?.toFixed(3) ?? '—' }}
                       </td>
                     </tr>
@@ -271,16 +239,14 @@ export default Vue.extend({
               </v-col>
             </v-row>
           </v-card-text>
-        </v-card> 
+        </v-card>
       </v-col>
     </v-row>
     <v-row>
       <v-col>
-        <v-card> 
+        <v-card>
           <v-card-title class="py-2">
-            <strong>
-              Workplace Offsets
-            </strong>
+            <strong> Workplace Offsets </strong>
           </v-card-title>
           <v-card-text>
             <v-row>
@@ -288,17 +254,11 @@ export default Vue.extend({
                 <v-simple-table>
                   <thead>
                     <tr>
-                      <th class="text-center">
-                        Offset
-                      </th>
-                      <th 
-                        v-for="(axis, index) in visibleAxes"
-                        :key="index" 
-                        class="text-center"
-                      >
+                      <th class="text-center">Offset</th>
+                      <th v-for="(axis, index) in visibleAxes" :key="index" class="text-center">
                         {{ axis.letter }}
                       </th>
-											
+
                       <th class="text-center" />
                     </tr>
                   </thead>
@@ -306,54 +266,40 @@ export default Vue.extend({
                     <tr
                       v-for="(offset, index) in workpieceOffsets"
                       :key="index"
-                      :class="{ selected: index === currentWorkOffset, notselected: index !== currentWorkOffset }"
+                      :class="{
+                        selected: index === currentWorkOffset,
+                        notselected: index !== currentWorkOffset,
+                      }"
                     >
                       <td>
                         <div class="pa-4 d-flex align-center">
                           <v-spacer />
-                          <v-btn
-                            block
-                            class=""
-                            @click="selectWorkplaceOffset(index)"
-                          >
+                          <v-btn block class="" @click="selectWorkplaceOffset(index)">
                             {{ workpieceLabel(index) }}
                           </v-btn>
                           <v-spacer />
                         </div>
                       </td>
-											
-                      <td 
-                        v-for="(axis, _index) in visibleAxes"
-                        :key="_index" 
-                      >
+
+                      <td v-for="(axis, _index) in visibleAxes" :key="_index">
                         <div class="pa-4 d-flex align-center">
                           <v-spacer />
                           <span class="">
                             {{ offset[_index]?.toFixed(3) ?? '—' }}
                           </span>
-                          <v-btn
-                            class="ml-10"
-                            @click="setWorkplaceAxisZero([axis])"
-                          >
+                          <v-btn class="ml-10" @click="setWorkplaceAxisZero([axis])">
                             {{ 'Set ' + [axis.letter] }}
                           </v-btn>
-													
-                          <v-btn
-                            class="ml-1"
-                            @click="resetWorkplaceAxisZero([axis])"
-                          >
+
+                          <v-btn class="ml-1" @click="resetWorkplaceAxisZero([axis])">
                             {{ 'Reset' }}
                           </v-btn>
                           <v-spacer />
                         </div>
                       </td>
-											
+
                       <td>
-                        <v-btn
-                          block
-                          class="move-btn"
-                          @click="setWorkplaceAxisZero(visibleAxes)"
-                        >
+                        <v-btn block class="move-btn" @click="setWorkplaceAxisZero(visibleAxes)">
                           {{ 'Set XYZ' }}
                         </v-btn>
                       </td>
@@ -363,7 +309,7 @@ export default Vue.extend({
               </v-col>
             </v-row>
           </v-card-text>
-        </v-card> 
+        </v-card>
       </v-col>
     </v-row>
   </div>
@@ -371,10 +317,9 @@ export default Vue.extend({
 
 <style scoped>
 .selected {
-	font-weight: bold;
+  font-weight: bold;
 }
 .notselected {
-	opacity: 0.3;
+  opacity: 0.3;
 }
-
 </style>
