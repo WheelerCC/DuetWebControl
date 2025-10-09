@@ -1,0 +1,39 @@
+
+> duetwebcontrol@3.6.1 build
+> vue-cli-service build
+
+All browser targets in the browserslist configuration have supported ES module.
+Therefore we don't build two separate bundles for differential loading.
+
+
+ WARNING  Compiled with 2 warnings12:48:11 AM
+
+ warning  in ./src/components/panels/SpindleSpeedPanel.vue?vue&type=style&index=0&id=038ce2d5&scoped=true&lang=scss
+
+Module Warning (from ./node_modules/sass-loader/dist/cjs.js):
+Deprecation The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+ warning  in ./src/routes/index.ts
+
+export 'default' (imported as 'VueRouter') was not found in 'vue-router' (possible exports: NavigationFailureType, RouterLink, RouterView, START_LOCATION, createMemoryHistory, createRouter, createRouterMatcher, createWebHashHistory, createWebHistory, isNavigationFailure, loadRouteLocation, matchedRouteKey, onBeforeRouteLeave, onBeforeRouteUpdate, parseQuery, routeLocationKey, routerKey, routerViewLocationKey, stringifyQuery, useLink, useRoute, useRouter, viewDepthKey)
+
+  File                                      Size             Gzipped
+
+  dist/js/monaco-editor.9b9d6b9e.js         5568.63 KiB      1233.03 KiB
+  dist/js/app.db9251dd.js                   2882.96 KiB      656.22 KiB
+  dist/js/OnScreenKeyboard.fdd11b5c.js      109.67 KiB       34.33 KiB
+  dist/workbox-6567b62a.js                  14.06 KiB        4.89 KiB
+  dist/js/monaco-json-worker.4af0d695.js    2.54 KiB         0.98 KiB
+  dist/js/monaco-worker.b50ff948.js         2.52 KiB         0.97 KiB
+  dist/service-worker.js                    1.69 KiB         0.88 KiB
+  dist/css/app.2bc4ad43.css                 628.07 KiB       97.44 KiB
+  dist/css/OnScreenKeyboard.aba13f80.css    3.55 KiB         1.13 KiB
+
+  Images and other types of assets omitted.
+  Build at: 2025-10-09T23:48:11.867Z - Hash: c46c9ab703b244bd - Time: 27956ms
+
+ DONE  Build complete. The dist directory is ready to be deployed.
+ INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html
+       

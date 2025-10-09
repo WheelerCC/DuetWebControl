@@ -76,23 +76,25 @@
 <script lang="ts">
 import { MachineMode } from '@duet3d/objectmodel'
 import * as monaco from 'monaco-editor'
-import Vue from 'vue'
 
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { useSettingsStore } from '@/stores/settings'
 import { indent } from '@/utils/display'
 import '@/utils/monaco-editor'
-import '@/utils/monaco-syntax'
 import '@/utils/monaco-menu'
 import '@/utils/monaco-STM32'
+import '@/utils/monaco-syntax'
 import Path from '@/utils/path'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useSettingsStore } from '@/stores/settings'
-import { useMachinesStore } from '@/stores/machines'
-import { useRootStore } from '@/stores'
 
 const mediumFileThreshold = 4194304 // 4 MiB
 const bigFileThreshold = 33554432 // 32 MiB
 
-export default Vue.extend({
+import eventbus from '@/utils/eventbus'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     shown: {
       type: Boolean,
@@ -218,7 +220,7 @@ export default Vue.extend({
       }
     },
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.monacoEditor !== null) {
       this.monacoEditor.dispose()
       this.monacoEditor = null
@@ -232,7 +234,7 @@ export default Vue.extend({
 
       this.$emit('input', '')
       this.$emit('update:shown', false)
-      this.$root.$emit('dialog-closing')
+      eventbus.$emit('dialog-closing')
     },
     indentComments() {
       if (this.monacoEditor !== null) {

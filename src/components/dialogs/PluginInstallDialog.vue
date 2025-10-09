@@ -214,7 +214,7 @@
     <confirm-dialog
       :title="$t('dialog.pluginInstallation.reloadPrompt.title')"
       :prompt="$t('dialog.pluginInstallation.reloadPrompt.prompt')"
-      :shown.sync="showReloadPrompt"
+      v-model:shown="showReloadPrompt"
       @confirmed="reload"
     />
   </v-dialog>
@@ -222,17 +222,16 @@
 
 <script lang="ts">
 import { initObject, PluginManifest, SbcPermission } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import packageInfo from '../../../package.json'
 import Plugins, { checkManifest, checkVersion } from '@/plugins'
+import packageInfo from '../../../package.json'
 
-import Events from '@/utils/events'
-import { getErrorMessage } from '@/utils/errors'
-import JSZip from 'jszip'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { getErrorMessage } from '@/utils/errors'
+import Events from '@/utils/events'
+import JSZip from 'jszip'
 
 enum Page {
   start,
@@ -242,7 +241,10 @@ enum Page {
   finish,
 }
 
-export default Vue.extend({
+import eventbus from '@/utils/eventbus'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       shown: false,
@@ -404,10 +406,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.$root.$on(Events.installPlugin, this.installPluginHook)
+    eventbus.$on(Events.installPlugin, this.installPluginHook)
   },
-  beforeDestroy() {
-    this.$root.$off(this.installPluginHook as any)
+  beforeUnmount() {
+    eventbus.$off(this.installPluginHook as any)
   },
   methods: {
     async installPluginHook({
@@ -473,8 +475,8 @@ export default Vue.extend({
           try {
             await useMachinesStore().installPlugin({
               zipFilename: this.zipFilename,
-              zipBlob: this.zipBlob,
-              zipFile: this.zipFile,
+              zipBlob: this.zipBlob!,
+              zipFile: this.zipFile!,
               start: this.startWhenFinished,
             })
           } catch (e) {

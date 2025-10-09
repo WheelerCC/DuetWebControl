@@ -1,17 +1,15 @@
 import { GCodeFileInfo } from '@duet3d/objectmodel'
 
 import { FileNotFoundError } from '@/utils/errors'
-import { getLocalSetting, setLocalSetting, removeLocalSetting } from '@/utils/localStorage'
+import { getLocalSetting, removeLocalSetting, setLocalSetting } from '@/utils/localStorage'
 import patch from '@/utils/patch'
 import Path from '@/utils/path'
 
 import { defineStore } from 'pinia'
-import { useSettingsStore } from './settings'
-import { useMachinesStore } from './machines'
-import { useMachinesSettingsStore } from './machineSettings'
-import { defaultMachine } from './misc'
 import { useRootStore } from '.'
-import machine from '@/old.store/machine'
+import { useMachinesStore } from './machines'
+import { defaultMachine } from './misc'
+import { useSettingsStore } from './settings'
 
 export interface MachineCacheState {
   /**
@@ -40,8 +38,7 @@ export interface MachineCacheState {
  */
 export const defaultPluginCacheFields: Record<string, any> = {}
 
-export const useMachinesCacheStore = defineStore({
-  id: 'machinesCache',
+export const useMachinesCacheStore = defineStore('machinesCache', {
   state: (): Record<string, MachineCacheState> => ({
     [defaultMachine]: {
       lastSentCodes: ['M0', 'M1', 'M84'],
@@ -102,12 +99,15 @@ export const useMachinesCacheStore = defineStore({
         cache = getLocalSetting(`cache/${machineName}`)
       } else {
         try {
-          cache = await machines.download(machineName, {
-            filename: Path.dwcCacheFile,
-            showProgress: false,
-            showSuccess: false,
-            showError: false,
-          })
+          cache = await machines.download(
+            {
+              filename: Path.dwcCacheFile,
+              showProgress: false,
+              showSuccess: false,
+              showError: false,
+            },
+            machineName,
+          )
         } catch (e) {
           if (!(e instanceof FileNotFoundError)) {
             throw e
@@ -116,13 +116,16 @@ export const useMachinesCacheStore = defineStore({
 
         if (!cache) {
           try {
-            cache = await machines.download(machineName, {
-              filename: Path.legacyDwcCacheFile,
-              showProgress: false,
-              showSuccess: false,
-              showError: false,
-            })
-            await machines.delete(machineName, Path.legacyDwcCacheFile)
+            cache = await machines.download(
+              {
+                filename: Path.legacyDwcCacheFile,
+                showProgress: false,
+                showSuccess: false,
+                showError: false,
+              },
+              machineName,
+            )
+            await machines.delete(Path.legacyDwcCacheFile, machineName)
           } catch (e) {
             if (!(e instanceof FileNotFoundError)) {
               throw e
@@ -154,13 +157,16 @@ export const useMachinesCacheStore = defineStore({
 
         try {
           const content = new Blob([JSON.stringify(this[machineName])])
-          machines.upload(machineName, {
-            filename: Path.dwcCacheFile,
-            content,
-            showProgress: false,
-            showSuccess: false,
-            showError: false,
-          })
+          machines.upload(
+            {
+              filename: Path.dwcCacheFile,
+              content,
+              showProgress: false,
+              showSuccess: false,
+              showError: false,
+            },
+            machineName,
+          )
         } catch (e) {
           // handled before we get here
         }

@@ -1,9 +1,9 @@
 import { PluginManifest, SbcPermission } from '@duet3d/objectmodel'
 import { Component } from 'vue'
 
-import PluginImports from './imports'
-import DwcPlugin from './DwcPlugin'
 import { useUIInjectionStore } from '@/stores/uiInjection'
+import DwcPlugin from './DwcPlugin'
+import PluginImports from './imports'
 
 /**
  * Check if the given plugin manifest is valid

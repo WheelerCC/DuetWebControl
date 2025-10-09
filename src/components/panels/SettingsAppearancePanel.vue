@@ -84,9 +84,11 @@
 
 <script lang="ts">
 import { DashboardMode, SettingsState, UnitOfMeasure, useSettingsStore } from '@/stores/settings'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+export default defineComponent({
   computed: {
     darkTheme: {
       get(): boolean {
@@ -122,10 +124,10 @@ export default Vue.extend({
     },
     languages() {
       const result: Array<{ code: string; language: string }> = []
-      for (let key in this.$i18n.messages) {
+      for (let key in useI18n()) {
         result.push({
           code: key,
-          language: this.$i18n.messages[key].language as string,
+          language: useI18n().messages[key].language as string,
         })
       }
       return result

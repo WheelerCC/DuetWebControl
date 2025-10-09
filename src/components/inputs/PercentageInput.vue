@@ -87,8 +87,8 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, ref, watch } from 'vue'
 
-import { isNumber } from '@/utils/numbers'
 import { useSettingsStore } from '@/stores/settings'
+import { isNumber } from '@/utils/numbers'
 
 const props = withDefaults(
   defineProps<{

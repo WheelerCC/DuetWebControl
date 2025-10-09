@@ -110,7 +110,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { PluginManifest } from '@duet3d/objectmodel'
+import { Plugin, PluginManifest } from '@duet3d/objectmodel'
 
 import packageInfo from '@/../package.json'
 
@@ -124,7 +124,11 @@ import { useRootStore } from '@/stores'
 import { useSettingsStore } from '@/stores/settings'
 import { useMachinesStore } from '@/stores/machines'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+import { makeNotification } from '@/utils/notifications'
+import DwcPlugin from '@/plugins/DwcPlugin'
+
+export default defineComponent({
   data() {
     return {
       dwcPluginsUnloaded: false,
@@ -133,7 +137,7 @@ export default Vue.extend({
   },
   computed: {
     plugins: () => {
-      const plugins: PluginManifest[] = [...Plugins]
+      const plugins: (Plugin | DwcPlugin)[] = [...Plugins]
       for (const plugin of useMachinesModelStore().plugins.values()) {
         if (plugin !== null) {
           plugins.push(plugin)
@@ -259,7 +263,7 @@ export default Vue.extend({
             })
 
             // Display a message
-            this.$makeNotification(LogType.success, this.$t('notification.plugins.started'))
+            makeNotification(LogType.success, this.$t('notification.plugins.started'))
           } catch (e) {
             alert(e)
             throw e
@@ -289,9 +293,9 @@ export default Vue.extend({
             }
 
             // Display a message
-            this.$makeNotification(LogType.success, this.$t('notification.plugins.started'))
+            makeNotification(LogType.success, this.$t('notification.plugins.started'))
           } catch (e) {
-            this.$makeNotification(
+            makeNotification(
               LogType.error,
               this.$t('notification.plugins.startError'),
               getErrorMessage(e),
@@ -303,7 +307,7 @@ export default Vue.extend({
         }
       }
     },
-    async stopPlugin(plugin: PluginManifest) {
+    async stopPlugin(plugin: Plugin | DwcPlugin) {
       if (!useMachinesModelStore().plugins.has(plugin.id)) {
         if (!(await useRootStore().unloadDwcPlugin(plugin.id))) {
           await useRootStore().unloadDwcPlugin(plugin.name)
@@ -317,9 +321,9 @@ export default Vue.extend({
           if (plugin.sbcExecutable && externalPlugin.pid > 0) {
             try {
               await useMachinesStore().stopSbcPlugin(plugin.id)
-              this.$makeNotification(LogType.success, this.$t('notification.plugins.stopped'))
+              makeNotification(LogType.success, this.$t('notification.plugins.stopped'))
             } catch (e) {
-              this.$makeNotification(
+              makeNotification(
                 LogType.error,
                 this.$t('notification.plugins.stopError'),
                 getErrorMessage(e),
@@ -338,17 +342,20 @@ export default Vue.extend({
         }
       }
     },
-    async doUninstallPlugin(plugin: PluginManifest) {
+    async doUninstallPlugin(plugin: Plugin | DwcPlugin) {
       this.busyPlugins.push(plugin.id)
       try {
         try {
+          if (plugin instanceof DwcPlugin) {
+            throw new Error('Cannot uninstall a dwc plugin')
+          }
           // Uninstall the plugin
           await useMachinesStore().uninstallPlugin(plugin)
 
           // Display a message
-          this.$makeNotification(LogType.success, this.$t('notification.plugins.uninstalled'))
+          makeNotification(LogType.success, this.$t('notification.plugins.uninstalled'))
         } catch (e) {
-          this.$makeNotification(
+          makeNotification(
             LogType.error,
             this.$t('notification.plugins.uninstallError'),
             getErrorMessage(e),

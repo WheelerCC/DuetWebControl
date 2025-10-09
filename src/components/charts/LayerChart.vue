@@ -26,24 +26,21 @@
 </template>
 
 <script lang="ts">
+import { Layer, ModelCollection } from '@duet3d/objectmodel'
 import {
   CategoryScale,
   Chart,
-  ChartDataset,
   Legend,
   LinearScale,
   LineController,
   LineElement,
   PointElement,
-  TickOptions,
   TimeScale,
 } from 'chart.js'
-import { Layer, ModelCollection } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import { display, displayZ, displayTime } from '@/utils/display'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useSettingsStore } from '@/stores/settings'
+import { display, displayTime, displayZ } from '@/utils/display'
 
 // Register required components and scales
 Chart.register(
@@ -56,10 +53,12 @@ Chart.register(
   CategoryScale,
 )
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
-      chart: {} as Chart,
+      chart: null as Chart<'line', number[], unknown> | null,
       showAllLayers: false,
     }
   },
@@ -195,31 +194,31 @@ export default Vue.extend({
   },
   methods: {
     updateChart() {
-      this.chart.data.labels = this.layers.map((_, index) => index + 1)
-      this.chart.data.datasets![0].data = this.layers.map((layer) => layer.duration)
+      this.chart!.data.labels = this.layers.map((_, index) => index + 1)
+      this.chart!.data.datasets![0].data = this.layers.map((layer) => layer.duration)
 
       if (this.showAllLayers) {
-        this.chart.config.options!.scales!.x!.min = 1
-        this.chart.config.options!.scales!.x!.max = this.layers.length
+        this.chart!.config.options!.scales!.x!.min = 1
+        this.chart!.config.options!.scales!.x!.max = this.layers.length
       } else {
-        this.chart.config.options!.scales!.x!.min = Math.max(
+        this.chart!.config.options!.scales!.x!.min = Math.max(
           this.layers.length > 2 ? 2 : 1,
           this.layers.length - 30,
         )
-        this.chart.config.options!.scales!.x!.max = Math.max(30, this.layers.length)
+        this.chart!.config.options!.scales!.x!.max = Math.max(30, this.layers.length)
       }
-      this.chart.update()
+      this.chart!.update()
     },
     applyDarkTheme(active: boolean) {
       const ticksColor = active ? '#FFF' : '#666'
-      this.chart.config.options!.scales!.x!.ticks!.color = ticksColor
-      this.chart.config.options!.scales!.y!.ticks!.color = ticksColor
+      this.chart!.config.options!.scales!.x!.ticks!.color = ticksColor
+      this.chart!.config.options!.scales!.y!.ticks!.color = ticksColor
 
       const gridLineColor = active ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-      this.chart.config.options!.scales!.x!.grid!.color = gridLineColor
-      this.chart.config.options!.scales!.y!.grid!.color = gridLineColor
+      this.chart!.config.options!.scales!.x!.grid!.color = gridLineColor
+      this.chart!.config.options!.scales!.y!.grid!.color = gridLineColor
 
-      this.chart.update()
+      this.chart!.update()
     },
   },
 })

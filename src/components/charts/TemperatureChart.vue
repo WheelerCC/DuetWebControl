@@ -20,6 +20,15 @@
 </template>
 
 <script lang="ts">
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { defaultMachine } from '@/stores/misc'
+import { useSettingsStore } from '@/stores/settings'
+import { getRealHeaterColor } from '@/utils/colors'
+import Events from '@/utils/events'
+import { AnalogSensor } from '@duet3d/objectmodel'
 import {
   Chart,
   ChartDataset,
@@ -28,24 +37,10 @@ import {
   LineController,
   LineElement,
   PointElement,
-  TickOptions,
   TimeScale,
-  Tooltip,
 } from 'chart.js'
 import dateFnsLocale from 'date-fns/locale/en-US'
-import { AnalogSensor } from '@duet3d/objectmodel'
-import Vue from 'vue'
-
-import i18n from '@/i18n'
-
-import { getRealHeaterColor } from '@/utils/colors'
-import Events from '@/utils/events'
-import { defaultMachine } from '@/stores/misc'
-import { useMachinesSettingsStore } from '@/stores/machineSettings'
-import { useRootStore } from '@/stores'
-import { useSettingsStore } from '@/stores/settings'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useMachinesStore } from '@/stores/machines'
+import { useI18n } from 'vue-i18n'
 
 // Register required components and scales
 Chart.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Legend)
@@ -123,7 +118,7 @@ function makeDataset(
     borderDash: extra ? [10, 5] : undefined,
     borderWidth: 2,
     data: new Array<number>(numSamples).fill(NaN),
-    locale: i18n.locale,
+    locale: useI18n().locale.value,
     pointRadius: 0,
     pointHitRadius: 0,
     rawLabel: null,
@@ -166,21 +161,21 @@ function pushSeriesData(machine: string, index: number, extra: boolean, sensor: 
   })
 
   // Check if the dataset has to be created first
-  if (!dataset || dataset.locale !== i18n.locale || dataset.rawLabel !== sensor.name) {
+  if (!dataset || dataset.locale !== useI18n().locale.value || dataset.rawLabel !== sensor.name) {
     let name
     if (sensor.name) {
       const matches = /(.*)\[(.*)\]$/.exec(sensor.name)
       name = matches ? matches[1] : sensor.name
     } else if (extra) {
-      name = i18n.t('chart.temperature.sensor', [index])
+      name = useI18n().t('chart.temperature.sensor', [index])
     } else {
-      name = i18n.t('chart.temperature.heater', [index])
+      name = useI18n().t('chart.temperature.heater', [index])
     }
 
     if (dataset) {
       dataset.rawLabel = sensor.name
       dataset.label = name
-      dataset.locale = i18n.locale
+      dataset.locale = useI18n().locale.value
     } else {
       dataset = makeDataset(index, extra, name, tempSamples[machine].times.length)
       machineData.temps.push(dataset)
@@ -194,7 +189,10 @@ function pushSeriesData(machine: string, index: number, extra: boolean, sensor: 
 let storeSubscribed = false,
   instances: Array<{ update: () => void }> = []
 
-export default Vue.extend({
+import eventbus from '@/utils/eventbus'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       chart: {} as Chart,
@@ -350,17 +348,17 @@ export default Vue.extend({
     // Keep track of updates
     instances.push(this)
     if (!storeSubscribed) {
-      this.$root.$on(Events.machineAdded, (hostname: string) => {
+      eventbus.$on(Events.machineAdded, (hostname: string) => {
         tempSamples[hostname] = {
           times: [],
           temps: [],
         }
       })
-      this.$root.$on(Events.machineRemoved, (hostname: string) => {
+      eventbus.$on(Events.machineRemoved, (hostname: string) => {
         delete tempSamples[hostname]
       })
 
-      this.$root.$on(Events.machineModelUpdated, (hostname: string) => {
+      eventbus.$on(Events.machineModelUpdated, (hostname: string) => {
         const dataset = tempSamples[hostname],
           now = new Date().getTime()
         if (
@@ -403,7 +401,7 @@ export default Vue.extend({
       storeSubscribed = true
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // Don't update this instance any more...
     instances = instances.filter((instance) => instance !== this, this)
   },

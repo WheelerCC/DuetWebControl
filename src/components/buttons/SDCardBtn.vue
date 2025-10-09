@@ -22,16 +22,18 @@
 </template>
 
 <script lang="ts">
+import { log } from '@/utils/logging'
 import { Volume } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import { getErrorMessage } from '@/utils/errors'
-import { LogType } from '@/utils/logging'
+import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
-import { useRootStore } from '@/stores'
+import { getErrorMessage } from '@/utils/errors'
+import { LogType } from '@/utils/logging'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     value: {
       type: Number,
@@ -88,10 +90,10 @@ export default Vue.extend({
 
       // Deal with the result
       if (success) {
-        this.$log(LogType.success, this.$t('notification.mount.successTitle'), response)
+        log(LogType.success, this.$t('notification.mount.successTitle'), response)
         this.$emit('input', index)
       } else {
-        this.$log(LogType.error, this.$t('notification.mount.errorTitle'), response)
+        log(LogType.error, this.$t('notification.mount.errorTitle'), response)
       }
     },
   },

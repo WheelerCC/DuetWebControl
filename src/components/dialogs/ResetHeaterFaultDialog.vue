@@ -26,14 +26,15 @@
 
 <script lang="ts">
 import { useMachinesStore } from '@/stores/machines'
-import Vue from 'vue'
 
 /**
  * How long to wait before a user can reset a heater fault (in s)
  */
 const countdownSeconds = 5
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     shown: {
       type: Boolean,

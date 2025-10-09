@@ -69,13 +69,12 @@
 import { HeaterState } from '@duet3d/objectmodel'
 import { computed, ref } from 'vue'
 
-import i18n from '@/i18n'
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import { log, LogType } from '@/utils/logging'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useRootStore } from '@/stores'
-import { useMachinesStore } from '@/stores/machines'
+import { useI18n } from 'vue-i18n'
 
 const dropdownShown = ref(false)
 
@@ -139,7 +138,7 @@ async function turnEverythingOff() {
     await useMachinesStore().sendCode(code)
   } catch (e) {
     if (!(e instanceof DisconnectedError)) {
-      log(LogType.error, i18n.t('error.turnOffEverythingFailed'), getErrorMessage(e))
+      log(LogType.error, useI18n().t('error.turnOffEverythingFailed'), getErrorMessage(e))
     }
   }
   turningEverythingOff.value = false

@@ -1,15 +1,12 @@
-import { connect, DefaultSettings, CancellationToken, BaseConnector } from '@duet3d/connectors'
-import Vue from 'vue'
-import Vuex, { Module, Store } from 'vuex'
+import { BaseConnector, CancellationToken, connect, DefaultSettings } from '@duet3d/connectors'
 
-import i18n from '@/i18n'
-import Root from '@/main'
 import Plugins, { checkVersion, loadDwcResources } from '@/plugins'
 import { getErrorMessage, InvalidPasswordError } from '@/utils/errors'
 import Events from '@/utils/events'
 import { logGlobal, logToConsole, LogType } from '@/utils/logging'
 import { closeNotifications, makeNotification } from '@/utils/notifications'
 import Path from '@/utils/path'
+import { useI18n } from 'vue-i18n'
 
 import packageInfo from '../../package.json'
 
@@ -90,19 +87,16 @@ export enum PluginDataType {
   machineSetting = 'machineSetting',
 }
 
-import { createPinia, defineStore } from 'pinia'
-import { useSettingsStore } from './settings'
-import { useMachinesSettingsStore } from './machineSettings'
-import { useMachinesStore } from './machines'
+import eventbus from '@/utils/eventbus'
+import ObjectModel from '@duet3d/objectmodel'
+import { defineStore } from 'pinia'
 import { useMachinesCacheStore } from './machineCache'
 import { useMachinesModelStore } from './machineModel'
+import { useMachinesSettingsStore } from './machineSettings'
+import { useMachinesStore } from './machines'
 import { defaultMachine, defaultPassword, defaultUsername } from './misc'
-import patch from '@/utils/patch'
-import ObjectModel from '@duet3d/objectmodel'
-import { DeepPartial } from '@/utils/misc'
-
-export const useRootStore = defineStore({
-  id: 'root',
+import { useSettingsStore } from './settings'
+export const useRootStore = defineStore('root', {
   state: (): InternalRootState => ({
     isConnecting: false,
     connectingProgress: -1,
@@ -224,7 +218,7 @@ export const useRootStore = defineStore({
           },
           onVolumeChanged(connector: BaseConnector, volumeIndex: number) {
             console.log('callback from connector called onVolumeChanged')
-            Root.$emit(Events.filesOrDirectoriesChanged, {
+            eventbus.$emit(Events.filesOrDirectoriesChanged, {
               machine: hostname,
               volume: volumeIndex,
             })
@@ -247,7 +241,7 @@ export const useRootStore = defineStore({
         }
 
         // Perform post-connect tasks
-        logGlobal(LogType.success, i18n.t('events.connected', [hostname]))
+        logGlobal(LogType.success, useI18n().t('events.connected', [hostname]))
 
         if (settingsStore.lastHostname !== location.host || hostname !== location.host) {
           const _settingsStore = useSettingsStore()
@@ -258,7 +252,7 @@ export const useRootStore = defineStore({
         if (!isPasswordError || password !== defaultPassword) {
           logGlobal(
             isPasswordError ? LogType.warning : LogType.error,
-            i18n.t('error.connect', [hostname]),
+            useI18n().t('error.connect', [hostname]),
             getErrorMessage(e),
           )
         }
@@ -306,10 +300,14 @@ export const useRootStore = defineStore({
         this.setDisconnecting(true)
         try {
           await machinesStore.disconnect()
-          logGlobal(LogType.success, i18n.t('events.disconnected', [hostname]))
+          logGlobal(LogType.success, useI18n().t('events.disconnected', [hostname]))
           // Disconnecting must always work - even if it does not always happen cleanly
         } catch (e) {
-          logGlobal(LogType.warning, i18n.t('error.disconnect', [hostname]), getErrorMessage(e))
+          logGlobal(
+            LogType.warning,
+            useI18n().t('error.disconnect', [hostname]),
+            getErrorMessage(e),
+          )
           console.warn(e)
         }
         this.setDisconnecting(false)
@@ -344,14 +342,14 @@ export const useRootStore = defineStore({
      */
     async onConnectionError({ hostname, error }: { hostname: string; error: Error }) {
       if (error instanceof InvalidPasswordError) {
-        logGlobal(LogType.error, i18n.t('events.connectionLost', [hostname]), error.message)
+        logGlobal(LogType.error, useI18n().t('events.connectionLost', [hostname]), error.message)
         await this.disconnect(hostname, false)
         this.askForPassword()
       } else if (process.env.NODE_ENV !== 'production') {
-        logGlobal(LogType.error, i18n.t('events.connectionLost', [hostname]), error.message)
+        logGlobal(LogType.error, useI18n().t('events.connectionLost', [hostname]), error.message)
         await this.disconnect(hostname, false)
       } else {
-        logGlobal(LogType.warning, i18n.t('events.reconnecting', [hostname]), error.message)
+        logGlobal(LogType.warning, useI18n().t('events.reconnecting', [hostname]), error.message)
         useMachinesStore().reconnect()
       }
     },
@@ -440,8 +438,8 @@ export const useRootStore = defineStore({
         this.setDwcPluginsLoading(true)
         const notification = makeNotification(
           LogType.primary,
-          i18n.t('notification.pluginLoad.title'),
-          i18n.t('notification.pluginLoad.message'),
+          useI18n().t('notification.pluginLoad.title'),
+          useI18n().t('notification.pluginLoad.message'),
           0,
           null,
           'mdi-connection',
@@ -506,7 +504,7 @@ export const useRootStore = defineStore({
      * @param context Action context
      * @param plugin Plugin identifier
      */
-    async unloadDwcPlugin({ dispatch, commit }, plugin: string) {
+    async unloadDwcPlugin(plugin: string) {
       let rootStore = useRootStore()
       let settingsStore = useSettingsStore()
       let machinesStore = useMachinesStore()
@@ -519,7 +517,7 @@ export const useRootStore = defineStore({
         // TODO multi machine confusion
         console.log('todo')
         settingsStore.save(rootStore.selectedMachine)
-        await dispatch('settings/save')
+        // await dispatch('settings/save')
         return true
       }
       return false
@@ -539,7 +537,7 @@ export const useRootStore = defineStore({
     // 			}
     // 		}
     // 		this.setDwcPluginsLoading(true);
-    // 		const notification = makeNotification(LogType.primary, i18n.t("notification.pluginLoad.title"), i18n.t("notification.pluginLoad.message"), 0, null, "mdi-connection");
+    // 		const notification = makeNotification(LogType.primary, useI18n().t("notification.pluginLoad.title"), useI18n().t("notification.pluginLoad.message"), 0, null, "mdi-connection");
     // 		let loadedPlugins = 0;
     // 		for (let i = 0; i < pluginList.length; i++) {
     // 			try {
@@ -652,7 +650,7 @@ export const useRootStore = defineStore({
 
       machinesStore.setConnector(connector, hostname)
 
-      Root.$emit(Events.machineAdded, hostname)
+      eventbus.$emit(Events.machineAdded, hostname)
     },
 
     /**
@@ -684,7 +682,7 @@ export const useRootStore = defineStore({
       delete machinesCacheStore[hostname]
       delete machineSettingsStore[hostname]
 
-      Root.$emit(Events.machineRemoved, hostname)
+      eventbus.$emit(Events.machineRemoved, hostname)
     },
 
     /**

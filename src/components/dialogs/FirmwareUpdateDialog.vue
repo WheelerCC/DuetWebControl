@@ -39,9 +39,10 @@
 
 <script lang="ts">
 import { useMachinesModelStore } from '@/stores/machineModel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     multipleUpdates: Boolean,
     updateWiFiFirmware: Boolean,

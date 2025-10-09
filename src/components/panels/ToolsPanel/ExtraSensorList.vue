@@ -42,13 +42,11 @@
 </template>
 
 <script setup lang="ts">
-import { AnalogSensor, AnalogSensorType } from '@duet3d/objectmodel'
-import { computed } from 'vue'
-
-import i18n from '@/i18n'
-
 import { getExtraColor } from '@/utils/colors'
 import { displaySensorValue } from '@/utils/display'
+import { AnalogSensor } from '@duet3d/objectmodel'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 interface ExtraSensor {
   sensor: AnalogSensor
@@ -86,7 +84,7 @@ function formatExtraName(sensor: { sensor: AnalogSensor; index: number }) {
     }
     return sensor.sensor.name
   }
-  return i18n.t('panel.tools.extra.sensorIndex', [sensor.index])
+  return useI18n().t('panel.tools.extra.sensorIndex', [sensor.index])
 }
 </script>
 

@@ -1,23 +1,23 @@
 <template>
   <div>
     <input-dialog
-      :shown.sync="showFilenameDialog"
+      v-model:shown="showFilenameDialog"
       :title="$t('dialog.newFile.title')"
       :prompt="$t('dialog.newFile.prompt')"
       @cancelled="cancelled"
       @confirmed="showEditor"
     />
-    <file-edit-dialog :shown.sync="showEditorDialog" :filename="filename" />
+    <file-edit-dialog v-model:shown="showEditorDialog" :filename="filename" />
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
-import Path from '@/utils/path'
 import { useRootStore } from '@/stores'
+import Path from '@/utils/path'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     shown: {
       type: Boolean,

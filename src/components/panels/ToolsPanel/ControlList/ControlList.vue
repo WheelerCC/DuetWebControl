@@ -55,7 +55,7 @@
     <heater-rows type="chamber" @resetHeaterFault="resetHeaterFault" />
 
     <!-- Heater faults-->
-    <reset-heater-fault-dialog :shown.sync="resettingHeaterFault" :heater="faultyHeaterToReset" />
+    <reset-heater-fault-dialog v-model:shown="resettingHeaterFault" :heater="faultyHeaterToReset" />
   </table>
   <v-alert v-else :value="true" type="info" class="mb-0">
     {{ $t('panel.tools.noTools') }}
@@ -65,10 +65,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import HeaterRows from './HeaterRows.vue'
-import ToolRows from './ToolRows.vue'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import HeaterRows from './HeaterRows.vue'
+import ToolRows from './ToolRows.vue'
 
 // General appearance
 const hasTools = computed(() => useMachinesModelStore().tools.some((tool) => tool !== null))

@@ -1,5 +1,5 @@
 <template>
-  <v-row :dense="$vuetify.breakpoint.mobile">
+  <v-row :dense="$vuetify.display.mobile">
     <v-col cols="12" sm="8" md="8" lg="9" xl="9">
       <movement-panel class="mb-2" />
 
@@ -44,9 +44,10 @@
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { MachineMode, Tool } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     uiFrozen(): boolean {
       return useRootStore().uiFrozen

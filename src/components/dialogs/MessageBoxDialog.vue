@@ -133,15 +133,16 @@
 
 <script lang="ts">
 import { Axis, AxisLetter, MessageBox, MessageBoxMode } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import { isNumber } from '@/utils/numbers'
-import { log } from '@/utils/logging'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { useMachinesStore } from '@/stores/machines'
+import { isNumber } from '@/utils/numbers'
 
-export default Vue.extend({
+import { display, displayZ } from '@/utils/display'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       messageBox: new MessageBox(),
@@ -254,8 +255,8 @@ export default Vue.extend({
         return this.$t('generic.noValue')
       }
       return axis.letter === AxisLetter.Z
-        ? this.$displayZ(axis.userPosition, false)
-        : this.$display(axis.userPosition, 1)
+        ? displayZ(axis.userPosition, false)
+        : display(axis.userPosition, 1)
     },
     getMoveCellClass(index: number): string {
       let classes = ''

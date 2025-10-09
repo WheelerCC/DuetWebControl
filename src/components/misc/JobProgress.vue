@@ -13,14 +13,15 @@
 </template>
 
 <script lang="ts">
-import { MachineMode, MachineStatus } from '@duet3d/objectmodel'
-import Vue from 'vue'
-
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { isPrinting } from '@/utils/enums'
 import { extractFileName } from '@/utils/path'
-import { useMachinesModelStore } from '@/stores/machineModel'
+import { MachineMode, MachineStatus } from '@duet3d/objectmodel'
 
-export default Vue.extend({
+import { display } from '@/utils/display'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       isSimulating: false,
@@ -36,7 +37,7 @@ export default Vue.extend({
     printStatus(): string {
       if (isPrinting(useMachinesModelStore().state.status)) {
         if (this.printFile) {
-          const progress = this.$display(this.jobProgress * 100, 1, '%')
+          const progress = display(this.jobProgress * 100, 1, '%')
           if (this.isSimulating) {
             return this.$t('jobProgress.simulating', [this.printFile, progress])
           }
@@ -82,7 +83,7 @@ export default Vue.extend({
             : useMachinesModelStore()
                 .move.extruders.map((extruder) => extruder.rawPosition)
                 .reduce((a, b) => a + b)
-        details += this.$t('jobProgress.filament', [this.$display(totalRawExtruded, 1, 'mm')])
+        details += this.$t('jobProgress.filament', [display(totalRawExtruded, 1, 'mm')])
         if (
           useMachinesModelStore().job.file !== null &&
           useMachinesModelStore().job.file!.filament.length > 0
@@ -91,7 +92,7 @@ export default Vue.extend({
           details +=
             ' (' +
             this.$t('jobProgress.filamentRemaining', [
-              this.$display(Math.max(needed - totalRawExtruded!, 0), 1, 'mm'),
+              display(Math.max(needed - totalRawExtruded!, 0), 1, 'mm'),
             ]) +
             ')'
         }

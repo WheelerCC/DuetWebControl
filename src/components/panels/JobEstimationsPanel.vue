@@ -58,13 +58,13 @@
 
 <script lang="ts">
 import { MachineStatus, TimesLeft } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import { isPrinting } from '@/utils/enums'
-import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
+import { isPrinting } from '@/utils/enums'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       isSimulating: false,

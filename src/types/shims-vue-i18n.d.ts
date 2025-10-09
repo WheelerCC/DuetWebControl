@@ -1,4 +1,4 @@
-import { Path, Values, Locale } from 'vue-i18n/types'
+import { Locale, Path, Values } from 'vue-i18n/types'
 import { VueI18n } from './vue-i18n'
 
 /**

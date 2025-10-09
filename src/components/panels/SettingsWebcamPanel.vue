@@ -5,7 +5,7 @@
     </v-card-title>
 
     <v-card-text>
-      <v-row :dense="$vuetify.breakpoint.mobile">
+      <v-row :dense="$vuetify.display.mobile">
         <v-col cols="12">
           <v-switch
             v-model="webcamEnabled"
@@ -73,11 +73,11 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
 import { SettingsState, useSettingsStore, WebcamFlip } from '@/stores/settings'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       rotationItems: [

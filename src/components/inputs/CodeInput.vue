@@ -44,14 +44,12 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
-import { MessageBox } from '@duet3d/objectmodel'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
-import { useSettingsStore } from '@/stores/settings'
-import { useMachinesStore } from '@/stores/machines'
 import { useMachinesCacheStore } from '@/stores/machineCache'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { useSettingsStore } from '@/stores/settings'
+import { MessageBox } from '@duet3d/objectmodel'
 
 const conditionalKeywords = [
   'abort',
@@ -67,7 +65,9 @@ const conditionalKeywords = [
   'set',
 ]
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     grow: Boolean,
     solo: Boolean,
@@ -217,8 +217,8 @@ export default Vue.extend({
           if (
             !inQuotes &&
             !useSettingsStore().disableAutoComplete &&
-            !reply.startsWith('Error: ') &&
-            !reply.startsWith('Warning: ') &&
+            !reply!.startsWith('Error: ') &&
+            !reply!.startsWith('Warning: ') &&
             bareCode.indexOf('M587') === -1 &&
             bareCode.indexOf('M589') === -1
           ) {

@@ -29,9 +29,10 @@
 <script lang="ts">
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { GCodeFileInfo, MachineMode } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     jobFile(): GCodeFileInfo | null {
       return useMachinesModelStore().job.file

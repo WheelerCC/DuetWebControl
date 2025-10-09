@@ -84,9 +84,10 @@ import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { Fan, Tool } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     uiFrozen(): boolean {
       return useRootStore().uiFrozen

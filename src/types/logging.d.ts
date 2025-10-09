@@ -1,5 +1,3 @@
-import Vue from 'vue'
-
 import { LogType } from '@/utils/logging'
 
 declare module 'vue/types/vue' {

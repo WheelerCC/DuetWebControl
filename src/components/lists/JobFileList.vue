@@ -37,9 +37,9 @@
       ref="filelist"
       v-model="selection"
       :headers="headers"
-      :directory.sync="directory"
-      :filelist.sync="filelist"
-      :loading.sync="loading"
+      v-model:directory="directory"
+      v-model:filelist="filelist"
+      v-model:loading="loading"
       sort-table="jobs"
       no-files-text="list.jobs.noJobs"
       @directoryLoaded="directoryLoaded"
@@ -72,8 +72,8 @@
             close-on-content-click
             :min-width="16"
           >
-            <template #activator="{ on, attrs }">
-              <div v-bind="attrs" tabindex="0" v-on="on" @click.stop="">
+            <template #activator="{ props }">
+              <div v-bind="props" tabindex="0" @click.stop="">
                 <thumbnail-img :thumbnail="getSmallThumbnail(item.thumbnails)" icon />
               </div>
             </template>
@@ -142,9 +142,9 @@
       </upload-btn>
     </v-speed-dial>
 
-    <new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
+    <new-directory-dialog v-model:shown="showNewDirectory" :directory="directory" />
     <confirm-dialog
-      :shown.sync="startJobDialog.shown"
+      v-model:shown="startJobDialog.shown"
       :title="startJobDialog.title"
       :prompt="startJobDialog.prompt"
       @confirmed="start(startJobDialog.item)"
@@ -154,9 +154,6 @@
 
 <script lang="ts">
 import { ThumbnailInfo, Volume } from '@duet3d/objectmodel'
-import Vue from 'vue'
-
-import i18n from '@/i18n'
 
 import { isPrinting } from '@/utils/enums'
 import { DisconnectedError, getErrorMessage, InvalidPasswordError } from '@/utils/errors'
@@ -169,6 +166,7 @@ import { ContextMenuItem, useUIInjectionStore } from '@/stores/uiInjection'
 import { useRootStore } from '@/stores'
 import { useMachinesCacheStore } from '@/stores/machineCache'
 import { useMachinesStore } from '@/stores/machines'
+import { log } from '@/utils/logging'
 
 interface JobListItemProperties {
   height?: number | null
@@ -182,7 +180,11 @@ interface JobListItemProperties {
 
 type JobListItem = BaseFileListItem & JobListItemProperties
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+import eventbus from '@/utils/eventbus'
+import { useI18n } from 'vue-i18n'
+
+export default defineComponent({
   data() {
     return {
       directory: Path.gCodes,
@@ -224,50 +226,48 @@ export default Vue.extend({
     headers(): Array<BaseFileListHeader> {
       return [
         {
-          class: 'pl-0',
-          cellClass: 'pl-0',
-          text: i18n.t('list.baseFileList.fileName'),
+          title: useI18n().t('list.baseFileList.fileName'),
           value: 'name',
         },
         {
-          text: i18n.t('list.baseFileList.size'),
+          title: useI18n().t('list.baseFileList.size'),
           value: 'size',
           unit: 'bytes',
         },
         {
-          text: i18n.t('list.baseFileList.lastModified'),
+          title: useI18n().t('list.baseFileList.lastModified'),
           value: 'lastModified',
           unit: 'date',
         },
         {
-          text: i18n.t('list.jobs.height'),
+          title: useI18n().t('list.jobs.height'),
           value: 'height',
           precision: 2,
           unit: 'mm',
         },
         {
-          text: i18n.t('list.jobs.layerHeight'),
+          title: useI18n().t('list.jobs.layerHeight'),
           value: 'layerHeight',
           precision: 2,
           unit: 'mm',
         },
         {
-          text: i18n.t('list.jobs.filament'),
+          title: useI18n().t('list.jobs.filament'),
           value: 'filament',
           unit: 'filaments',
         },
         {
-          text: i18n.t('list.jobs.printTime'),
+          title: useI18n().t('list.jobs.printTime'),
           value: 'printTime',
           unit: 'time',
         },
         {
-          text: i18n.t('list.jobs.simulatedTime'),
+          title: useI18n().t('list.jobs.simulatedTime'),
           value: 'simulatedTime',
           unit: 'time',
         },
         {
-          text: i18n.t('list.jobs.generatedBy'),
+          title: useI18n().t('list.jobs.generatedBy'),
           value: 'generatedBy',
         },
       ]
@@ -396,7 +396,7 @@ export default Vue.extend({
               // Deal with the error. If the connection has been terminated, the next call will invalidate everything
               if (!(e instanceof DisconnectedError) && !(e instanceof InvalidPasswordError)) {
                 console.warn(e)
-                this.$log(
+                log(
                   LogType.error,
                   this.$t('error.fileinfoRequestFailed', [file.name]),
                   getErrorMessage(e),
@@ -468,7 +468,7 @@ export default Vue.extend({
       if (menuItem.path) {
         await this.$router.push(menuItem.path)
       }
-      this.$root.$emit(menuItem.action, path)
+      eventbus.$emit(menuItem.action, path)
     },
   },
 })

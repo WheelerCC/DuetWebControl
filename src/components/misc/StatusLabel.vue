@@ -8,9 +8,10 @@
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useSettingsStore } from '@/stores/settings'
 import { MachineMode, MachineStatus } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     statusText(): string {
       let type: string = useMachinesModelStore().state.status

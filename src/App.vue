@@ -6,7 +6,7 @@
       clipped
       fixed
       app
-      :width="$vuetify.breakpoint.smAndDown ? 275 : 256"
+      :width="$vuetify.display.smAndDown ? 275 : 256"
       :expand-on-hover="iconMenu"
       :mini-variant="iconMenu"
       :style="`padding-bottom: ${bottomMargin}px`"
@@ -20,8 +20,8 @@
 
       <v-list
         class="pt-0"
-        :dense="!$vuetify.breakpoint.smAndDown"
-        :expand="!$vuetify.breakpoint.smAndDown"
+        :dense="!$vuetify.display.smAndDown"
+        :expand="!$vuetify.display.smAndDown"
       >
         <v-list-group
           v-for="(category, index) in categories"
@@ -84,9 +84,11 @@
       <v-divider class="hidden-sm-and-down" />
 
       <v-container fluid>
-        <keep-alive>
-          <router-view />
-        </keep-alive>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </v-container>
     </v-main>
 
@@ -132,8 +134,9 @@
 <script lang="ts">
 import ObjectModel, { MachineMode, MachineStatus } from '@duet3d/objectmodel'
 import Piecon from 'piecon'
-import Vue, { Component } from 'vue'
-import { Route, NavigationGuardNext } from 'vue-router'
+import Vue, { Component, defineComponent } from 'vue'
+import { RouteLocationNormalized as Route, NavigationGuardNext } from 'vue-router'
+import { log, logToConsole, logCode, logGlobal } from '@/utils/logging'
 
 import { Menu, MenuCategory, MenuItem, Routes } from '@/routes'
 
@@ -144,11 +147,12 @@ import { useRootStore } from './stores'
 import { useMachinesStore } from './stores/machines'
 import { DashboardMode, useSettingsStore } from './stores/settings'
 import { useUIInjectionStore } from './stores/uiInjection'
+import { useDisplay } from 'vuetify'
 
-export default Vue.extend({
+export default defineComponent({
   data() {
     return {
-      drawer: this.$vuetify.breakpoint.lgAndUp,
+      drawer: useDisplay().lgAndUp,
       injectedComponentNames: new Array<string>(),
       showConnectButton: process.env.NODE_ENV === 'development',
     }
@@ -206,8 +210,8 @@ export default Vue.extend({
     },
     showBottomNavigation(): boolean {
       return (
-        this.$vuetify.breakpoint.mobile &&
-        !this.$vuetify.breakpoint.xsOnly &&
+        this.$vuetify.display.mobile &&
+        !this.$vuetify.display.xs &&
         useSettingsStore().bottomNavigation
       )
     },
@@ -225,7 +229,7 @@ export default Vue.extend({
       }
     },
     darkTheme(to: boolean) {
-      this.$vuetify.theme.dark = to
+      this.$vuetify.theme.change(to ? 'dark' : 'light')
     },
     isConnecting(to: boolean) {
       if (!to && useMachinesModelStore().volumes.length > 0) {
@@ -238,7 +242,7 @@ export default Vue.extend({
         ) {
           // 256 MiB
           // Report a warning if less than 5% free space is available
-          this.$log(
+          log(
             LogType.warning,
             this.$t('notification.freeSpaceWarning.title'),
             this.$t('notification.freeSpaceWarning.message'),
@@ -256,7 +260,7 @@ export default Vue.extend({
         if (printing) {
           // Go to Job Status when a print starts
           if (
-            this.$router.currentRoute.path !== '/Job/Status' &&
+            this.$router.currentRoute.value.path !== '/Job/Status' &&
             !this.doNotSwitchToStatusPanelOnJobStart
           ) {
             this.$router.push('/Job/Status')
@@ -298,7 +302,6 @@ export default Vue.extend({
     useSettingsStore().load()
 
     // Validate navigation
-    Vue.prototype.$vuetify = this.$vuetify
     this.$router.beforeEach((to: Route, from: Route, next: NavigationGuardNext) => {
       if (Routes.some((route) => route.path === to.path && !(route as MenuItem).condition)) {
         next('/')
@@ -317,7 +320,7 @@ export default Vue.extend({
   },
   methods: {
     isExpanded(category: MenuCategory): boolean {
-      if (this.$vuetify.breakpoint.smAndDown) {
+      if (this.$vuetify.display.smAndDown) {
         const route = this.$route
         return category.pages.some((page) => page.path === route.path)
       }

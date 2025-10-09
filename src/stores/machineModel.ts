@@ -1,4 +1,3 @@
-import { BaseConnector } from '@duet3d/connectors'
 import ObjectModel, {
   Axis,
   AxisLetter,
@@ -10,27 +9,23 @@ import ObjectModel, {
   initCollection,
   initObject,
   MachineStatus,
-  ModelDictionary,
   Move,
   Network,
-  Plugin,
   Probe,
   Sensors,
   State,
   Tool,
 } from '@duet3d/objectmodel'
 import Vue from 'vue'
-import type { Module } from 'vuex'
 
 import { translateResponse } from '@/i18n'
 import { isPaused, isPrinting } from '@/utils/enums'
 import patch from '@/utils/patch'
 
 import { defineStore } from 'pinia'
-import { defaultMachine } from './misc'
-import { useRootStore } from '.'
-import { DeepPartial } from '@/utils/misc'
 import { WritableDeep } from 'type-fest'
+import { useRootStore } from '.'
+import { defaultMachine } from './misc'
 
 /**
  * Default object model used to display initial values.
@@ -88,8 +83,7 @@ export const DefaultModel = initObject(ObjectModel, {
   ]),
 })
 
-export const useMachinesModelStore = defineStore({
-  id: 'machinesModelSettings',
+export const useMachinesModelStore = defineStore('machinesModelSettings', {
   state: (): Record<string, ObjectModel> => ({
     [defaultMachine]: DefaultModel,
   }),
@@ -228,7 +222,7 @@ export const useMachinesModelStore = defineStore({
         } else if (key === 'plugins') {
           Vue.set(this[useRootStore().selectedMachine], 'plugins', data.plugins!)
         } else if (key === 'sbc' && this[useRootStore().selectedMachine].sbc === null) {
-          Vue.set(this[useRootStore().selectedMachine], 'sbc', data.sbc)
+          this[useRootStore().selectedMachine].sbc = data.sbc ?? null
         } else {
           patch((this[useRootStore().selectedMachine] as any)[key], data[key])
         }

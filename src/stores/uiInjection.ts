@@ -1,5 +1,3 @@
-import { Module } from 'vuex'
-
 import { ContextMenuType } from '@/plugins'
 
 import { Component } from 'vue'
@@ -62,8 +60,7 @@ export interface UiInjectionState {
 
 import { defineStore } from 'pinia'
 
-export const useUIInjectionStore = defineStore({
-  id: 'uiInjection',
+export const useUIInjectionStore = defineStore('uiInjection', {
   state: (): UiInjectionState => ({
     contextMenuItems: {
       jobFileList: [],

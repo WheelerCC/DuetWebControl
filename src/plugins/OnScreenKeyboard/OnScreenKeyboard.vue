@@ -9,7 +9,9 @@ import Keyboard from 'simple-keyboard'
 import 'simple-keyboard/build/css/index.css'
 import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       input: null as HTMLInputElement | HTMLTextAreaElement | null,
@@ -21,7 +23,7 @@ export default Vue.extend({
     window.addEventListener('focusin', this.inputFocused)
     window.addEventListener('click', this.globalClick)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('focusin', this.inputFocused)
     window.removeEventListener('click', this.globalClick)
   },

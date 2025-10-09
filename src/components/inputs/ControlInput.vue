@@ -22,16 +22,19 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from 'vue'
+import { PropType } from 'vue'
 
-import { LogType } from '@/utils/logging'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { useRootStore } from '@/stores'
-import { useSettingsStore } from '@/stores/settings'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { useSettingsStore } from '@/stores/settings'
+import { LogType } from '@/utils/logging'
 
-export default Vue.extend({
+import { makeNotification } from '@/utils/notifications'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     disabled: Boolean,
     label: {
@@ -212,7 +215,7 @@ export default Vue.extend({
 
       const value = parseFloat(this.inputValue)
       if (!isFinite(value)) {
-        this.$makeNotification(LogType.warning, this.$t('error.enterValidNumber'))
+        makeNotification(LogType.warning, this.$t('error.enterValidNumber'))
         return
       }
 

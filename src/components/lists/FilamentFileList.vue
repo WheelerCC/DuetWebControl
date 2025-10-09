@@ -39,9 +39,9 @@
     <base-file-list
       ref="filelist"
       v-model="selection"
-      :directory.sync="directory"
+      v-model:directory="directory"
       :folder-icon="isRootDirectory ? 'mdi-radiobox-marked' : 'mdi-folder'"
-      :loading.sync="loading"
+      v-model:loading="loading"
       :doing-file-operation="doingFileOperation"
       sort-table="filaments"
       :no-delete="filamentLoaded"
@@ -95,7 +95,7 @@
     </v-speed-dial>
 
     <new-directory-dialog
-      :shown.sync="showNewFilament"
+      v-model:shown="showNewFilament"
       :directory="directory"
       :title="$t('dialog.newFilament.title')"
       :prompt="$t('dialog.newFilament.prompt')"
@@ -105,7 +105,7 @@
       @directoryCreated="createFilamentFiles"
     />
     <new-directory-dialog
-      :shown.sync="showDuplicateFilament"
+      v-model:shown="showDuplicateFilament"
       :directory="directory"
       :title="$t('dialog.duplicateFilament.title')"
       :prompt="$t('dialog.duplicateFilament.prompt')"
@@ -114,14 +114,13 @@
       @directoryCreationFailed="directoryCreationFailed"
       @directoryCreated="duplicateFilamentFiles"
     />
-    <new-file-dialog :shown.sync="showNewFile" :directory="directory" />
+    <new-file-dialog v-model:shown="showNewFile" :directory="directory" />
   </div>
 </template>
 
 <script lang="ts">
 import saveAs from 'file-saver'
 import JSZip from 'jszip'
-import Vue from 'vue'
 
 import {
   DisconnectedError,
@@ -129,15 +128,18 @@ import {
   getErrorMessage,
   OperationCancelledError,
 } from '@/utils/errors'
-import Path from '@/utils/path'
 import { LogType } from '@/utils/logging'
+import Path from '@/utils/path'
 
-import { BaseFileListItem } from './BaseFileList.vue'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { BaseFileListItem } from './BaseFileList.vue'
 
-export default Vue.extend({
+import { makeNotification } from '@/utils/notifications'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       directory: Path.filaments,
@@ -191,7 +193,7 @@ export default Vue.extend({
   },
   methods: {
     directoryCreationFailed(error: any) {
-      this.$makeNotification(
+      makeNotification(
         LogType.error,
         this.$t('notification.newFilament.errorTitle'),
         getErrorMessage(error),
@@ -220,14 +222,14 @@ export default Vue.extend({
           content: emptyFile,
           showSuccess: false,
         })
-        this.$makeNotification(
+        makeNotification(
           LogType.success,
           this.$t('notification.newFilament.successTitle'),
           this.$t('notification.newFilament.successMessage', [Path.extractFileName(path)]),
         )
       } catch (e) {
         console.warn(e)
-        this.$makeNotification(
+        makeNotification(
           LogType.error,
           this.$t('notification.newFilament.errorTitleMacros'),
           getErrorMessage(e),
@@ -258,7 +260,7 @@ export default Vue.extend({
         })
       } catch (e) {
         if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError)) {
-          this.$makeNotification(
+          makeNotification(
             LogType.error,
             this.$t('notification.download.error', [!loadG ? 'load.g' : 'unload.g']),
             getErrorMessage(e),
@@ -282,7 +284,7 @@ export default Vue.extend({
           !(e instanceof OperationCancelledError) &&
           !(e instanceof FileNotFoundError)
         ) {
-          this.$makeNotification(
+          makeNotification(
             LogType.error,
             this.$t('notification.download.error', ['config.g']),
             getErrorMessage(e),
@@ -303,7 +305,7 @@ export default Vue.extend({
         saveAs(zipBlob, `${filament}.zip`)
       } catch (e) {
         console.warn(e)
-        this.$makeNotification(
+        makeNotification(
           LogType.error,
           this.$t('notification.compress.errorTitle'),
           getErrorMessage(e),
@@ -338,7 +340,7 @@ export default Vue.extend({
           })
         } catch (e) {
           if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError)) {
-            this.$makeNotification(
+            makeNotification(
               LogType.error,
               this.$t('notification.download.error', [!loadG ? 'load.g' : 'unload.g']),
               getErrorMessage(e),
@@ -362,7 +364,7 @@ export default Vue.extend({
             !(e instanceof OperationCancelledError) &&
             !(e instanceof FileNotFoundError)
           ) {
-            this.$makeNotification(
+            makeNotification(
               LogType.error,
               this.$t('notification.download.error', ['config.g']),
               getErrorMessage(e),
@@ -387,14 +389,14 @@ export default Vue.extend({
           content: unloadG ?? emptyFile,
           showSuccess: false,
         })
-        this.$makeNotification(
+        makeNotification(
           LogType.success,
           this.$t('notification.newFilament.successTitle'),
           this.$t('notification.newFilament.successMessage', [Path.extractFileName(path)]),
         )
       } catch (e) {
         console.warn(e)
-        this.$makeNotification(
+        makeNotification(
           LogType.error,
           this.$t('notification.newFilament.errorTitleMacros'),
           getErrorMessage(e),

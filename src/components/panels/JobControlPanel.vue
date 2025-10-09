@@ -69,14 +69,15 @@
 
 <script lang="ts">
 import { MachineMode, MachineStatus, ThumbnailInfo } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { isPaused, isPrinting } from '@/utils/enums'
 import { escapeFilename } from '@/utils/path'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useRootStore } from '@/stores'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       isSimulating: false,

@@ -51,13 +51,14 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { MachineStatus } from '@duet3d/objectmodel'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { MachineStatus } from '@duet3d/objectmodel'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       displayReset: false,

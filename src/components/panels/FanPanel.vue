@@ -11,7 +11,7 @@
           <p class="mb-1">
             {{ $t('panel.fan.selection') }}
           </p>
-          <v-btn-toggle v-model="fan" mandatory>
+          <v-btn-toggle v-model="fan" mandatory="force">
             <v-btn v-if="currentTool && currentTool.fans.length > 0" :value="-1">
               {{ $t('panel.fan.toolFan') }}
             </v-btn>
@@ -42,9 +42,10 @@ import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { Fan, Tool } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       fan: -1,

@@ -1,5 +1,5 @@
+import { gcodeCNCLanguage, gcodeFDMLanguage } from '@duet3d/monacotokens'
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
-import { gcodeFDMLanguage, gcodeCNCLanguage } from '@duet3d/monacotokens'
 
 const languageConfiguration: monaco.languages.LanguageConfiguration = {
   comments: {

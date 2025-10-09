@@ -1,11 +1,11 @@
 import { CancellationToken, OnProgressCallback } from '@duet3d/connectors'
-import Vue from 'vue'
+import { reactive } from 'vue'
 
-import i18n from '@/i18n'
+import { useI18n } from 'vue-i18n'
 
+import { useSettingsStore } from '@/stores/settings'
 import { extractFileName } from '@/utils/path'
 import { LogType } from './logging'
-import { useSettingsStore } from '@/stores/settings'
 
 /**
  * Possible file transfer types
@@ -99,7 +99,7 @@ export interface Notification {
 /**
  * List of active notifications
  */
-export const notifications = Vue.observable(new Array<Notification>())
+export const notifications = reactive(new Array<Notification>())
 
 /**
  * Persistent message notification (see M117)
@@ -109,7 +109,7 @@ let messageNotification: Notification | null = null
 /**
  * List of active file transfer notifications
  */
-export const fileTransferNotifications = Vue.observable(new Array<Notification>())
+export const fileTransferNotifications = reactive(new Array<Notification>())
 
 /**
  * Show a new notification
@@ -284,7 +284,7 @@ export function showMessage(message: string | null): Notification | null {
   if (messageNotification === null) {
     messageNotification = makeNotification(
       LogType.info,
-      i18n.t('notification.message'),
+      useI18n().t('notification.message'),
       message,
       0,
       null,
@@ -301,8 +301,3 @@ export function showMessage(message: string | null): Notification | null {
   }
   return messageNotification
 }
-
-// Register extensions
-Vue.prototype.$makeNotification = makeNotification
-Vue.prototype.$makeFileTransferNotification = makeFileTransferNotification
-Vue.prototype.$showMessage = showMessage

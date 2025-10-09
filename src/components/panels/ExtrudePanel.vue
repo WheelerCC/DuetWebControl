@@ -10,7 +10,7 @@
           <p class="mb-1">
             {{ $t('panel.extrude.mixRatio') }}
           </p>
-          <v-btn-toggle v-model="mix" mandatory multiple>
+          <v-btn-toggle v-model="mix" mandatory="force" multiple>
             <v-btn text value="mix" :disabled="uiFrozen" color="primary">
               {{ $t('panel.extrude.mix') }}
             </v-btn>
@@ -30,7 +30,7 @@
           <p class="mb-1">
             {{ $t('panel.extrude.amount', ['mm']) }}
           </p>
-          <v-btn-toggle v-model="amount" mandatory class="d-flex">
+          <v-btn-toggle v-model="amount" mandatory="force" class="d-flex">
             <v-btn
               v-for="(savedAmount, index) in extruderAmounts"
               :key="index"
@@ -47,7 +47,7 @@
           <p class="mb-1">
             {{ $t('panel.extrude.feedrate', ['mm/s']) }}
           </p>
-          <v-btn-toggle v-model="feedrate" mandatory class="d-flex">
+          <v-btn-toggle v-model="feedrate" mandatory="force" class="d-flex">
             <v-btn
               v-for="(savedFeedrate, index) in extruderFeedrates"
               :key="index"
@@ -86,7 +86,7 @@
     </v-card-text>
 
     <input-dialog
-      :shown.sync="editAmountDialog.shown"
+      v-model:shown="editAmountDialog.shown"
       :title="$t('dialog.editExtrusionAmount.title')"
       :prompt="$t('dialog.editExtrusionAmount.prompt')"
       :preset="editAmountDialog.preset"
@@ -94,7 +94,7 @@
       @confirmed="setAmount"
     />
     <input-dialog
-      :shown.sync="editFeedrateDialog.shown"
+      v-model:shown="editFeedrateDialog.shown"
       :title="$t('dialog.editExtrusionFeedrate.title')"
       :prompt="$t('dialog.editExtrusionFeedrate.prompt')"
       :preset="editFeedrateDialog.preset"
@@ -110,9 +110,10 @@ import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { MachineStatus, Tool } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       busy: false,

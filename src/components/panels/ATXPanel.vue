@@ -5,7 +5,7 @@
     </v-card-title>
 
     <v-card-text class="pt-0">
-      <v-btn-toggle :value="atxPower" mandatory @change="toggleAtxPower">
+      <v-btn-toggle :value="atxPower" mandatory="force" @change="toggleAtxPower">
         <v-btn
           text
           :value="true"
@@ -33,9 +33,10 @@
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       sendingCode: false,

@@ -121,11 +121,13 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from 'vue'
+import { PropType } from 'vue'
 
 import { MachineSettingsState, useMachinesSettingsStore } from '@/stores/machineSettings'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     itemKey: {
       type: String as PropType<keyof MachineSettingsState['temperatures'] | 'spindleRPM'>,

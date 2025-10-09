@@ -31,9 +31,10 @@
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { AxisLetter } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     babystepping(): number {
       return (

@@ -244,9 +244,9 @@
                 </strong>
 
                 <div class="d-flex flex-row">
-                  <template v-for="(item, index) in fanRPM">
+                  <template v-for="(item, index) in fanRPM" :key="index">
                     <template v-if="index !== 0"> , </template>
-                    <span :key="index" :title="item.name" class="mx-0">
+                    <span :title="item.name" class="mx-0">
                       {{ item.rpm }}
                     </span>
                   </template>
@@ -283,14 +283,15 @@
 
 <script lang="ts">
 import ObjectModel, { Axis, Board, MachineMode, Probe, ProbeType } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import { isPrinting } from '@/utils/enums'
+import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { DashboardMode, useSettingsStore } from '@/stores/settings'
-import { useRootStore } from '@/stores'
+import { isPrinting } from '@/utils/enums'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       displayToolPosition: true,

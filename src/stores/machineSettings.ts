@@ -1,18 +1,16 @@
-import { BaseConnector } from '@duet3d/connectors'
 import { AxisLetter } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
 import { FileNotFoundError } from '@/utils/errors'
-import { setLocalSetting, getLocalSetting, removeLocalSetting } from '@/utils/localStorage'
+import { getLocalSetting, removeLocalSetting, setLocalSetting } from '@/utils/localStorage'
 import patch from '@/utils/patch'
 import Path from '@/utils/path'
 
-import { resetSettingsTimer } from './observer'
 import { defineStore } from 'pinia'
-import { useSettingsStore } from './settings'
+import { useRootStore } from '.'
 import { useMachinesStore } from './machines'
 import { defaultMachine } from './misc'
-import { useRootStore } from '.'
+import { resetSettingsTimer } from './observer'
+import { useSettingsStore } from './settings'
 
 /**
  * Default settings defined by third-party plugins
@@ -212,8 +210,7 @@ export interface MachineSettingsState {
 // 		}
 // 	}
 
-export const useMachinesSettingsStore = defineStore({
-  id: 'machinesSettings',
+export const useMachinesSettingsStore = defineStore('machinesSettings', {
   state: (): Record<string, MachineSettingsState> => ({
     [defaultMachine]: {
       // Poll Connector
@@ -379,12 +376,15 @@ export const useMachinesSettingsStore = defineStore({
 
         // Try to get the saved DWC settings
         try {
-          settings = await machinesStore.download(machineName, {
-            filename: Path.dwcSettingsFile,
-            showProgress: false,
-            showSuccess: false,
-            showError: false,
-          })
+          settings = await machinesStore.download(
+            {
+              filename: Path.dwcSettingsFile,
+              showProgress: false,
+              showSuccess: false,
+              showError: false,
+            },
+            machineName,
+          )
         } catch (e) {
           if (!(e instanceof FileNotFoundError)) {
             throw e
@@ -394,12 +394,15 @@ export const useMachinesSettingsStore = defineStore({
         // If that fails, try to get the DWC defaults
         if (!settings) {
           try {
-            settings = await machinesStore.download(machineName, {
-              filename: Path.dwcFactoryDefaults,
-              showProgress: false,
-              showSuccess: false,
-              showError: false,
-            })
+            settings = await machinesStore.download(
+              {
+                filename: Path.dwcFactoryDefaults,
+                showProgress: false,
+                showSuccess: false,
+                showError: false,
+              },
+              machineName,
+            )
           } catch (e) {
             if (!(e instanceof FileNotFoundError)) {
               throw e
@@ -410,12 +413,15 @@ export const useMachinesSettingsStore = defineStore({
         // If that fails, try to get the DWC settings
         if (!settings) {
           try {
-            settings = await machinesStore.download(machineName, {
-              filename: Path.legacyDwcSettingsFile,
-              showProgress: false,
-              showSuccess: false,
-              showError: false,
-            })
+            settings = await machinesStore.download(
+              {
+                filename: Path.legacyDwcSettingsFile,
+                showProgress: false,
+                showSuccess: false,
+                showError: false,
+              },
+              machineName,
+            )
           } catch (e) {
             if (!(e instanceof FileNotFoundError)) {
               throw e
@@ -427,12 +433,15 @@ export const useMachinesSettingsStore = defineStore({
 
         if (!settings) {
           try {
-            settings = await machinesStore.download(machineName, {
-              filename: Path.legacyDwcFactoryDefaults,
-              showProgress: false,
-              showSuccess: false,
-              showError: false,
-            })
+            settings = await machinesStore.download(
+              {
+                filename: Path.legacyDwcFactoryDefaults,
+                showProgress: false,
+                showSuccess: false,
+                showError: false,
+              },
+              machineName,
+            )
           } catch (e) {
             if (e instanceof FileNotFoundError) {
               await settingsStore.applyDefaults(machineName)
@@ -535,7 +544,7 @@ export const useMachinesSettingsStore = defineStore({
             axisMoveSteps instanceof Array &&
             axisMoveSteps.length === this[machineName].moveSteps.default.length
           ) {
-            Vue.set(this[machineName].moveSteps, axis, axisMoveSteps)
+            this[machineName].moveSteps[axis] = axisMoveSteps
           }
         }
         delete payload.moveSteps
@@ -565,7 +574,7 @@ export const useMachinesSettingsStore = defineStore({
             axisMoveSteps instanceof Array &&
             axisMoveSteps.length === this[machineName].moveSteps.default.length
           ) {
-            Vue.set(this[machineName].moveSteps, axis, axisMoveSteps)
+            this[machineName].moveSteps[axis] = axisMoveSteps
           }
         }
         delete payload.moveSteps

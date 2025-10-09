@@ -1,6 +1,6 @@
 <template>
   <input-dialog
-    :shown.sync="innerShown"
+    v-model:shown="innerShown"
     :title="title || $t('dialog.newDirectory.title')"
     :prompt="prompt || $t('dialog.newDirectory.prompt')"
     @confirmed="createDirectory"
@@ -8,15 +8,16 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
-import { DisconnectedError, getErrorMessage } from '@/utils/errors'
-import { LogType } from '@/utils/logging'
-import Path from '@/utils/path'
 import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
+import { DisconnectedError, getErrorMessage } from '@/utils/errors'
+import { LogType } from '@/utils/logging'
+import { makeNotification } from '@/utils/notifications'
+import Path from '@/utils/path'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     shown: {
       type: Boolean,
@@ -79,7 +80,7 @@ export default Vue.extend({
 
         this.$emit('directoryCreated', path)
         if (this.showSuccess) {
-          this.$makeNotification(
+          makeNotification(
             LogType.success,
             this.$t('notification.newDirectory.successTitle'),
             this.$t('notification.newDirectory.successMessage', [directory]),
@@ -90,7 +91,7 @@ export default Vue.extend({
           console.warn(e)
           this.$emit('directoryCreationFailed', e)
           if (this.showError) {
-            this.$makeNotification(
+            makeNotification(
               LogType.error,
               this.$t('notification.newDirectory.errorTitle'),
               getErrorMessage(e),

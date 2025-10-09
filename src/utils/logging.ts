@@ -1,11 +1,9 @@
-import Vue from 'vue'
+import { useI18n } from 'vue-i18n'
 
-import i18n from '@/i18n'
-
-import { makeNotification } from './notifications'
-import { defaultMachine } from '@/stores/misc'
-import { useMachinesStore } from '@/stores/machines'
 import { useRootStore } from '@/stores'
+import { useMachinesStore } from '@/stores/machines'
+import { defaultMachine } from '@/stores/misc'
+import { makeNotification } from './notifications'
 
 /**
  * Possible logging types
@@ -81,8 +79,8 @@ export function logCode(code: string | null, reply: string, hostname?: string) {
     let title = code || '',
       message = responseLines.join('<br>')
     if (responseLines.length > 3 || toLog.length > 128) {
-      title = !code ? i18n.t('notification.responseTooLong') : code
-      message = !code ? '' : i18n.t('notification.responseTooLong')
+      title = !code ? useI18n().t('notification.responseTooLong') : code
+      message = !code ? '' : useI18n().t('notification.responseTooLong')
     } else if (!code) {
       title = responseLines[0]
       message = responseLines.slice(1).join('<br>')
@@ -115,9 +113,3 @@ export function logGlobal(type: LogType, title: string, message: string | null =
   }
   useMachinesStore().log({ date: new Date(), type, title, message })
 }
-
-// Register extensions
-Vue.prototype.$log = log
-Vue.prototype.$logToConsole = logToConsole
-Vue.prototype.$logCode = logCode
-Vue.prototype.$logGlobal = logGlobal

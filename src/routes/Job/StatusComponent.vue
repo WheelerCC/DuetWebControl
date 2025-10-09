@@ -2,9 +2,9 @@
   <div class="d-flex flex-column">
     <job-progress />
 
-    <v-row class="mt-0" :dense="$vuetify.breakpoint.mobile">
+    <v-row class="mt-0" :dense="$vuetify.display.mobile">
       <v-col order="1" order-md="1" cols="12" sm="6" md="3" xl="2">
-        <v-row align="center" :dense="$vuetify.breakpoint.mobile">
+        <v-row align="center" :dense="$vuetify.display.mobile">
           <v-col cols="12">
             <job-control-panel />
           </v-col>
@@ -46,7 +46,7 @@
       </v-col>
 
       <v-col order="2" order-md="3" cols="12" sm="6" md="4" xl="3">
-        <v-row :dense="$vuetify.breakpoint.mobile">
+        <v-row :dense="$vuetify.display.mobile">
           <v-col cols="12" class="hidden-md-and-up">
             <job-estimations-panel />
           </v-col>
@@ -73,9 +73,9 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 
-export default Vue.extend({})
+export default defineComponent({})
 </script>
 
 <style scoped>

@@ -5,9 +5,10 @@
 <script lang="ts">
 import { ThumbnailFormat } from '@duet3d/objectmodel'
 import QOI from 'qoijs'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     icon: Boolean,
     thumbnail: {

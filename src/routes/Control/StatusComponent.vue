@@ -7,12 +7,13 @@
 
 <script lang="ts">
 import { MachineMode } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { DashboardMode, useSettingsStore } from '@/stores/settings'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     isFFForUnset() {
       if (useSettingsStore().dashboardMode === DashboardMode.default) {

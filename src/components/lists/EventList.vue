@@ -10,8 +10,8 @@
       hide-default-footer
       :mobile-breakpoint="0"
       :custom-sort="sort"
-      :sort-by.sync="sortBy"
-      :sort-desc.sync="sortDesc"
+      v-model:sort-by="sortBy"
+      v-model:sort-desc="sortDesc"
       must-sort
       class="elevation-3"
       :class="{ 'empty-table-fix': !events.length }"
@@ -65,33 +65,33 @@
 
 <script lang="ts">
 import saveAs from 'file-saver'
-import Vue from 'vue'
 import { DataTableHeader } from 'vuetify'
 
-import i18n from '@/i18n'
-
-import { LogType } from '@/utils/logging'
-import { MachineEvent, useMachinesStore } from '@/stores/machines'
 import { useMachinesCacheStore } from '@/stores/machineCache'
+import { MachineEvent, useMachinesStore } from '@/stores/machines'
 import { useSettingsStore } from '@/stores/settings'
+import { LogType } from '@/utils/logging'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+export default defineComponent({
   computed: {
     headers(): Array<DataTableHeader> {
       return [
         {
-          text: i18n.t('list.eventLog.date'),
+          title: useI18n().t('list.eventLog.date'),
           value: 'date',
           width: '15%',
         },
         {
-          text: i18n.t('list.eventLog.message'),
+          title: useI18n().t('list.eventLog.message'),
           value: 'message',
           sortable: false,
           width: '74%',
         },
         {
-          text: '',
+          title: '',
           value: 'btn',
           sortable: false,
           width: '1%',

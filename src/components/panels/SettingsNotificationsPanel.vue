@@ -30,11 +30,11 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
 import { SettingsState, useSettingsStore } from '@/stores/settings'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     notificationErrorsPersistent: {
       get(): boolean {

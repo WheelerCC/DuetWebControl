@@ -52,7 +52,7 @@
           v-show="currentSpeed !== null && currentSpeed > 0"
           class="ml-3 text--secondary text-button"
         >
-          {{ $t('dialog.fileTransfer.currentSpeed', [$displayTransferSpeed(currentSpeed)]) }}
+          {{ $t('dialog.fileTransfer.currentSpeed', [displayTransferSpeed(currentSpeed)]) }}
         </span>
         <v-spacer />
         <v-btn v-show="canCancel" color="blue darken-1" text @click="cancel">
@@ -80,13 +80,16 @@
 
 <script lang="ts">
 import { CancellationToken } from '@duet3d/connectors'
-import Vue from 'vue'
 
-import Events from '@/utils/events'
 import { useRootStore } from '@/stores'
 import { FileTransferItem } from '@/stores/machines'
+import Events from '@/utils/events'
 
-export default Vue.extend({
+import { displaySize, displayTransferSpeed } from '@/utils/display'
+import eventbus from '@/utils/eventbus'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       isMachineUploading: {} as Record<string, boolean>,
@@ -94,7 +97,6 @@ export default Vue.extend({
       closeProgressOnSuccess: {} as Record<string, boolean>,
       filesBeingTransferred: {} as Record<string, Array<FileTransferItem>>,
       fileNameOffsets: {} as Record<string, number>,
-      retries: {} as Record<string, number>,
     }
   },
   computed: {
@@ -172,22 +174,23 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.$root
+    eventbus
       .$on(Events.multipleFilesUploading, this.multiUploadStarting)
       .$on(Events.multipleFilesDownloading, this.multiDownloadStarting)
       .$on(Events.fileUploaded, this.fileComplete.bind(this))
       .$on(Events.fileDownloaded, this.fileComplete.bind(this))
   },
-  beforeDestroy() {
-    this.$root
+  beforeUnmount() {
+    eventbus
       .$off(this.multiUploadStarting as any)
       .$off(this.multiDownloadStarting as any)
       .$off(this.fileComplete as any)
   },
   methods: {
+    displayTransferSpeed,
     getSize(file: FileTransferItem) {
       if (file.size || (file.content && file.content.size)) {
-        return this.$displaySize(file.size || file.content.size)
+        return displaySize(file.size || file.content.size)
       }
       return ''
     },
@@ -214,12 +217,12 @@ export default Vue.extend({
     },
     cancel() {
       this.cancellationTokens[useRootStore().selectedMachine].cancel()
-      Vue.delete(this.cancellationTokens, useRootStore().selectedMachine)
+      delete this.cancellationTokens[useRootStore().selectedMachine]
     },
     close() {
-      Vue.delete(this.closeProgressOnSuccess, useRootStore().selectedMachine)
-      Vue.delete(this.cancellationTokens, useRootStore().selectedMachine)
-      Vue.delete(this.filesBeingTransferred, useRootStore().selectedMachine)
+      delete this.closeProgressOnSuccess[useRootStore().selectedMachine]
+      delete this.cancellationTokens[useRootStore().selectedMachine]
+      delete this.filesBeingTransferred[useRootStore().selectedMachine]
     },
     multiUploadStarting({
       machine,
@@ -235,10 +238,10 @@ export default Vue.extend({
       cancellationToken: CancellationToken
     }) {
       if (showProgress) {
-        Vue.set(this.isMachineUploading, machine, true)
-        Vue.set(this.closeProgressOnSuccess, machine, closeProgressOnSuccess)
-        Vue.set(this.cancellationTokens, machine, cancellationToken)
-        Vue.set(this.filesBeingTransferred, machine, files)
+        this.isMachineUploading[machine] = true
+        this.closeProgressOnSuccess[machine] = closeProgressOnSuccess
+        this.cancellationTokens[machine] = cancellationToken
+        this.filesBeingTransferred[machine] = files
         this.setFileNameOffsets(machine, files)
       }
     },
@@ -256,16 +259,15 @@ export default Vue.extend({
       cancellationToken: CancellationToken
     }) {
       if (showProgress) {
-        Vue.set(this.isMachineUploading, machine, false)
-        Vue.set(this.closeProgressOnSuccess, machine, closeProgressOnSuccess)
-        Vue.set(this.cancellationTokens, machine, cancellationToken)
-        Vue.set(this.filesBeingTransferred, machine, files)
-        Vue.set(this.retries, machine, [])
+        this.isMachineUploading[machine] = false
+        this.closeProgressOnSuccess[machine] = closeProgressOnSuccess
+        this.cancellationTokens[machine] = cancellationToken
+        this.filesBeingTransferred[machine] = files
         this.setFileNameOffsets(machine, files)
       }
     },
     setFileNameOffsets(machine: string, files: Array<FileTransferItem>) {
-      Vue.set(this.fileNameOffsets, machine, 0)
+      this.fileNameOffsets[machine] = 0
       if (files.length > 1) {
         let offset = 0
         do {

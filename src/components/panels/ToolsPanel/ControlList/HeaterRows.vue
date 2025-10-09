@@ -161,14 +161,13 @@
 import { Heater, HeaterState, MachineStatus } from '@duet3d/objectmodel'
 import { computed, PropType, ref } from 'vue'
 
-import i18n from '@/i18n'
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { getHeaterColor } from '@/utils/colors'
 import { displaySensorValue } from '@/utils/display'
-import { useMachinesSettingsStore } from '@/stores/machineSettings'
-import { useRootStore } from '@/stores'
-import { useMachinesStore } from '@/stores/machines'
-import { useMachinesModelStore } from '@/stores/machineModel'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   type: {
@@ -235,11 +234,13 @@ function selectHeater(index: number, heater: Heater | null, heaterIndex: number)
 
 const singleHeaterCaption = computed(() => {
   if (selectedHeater.value === null) {
-    return props.type === 'bed' ? i18n.t('panel.tools.beds') : i18n.t('panel.tools.chambers')
+    return props.type === 'bed'
+      ? useI18n().t('panel.tools.beds')
+      : useI18n().t('panel.tools.chambers')
   }
   return props.type === 'bed'
-    ? i18n.t('panel.tools.bed', [''])
-    : i18n.t('panel.tools.chamber', [''])
+    ? useI18n().t('panel.tools.bed', [''])
+    : useI18n().t('panel.tools.chamber', [''])
 })
 
 async function allHeatersClick() {
@@ -337,7 +338,7 @@ function getHeaterName(heater: Heater | null, heaterIndex: number) {
       return sensor.name
     }
   }
-  return i18n.t('panel.tools.heater', [heaterIndex])
+  return useI18n().t('panel.tools.heater', [heaterIndex])
 }
 
 function getHeaterValue(heater: Heater | null) {
@@ -351,7 +352,7 @@ function getHeaterValue(heater: Heater | null) {
       return displaySensorValue(sensor)
     }
   }
-  return i18n.t('generic.noValue')
+  return useI18n().t('generic.noValue')
 }
 
 async function heaterClick(index: number, heater: Heater | null) {

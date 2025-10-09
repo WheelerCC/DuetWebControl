@@ -45,15 +45,14 @@
 
 <script lang="ts">
 import { Directories } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
 import { isBaseFileListDataTransfer } from '@/components/lists/BaseFileList.vue'
 
-import { getErrorMessage } from '@/utils/errors'
-import { LogType } from '@/utils/logging'
-import Path from '@/utils/path'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { getErrorMessage } from '@/utils/errors'
+import { log, LogType } from '@/utils/logging'
+import Path from '@/utils/path'
 
 interface BreadcrumbItem {
   showDropdown: boolean
@@ -62,7 +61,9 @@ interface BreadcrumbItem {
   href: string
 }
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     value: {
       type: String,
@@ -212,7 +213,7 @@ export default Vue.extend({
             try {
               await useMachinesStore().move({ from, to })
             } catch (e) {
-              this.$log(
+              log(
                 LogType.error,
                 this.$t('error.move', [data.items[i].name, directory]),
                 getErrorMessage(e),

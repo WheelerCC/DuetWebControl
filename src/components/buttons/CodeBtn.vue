@@ -14,9 +14,9 @@
 <script lang="ts">
 import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
-import { VBtn } from 'vuetify/lib'
+import { defineComponent } from 'vue'
 
-export default VBtn.extend({
+export default defineComponent({
   props: {
     code: {
       type: String,

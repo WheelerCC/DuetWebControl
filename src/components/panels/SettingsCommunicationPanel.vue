@@ -5,7 +5,7 @@
     </v-card-title>
 
     <v-card-text>
-      <v-row :dense="$vuetify.breakpoint.mobile">
+      <v-row :dense="$vuetify.display.mobile">
         <template v-if="isRestConnector">
           <v-col cols="6">
             <v-text-field
@@ -98,9 +98,10 @@
 import { useMachinesStore } from '@/stores/machines'
 import { MachineSettingsState, useMachinesSettingsStore } from '@/stores/machineSettings'
 import { PollConnector, RestConnector } from '@duet3d/connectors'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     isRestConnector(): boolean {
       return useMachinesStore().connector instanceof RestConnector

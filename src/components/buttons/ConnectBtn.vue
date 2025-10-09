@@ -1,5 +1,10 @@
 <template>
-  <v-btn v-bind="$props" :color="buttonColor" :depressed="isBusy" @click="clicked">
+  <v-btn
+    v-bind="$props"
+    :color="buttonColor"
+    :variant="isBusy ? 'flat' : undefined"
+    @click="clicked"
+  >
     <v-icon v-show="!isBusy">
       {{ buttonIcon }}
     </v-icon>
@@ -11,9 +16,10 @@
 <script lang="ts">
 import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     isConnected(): boolean {
       return useRootStore().isConnected

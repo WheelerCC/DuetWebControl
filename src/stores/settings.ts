@@ -1,10 +1,10 @@
-import i18n, { getBrowserLocale } from '@/i18n'
+import { getBrowserLocale } from '@/i18n'
 
 import {
-  localStorageSupported,
   getLocalSetting,
-  setLocalSetting,
+  localStorageSupported,
   removeLocalSetting,
+  setLocalSetting,
 } from '@/utils/localStorage'
 import patch from '@/utils/patch'
 import Path from '@/utils/path'
@@ -190,15 +190,15 @@ export interface SettingsState {
 }
 
 import { defineStore } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useRootStore } from '.'
-import { useMachinesModelStore } from './machineModel'
-import { useMachinesSettingsStore } from './machineSettings'
 import { useMachinesCacheStore } from './machineCache'
-import { resetSettingsTimer } from './observer'
+import { useMachinesModelStore } from './machineModel'
 import { useMachinesStore } from './machines'
+import { useMachinesSettingsStore } from './machineSettings'
+import { resetSettingsTimer } from './observer'
 
-export const useSettingsStore = defineStore({
-  id: 'settings',
+export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
     language: getBrowserLocale(),
     lastHostname: location.host,
@@ -309,8 +309,8 @@ export const useSettingsStore = defineStore({
         payload.ignoreFileTimestamps === undefined && payload.settingsSaveDelay === 2000
       const updateCacheTime =
         payload.ignoreFileTimestamps === undefined && payload.settingsSaveDelay === 4000
-      if (payload.language && i18n.locale !== payload.language) {
-        i18n.locale = payload.language
+      if (payload.language && useI18n().locale !== payload.language) {
+        useI18n().locale = payload.language
       }
       if (payload.plugins) {
         this.plugins = payload.plugins
@@ -376,16 +376,13 @@ export const useSettingsStore = defineStore({
           showProgress: false,
           showSuccess: false,
           showError: false,
+        })[0]
+        await useMachinesStore().upload({
+          filename: Path.dwcSettingsFile,
+          content: new Blob([defaults]),
+          showProgress: false,
+          showSuccess: false,
         })
-        await useMachinesStore().upload(
-          {
-            filename: Path.dwcSettingsFile,
-            content: new Blob([defaults]),
-            showProgress: false,
-            showSuccess: false,
-          },
-          { root: true },
-        )
       } catch (e) {
         // handled before we get here
       }
@@ -406,8 +403,8 @@ export const useSettingsStore = defineStore({
       setLocalSetting('lastHostname', hostname)
     },
     update(payload: any) {
-      if (payload.language && i18n.locale !== payload.language) {
-        i18n.locale = payload.language
+      if (payload.language && useI18n().locale !== payload.language) {
+        useI18n().locale = payload.language
       }
       if (payload.plugins) {
         this.plugins = payload.plugins

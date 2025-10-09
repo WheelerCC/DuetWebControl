@@ -6,13 +6,13 @@
 </template>
 
 <script lang="ts">
-import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { DashboardMode, useSettingsStore } from '@/stores/settings'
 import { MachineMode } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     isFFForUnset() {
       let settingsStore = useSettingsStore()

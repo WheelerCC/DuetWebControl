@@ -48,17 +48,17 @@
 </template>
 
 <script lang="ts">
+import { log } from '@/utils/logging'
 import { FileListItem } from '@duet3d/connectors'
 import { Volume } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import Events from '@/utils/events'
 import { LogType } from '@/utils/logging'
 import Path, { escapeFilename } from '@/utils/path'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useRootStore } from '@/stores'
-import { useMachinesStore } from '@/stores/machines'
 
 interface MacroItemProperties {
   displayName: string
@@ -67,7 +67,10 @@ interface MacroItemProperties {
 
 type MacroItem = FileListItem & MacroItemProperties
 
-export default Vue.extend({
+import eventbus from '@/utils/eventbus'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       loading: false,
@@ -159,11 +162,11 @@ export default Vue.extend({
     }
 
     // Keep track of file changes
-    this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
+    eventbus.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // No longer keep track of file changes
-    this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
+    eventbus.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
   },
   methods: {
     async loadDirectory(directory: string) {
@@ -173,7 +176,16 @@ export default Vue.extend({
 
       this.loading = true
       try {
-        const files: Array<MacroItem> = await useMachinesStore().getFileList(directory)
+        const files: Array<MacroItem> = (await useMachinesStore().getFileList(directory)).map(
+          (fileListItem) => {
+            return {
+              ...fileListItem,
+              displayName: '',
+              executing: false,
+            } satisfies MacroItem
+          },
+        )
+
         files.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
         files.sort((a, b) => (a.isDirectory === b.isDirectory ? 0 : a.isDirectory ? -1 : 1))
         for (const item of files) {
@@ -186,7 +198,7 @@ export default Vue.extend({
       } catch (e) {
         if (!(e instanceof DisconnectedError)) {
           console.warn(e)
-          this.$log(LogType.error, this.$t('error.filelistRequestFailed'), getErrorMessage(e))
+          log(LogType.error, this.$t('error.filelistRequestFailed'), getErrorMessage(e))
         }
       }
       this.loading = false

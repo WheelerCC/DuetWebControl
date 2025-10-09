@@ -1,5 +1,5 @@
-import { PluginManifest } from '@duet3d/objectmodel'
 import { NotImplementedError } from '@/utils/errors'
+import { PluginManifest } from '@duet3d/objectmodel'
 
 /**
  * This interface is meant only built-in DWC plugins and for dev purposes.

@@ -1,11 +1,9 @@
 import { AnalogSensor, AnalogSensorType, Axis, AxisLetter, MachineMode } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import i18n from '@/i18n'
-
-import { UnitOfMeasure, useSettingsStore } from '@/stores/settings'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { UnitOfMeasure, useSettingsStore } from '@/stores/settings'
+import { useI18n } from 'vue-i18n'
 
 /**
  * Display a numeric value with a given precision and an optional unit.
@@ -21,7 +19,7 @@ export function display(
 ) {
   if (typeof value === 'number') {
     if (isNaN(value)) {
-      return i18n.t('generic.noValue')
+      return useI18n().t('generic.noValue')
     }
     return value.toFixed(precision !== undefined ? precision : 2) + (unit ? ' ' + unit : '')
   }
@@ -30,11 +28,11 @@ export function display(
       .map((item) =>
         item !== undefined
           ? item.toFixed(precision !== undefined ? precision : 0) + (unit ? ' ' + unit : '')
-          : i18n.t('generic.noValue'),
+          : useI18n().t('generic.noValue'),
       )
       .join(', ')
   }
-  return value && value.constructor === String ? value : i18n.t('generic.noValue')
+  return value && value.constructor === String ? value : useI18n().t('generic.noValue')
 }
 
 /**
@@ -45,7 +43,7 @@ export function display(
 export function displayAxisPosition(axis: Axis, machinePosition: boolean = false) {
   let position = machinePosition ? axis.machinePosition : axis.userPosition
   if (position === null) {
-    return i18n.t('generic.noValue')
+    return useI18n().t('generic.noValue')
   }
 
   let settingsStore = useSettingsStore()
@@ -98,7 +96,7 @@ export function displaySensorValue(sensor: AnalogSensor) {
  */
 export function displaySize(bytes: number | null | undefined) {
   if (typeof bytes !== 'number') {
-    return i18n.t('generic.noValue')
+    return useI18n().t('generic.noValue')
   }
   let settingsStore = useSettingsStore()
 
@@ -139,9 +137,9 @@ export function displaySize(bytes: number | null | undefined) {
  */
 export function displayMoveSpeed(speed: number | null | undefined) {
   if (typeof speed === 'number' && useSettingsStore().displayUnits === UnitOfMeasure.imperial) {
-    return display((speed * 60) / 25.4, 1, i18n.t('panel.settingsAppearance.unitInchSpeed'))
+    return display((speed * 60) / 25.4, 1, useI18n().t('panel.settingsAppearance.unitInchSpeed'))
   }
-  return display(speed, 1, i18n.t('panel.settingsAppearance.unitMmSpeed'))
+  return display(speed, 1, useI18n().t('panel.settingsAppearance.unitMmSpeed'))
 }
 
 /**
@@ -151,7 +149,7 @@ export function displayMoveSpeed(speed: number | null | undefined) {
  */
 export function displayTransferSpeed(bytesPerSecond: number | null | undefined) {
   if (typeof bytesPerSecond !== 'number') {
-    return i18n.t('generic.noValue')
+    return useI18n().t('generic.noValue')
   }
   let settingsStore = useSettingsStore()
 
@@ -193,7 +191,7 @@ export function displayTransferSpeed(bytesPerSecond: number | null | undefined) 
  */
 export function displayTime(value: number | null | undefined, showTrailingZeroes = false) {
   if (typeof value !== 'number' || isNaN(value)) {
-    return i18n.t('generic.noValue')
+    return useI18n().t('generic.noValue')
   }
 
   value = Math.round(value)
@@ -289,12 +287,3 @@ export function indent(content: string): string {
   }
   return newResult.trim()
 }
-
-// Register display extensions
-Vue.prototype.$display = display
-Vue.prototype.$displayAxisPosition = displayAxisPosition
-Vue.prototype.$displayZ = displayZ
-Vue.prototype.$displaySize = displaySize
-Vue.prototype.$displayMoveSpeed = displayMoveSpeed
-Vue.prototype.$displayTransferSpeed = displayTransferSpeed
-Vue.prototype.$displayTime = displayTime

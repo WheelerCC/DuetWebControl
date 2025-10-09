@@ -16,11 +16,11 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
 import { MachineSettingTabs } from '..'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       tab: 'machine-tab-0',

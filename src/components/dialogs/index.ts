@@ -6,16 +6,16 @@ import ConnectDialog from './ConnectDialog.vue'
 import ConnectionDialog from './ConnectionDialog.vue'
 import FilamentDialog from './FilamentDialog.vue'
 import FileEditDialog from './FileEditDialog.vue'
+import FileTransferDialog from './FileTransferDialog.vue'
 import FirmwareUpdateDialog from './FirmwareUpdateDialog.vue'
 import IncompatibleVersionsDialog from './IncompatibleVersionsDialog.vue'
 import InputDialog from './InputDialog.vue'
 import MeshEditDialog from './MeshEditDialog.vue'
 import MessageBoxDialog from './MessageBoxDialog.vue'
-import NewFileDialog from './NewFileDialog.vue'
 import NewDirectoryDialog from './NewDirectoryDialog.vue'
+import NewFileDialog from './NewFileDialog.vue'
 import PluginInstallDialog from './PluginInstallDialog.vue'
 import ResetHeaterFaultDialog from './ResetHeaterFaultDialog.vue'
-import FileTransferDialog from './FileTransferDialog.vue'
 
 Vue.component('config-updated-dialog', ConfigUpdatedDialog)
 Vue.component('confirm-dialog', ConfirmDialog)

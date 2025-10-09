@@ -42,17 +42,19 @@
 </template>
 
 <script lang="ts">
+import { log } from '@/utils/logging'
 import { FileListItem } from '@duet3d/connectors'
 import { Tool } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
+import { useSettingsStore } from '@/stores/settings'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import { LogType } from '@/utils/logging'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useSettingsStore } from '@/stores/settings'
-import { useMachinesStore } from '@/stores/machines'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     runMacros: {
       type: Boolean,
@@ -113,7 +115,7 @@ export default Vue.extend({
       } catch (e) {
         if (!(e instanceof DisconnectedError)) {
           console.warn(e)
-          this.$log(LogType.error, this.$t('error.filamentsLoadFailed'), getErrorMessage(e))
+          log(LogType.error, this.$t('error.filamentsLoadFailed'), getErrorMessage(e))
         }
         this.hide()
       }

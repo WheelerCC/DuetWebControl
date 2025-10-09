@@ -1,7 +1,6 @@
 import { CancellationToken } from '@duet3d/connectors'
-import Vue from 'vue'
 
-import type { NotificationType, Notification } from '@/utils/notifications'
+import type { Notification, NotificationType } from '@/utils/notifications'
 
 declare module 'vue/types/vue' {
   interface Vue {

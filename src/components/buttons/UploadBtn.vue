@@ -26,28 +26,28 @@
 
     <input ref="fileInput" type="file" :accept="accept" hidden multiple @change="fileSelected" />
     <firmware-update-dialog
-      :shown.sync="confirmUpdate"
+      v-model:shown="confirmUpdate"
       :multiple-updates="multipleUpdates"
-      :update-wi-fi-firmware.sync="updates.wifiServer"
+      v-model:update-wi-fi-firmware="updates.wifiServer"
       @confirmed="startUpdate"
     />
-    <config-updated-dialog :shown.sync="confirmFirmwareReset" />
+    <config-updated-dialog v-model:shown="confirmFirmwareReset" />
   </div>
 </template>
 
 <script lang="ts">
-import { NetworkInterfaceType, MachineStatus, Board } from '@duet3d/objectmodel'
+import { Board, MachineStatus, NetworkInterfaceType } from '@duet3d/objectmodel'
 import JSZip from 'jszip'
-import Vue, { PropType } from 'vue'
+import { PropType } from 'vue'
 
-import { isPrinting } from '@/utils/enums'
-import { getErrorMessage, DisconnectedError } from '@/utils/errors'
-import Events from '@/utils/events'
-import { LogType } from '@/utils/logging'
-import Path, { escapeFilename } from '@/utils/path'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { isPrinting } from '@/utils/enums'
+import { DisconnectedError, getErrorMessage } from '@/utils/errors'
+import Events from '@/utils/events'
+import { log, LogType } from '@/utils/logging'
+import Path, { escapeFilename } from '@/utils/path'
 
 const webExtensions: Array<string> = [
   '.htm',
@@ -122,7 +122,12 @@ export enum UploadType {
   update = 'update',
 }
 
-export default Vue.extend({
+import { displayTime } from '@/utils/display'
+import eventbus from '@/utils/eventbus'
+import { makeNotification } from '@/utils/notifications'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     block: Boolean,
     color: {
@@ -351,7 +356,7 @@ export default Vue.extend({
         (this.target === UploadType.start || this.target === UploadType.plugin) &&
         files.length !== 1
       ) {
-        this.$makeNotification(
+        makeNotification(
           LogType.error,
           this.$t(`button.upload.${this.target}.caption`),
           this.$t('error.uploadStartWrongFileCount'),
@@ -365,7 +370,7 @@ export default Vue.extend({
           files.length > 1 &&
           Array.from(files).some((file) => file.name.toLowerCase().endsWith('.zip'))
         ) {
-          this.$makeNotification(
+          makeNotification(
             LogType.error,
             this.$t(`button.upload.${this.target}.caption`),
             this.$t('error.uploadNoSingleZIP'),
@@ -388,7 +393,7 @@ export default Vue.extend({
           const zip = new JSZip(),
             zipFiles: Array<string> = [],
             target = this.target
-          const notification = this.$makeNotification(
+          const notification = makeNotification(
             LogType.info,
             this.$t('notification.decompress.title'),
             this.$t('notification.decompress.message'),
@@ -417,7 +422,7 @@ export default Vue.extend({
                 })
 
                 if (isPlugin) {
-                  this.$root.$emit(Events.installPlugin, {
+                  eventbus.$emit(Events.installPlugin, {
                     machine: this.machine || useRootStore().selectedMachine,
                     zipFilename: files[0].name,
                     zipBlob: files[0],
@@ -443,7 +448,7 @@ export default Vue.extend({
 
               // Could we get anything useful?
               if (zipFiles.length === 0) {
-                this.$makeNotification(
+                makeNotification(
                   LogType.error,
                   this.$t(`button.upload.${this.target}.caption`),
                   this.$t('error.uploadNoFiles'),
@@ -456,7 +461,7 @@ export default Vue.extend({
                 useMachinesModelStore().sbc !== null &&
                 zipFiles.some((file) => file === 'index.html.gz')
               ) {
-                this.$makeNotification(
+                makeNotification(
                   LogType.error,
                   this.$t(`button.upload.${this.target}.caption`),
                   this.$t('notification.decompress.standaloneUpdateInSbcModeError'),
@@ -479,7 +484,7 @@ export default Vue.extend({
             }
             return
           } catch (e) {
-            this.$makeNotification(
+            makeNotification(
               LogType.error,
               this.$t('notification.decompress.errorTitle'),
               getErrorMessage(e),
@@ -645,9 +650,9 @@ export default Vue.extend({
         const secondsPassed = startTime
           ? Math.round((new Date().getTime() - startTime.getTime()) / 1000)
           : 0
-        this.$makeNotification(
+        makeNotification(
           LogType.success,
-          this.$t('notification.upload.success', [zipName, this.$displayTime(secondsPassed)]),
+          this.$t('notification.upload.success', [zipName, displayTime(secondsPassed)]),
           null,
         )
       }
@@ -668,7 +673,7 @@ export default Vue.extend({
           } catch (e) {
             if (!(e instanceof DisconnectedError)) {
               console.warn(e)
-              this.$log(LogType.error, this.$t('generic.error'), getErrorMessage(e))
+              log(LogType.error, this.$t('generic.error'), getErrorMessage(e))
             }
           }
         }
@@ -699,7 +704,7 @@ export default Vue.extend({
         } catch (e) {
           if (!(e instanceof DisconnectedError)) {
             console.warn(e)
-            this.$log(LogType.error, this.$t('generic.error'), getErrorMessage(e))
+            log(LogType.error, this.$t('generic.error'), getErrorMessage(e))
           }
         }
       }

@@ -117,9 +117,9 @@
                     </strong>
 
                     <div class="d-flex flex-row">
-                      <template v-for="(item, index) in fanRPM">
+                      <template v-for="(item, index) in fanRPM" :key="index">
                         <template v-if="index !== 0"> , </template>
-                        <span :key="index" :title="item.name" class="mx-0">{{ item.rpm }}</span>
+                        <span :title="item.name" class="mx-0">{{ item.rpm }}</span>
                       </template>
                     </div>
                   </v-col>
@@ -170,22 +170,22 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
 import {
-  ProbeType,
+  AnalogSensor,
   AnalogSensorType,
   Board,
   CurrentMove,
   Probe,
-  AnalogSensor,
+  ProbeType,
 } from '@duet3d/objectmodel'
 
-import { isPrinting } from '@/utils/enums'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useSettingsStore } from '@/stores/settings'
+import { isPrinting } from '@/utils/enums'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   computed: {
     currentMove(): CurrentMove {
       return useMachinesModelStore().move.currentMove

@@ -45,7 +45,7 @@
                 <v-btn-toggle
                   v-show="hasReverseableSpindle && spindle.canReverse"
                   v-model="spindleDirections[index]"
-                  mandatory
+                  mandatory="force"
                 >
                   <v-btn>
                     {{ $t('panel.spindle.forward') }}
@@ -78,9 +78,10 @@ import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { Spindle, SpindleState } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data: function () {
     return {
       spindleDirections: {} as Record<number, number>,
@@ -147,10 +148,10 @@ export default Vue.extend({
         const spindle = this.spindles[i]
         switch (spindle?.state) {
           case SpindleState.forward:
-            Vue.set(this.spindleDirections, i, 0)
+            this.spindleDirections[i] = 0
             break
           case SpindleState.reverse:
-            Vue.set(this.spindleDirections, i, 1)
+            this.spindleDirections[i] = 1
             break
         }
       }

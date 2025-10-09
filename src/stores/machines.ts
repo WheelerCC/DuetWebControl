@@ -1,25 +1,27 @@
-import i18n, { translateResponse } from '@/i18n'
-import Vue, { markRaw } from 'vue'
-import {
-  CancellationToken,
-  OperationFailedError,
-  FileNotFoundError,
-  OperationCancelledError,
-  OnProgressCallback,
-  BaseConnector,
-  InvalidPasswordError,
-} from '@duet3d/connectors'
+import { translateResponse } from '@/i18n'
 import { makeFileTransferNotification, Notification, showMessage } from '@/utils/notifications'
-import Root from '@/main'
+import {
+  BaseConnector,
+  CancellationToken,
+  CodeBufferError,
+  DisconnectedError,
+  FileNotFoundError,
+  InvalidPasswordError,
+  OnProgressCallback,
+  OperationCancelledError,
+  OperationFailedError,
+} from '@duet3d/connectors'
+import { Plugin } from '@duet3d/objectmodel'
+import { markRaw, reactive } from 'vue'
 
-import Path from '@/utils/path'
-import Events from '@/utils/events'
 import Plugins, { checkVersion, loadDwcResources } from '@/plugins'
-
+import Events from '@/utils/events'
+import Path from '@/utils/path'
 import packageInfo from '../../package.json'
 
-import { defineStore } from 'pinia'
 import { log, logCode, LogType } from '@/utils/logging'
+import { defineStore } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
 /**
  * Recorded machine event (e.g. message or code reply)
@@ -46,24 +48,19 @@ export interface MachineEvent {
   message: string | null
 }
 
-import { useSettingsStore } from './settings'
-import { FileTransferType } from '@/utils/notifications'
+import beep from '@/utils/beep'
 import { displayTime } from '@/utils/display'
 import { getErrorMessage } from '@/utils/errors'
-import { useRootStore } from '.'
-import { useMachinesModelStore } from './machineModel'
-import { useMachinesCacheStore } from './machineCache'
-import { defaultMachine } from './misc'
-import ObjectModel, {
-  DefaultHostname,
-  GCodeFileInfo,
-  MachineStatus,
-  MessageType,
-} from '@duet3d/objectmodel'
+import eventbus from '@/utils/eventbus'
+import { FileTransferType } from '@/utils/notifications'
+import ObjectModel, { DefaultHostname, MachineStatus, MessageType } from '@duet3d/objectmodel'
 import JSZip from 'jszip'
+import { useRootStore } from '.'
+import { useMachinesCacheStore } from './machineCache'
+import { useMachinesModelStore } from './machineModel'
 import { useMachinesSettingsStore } from './machineSettings'
-import beep from '@/utils/beep'
-import { DeepPartial } from '@/utils/misc'
+import { defaultMachine } from './misc'
+import { useSettingsStore } from './settings'
 
 /**
  * State of the machine module
@@ -150,8 +147,7 @@ export interface FileTransferItem {
   error?: any
 }
 
-export const useMachinesStore = defineStore({
-  id: 'machines',
+export const useMachinesStore = defineStore('machines', {
   state: (): Record<string, MachineState & { _connector?: BaseConnector | null }> => ({
     [defaultMachine]: {
       boardBeingUpdated: -1,
@@ -216,15 +212,17 @@ export const useMachinesStore = defineStore({
      * @param payload.zipFile ZIP container to extract (if applicable)
      * @param payload.start Whether to start the plugin upon installation
      */
-    async installPlugin(
-      { commit, dispatch },
-      {
-        zipFilename,
-        zipBlob,
-        zipFile,
-        start,
-      }: { zipFilename: string; zipBlob: Blob; zipFile: JSZip; start: boolean },
-    ) {
+    async installPlugin({
+      zipFilename,
+      zipBlob,
+      zipFile,
+      start,
+    }: {
+      zipFilename: string
+      zipBlob: Blob
+      zipFile: JSZip
+      start: boolean
+    }) {
       console.log('todo')
       // if (connector === null) { throw new OperationFailedError("installPlugin is not available in default machine module"); }
 
@@ -270,11 +268,12 @@ export const useMachinesStore = defineStore({
      * @param context Action context
      * @param plugin Plugin instance to uninstall
      */
-    async uninstallPlugin(_, plugin: Plugin): Promise<void> {
-      console.log('todo')
-      // if (connector === null) { throw new OperationFailedError("uninstallPlugin is not available in default machine module"); }
+    async uninstallPlugin(plugin: Plugin): Promise<void> {
+      if (this.connector === null) {
+        throw new OperationFailedError('uninstallPlugin is not available in default machine module')
+      }
 
-      // await connector.uninstallPlugin(plugin);
+      await this.connector.uninstallPlugin(plugin)
     },
 
     /**
@@ -365,14 +364,14 @@ export const useMachinesStore = defineStore({
      * @param context Action context
      * @param directory Directory path to create
      */
-    async makeDirectory(_, directory: string) {
+    async makeDirectory(directory: string) {
       if (this.connector === null) {
         throw new OperationFailedError('delete is not available in default machine module')
       }
 
       await this.connector.makeDirectory(directory)
-      Root.$emit(Events.directoryCreated, { machine: this.connector.hostname, directory })
-      Root.$emit(Events.filesOrDirectoriesChanged, {
+      eventbus.$emit(Events.directoryCreated, { machine: this.connector.hostname, directory })
+      eventbus.$emit(Events.filesOrDirectoriesChanged, {
         machine: this.connector.hostname,
         files: [directory],
       })
@@ -391,8 +390,13 @@ export const useMachinesStore = defineStore({
       }
 
       await this.connector.move(from, to, force)
-      Root.$emit(Events.fileOrDirectoryMoved, { machine: this.connector.hostname, from, to, force })
-      Root.$emit(Events.filesOrDirectoriesChanged, {
+      eventbus.$emit(Events.fileOrDirectoryMoved, {
+        machine: this.connector.hostname,
+        from,
+        to,
+        force,
+      })
+      eventbus.$emit(Events.filesOrDirectoriesChanged, {
         machine: this.connector.hostname,
         files: [from, to],
       })
@@ -427,7 +431,7 @@ export const useMachinesStore = defineStore({
         await this.connector.reconnect()
 
         this.setReconnecting(false)
-        log(LogType.success, i18n.t('events.reconnected'))
+        log(LogType.success, useI18n().t('events.reconnected'))
       } catch (e) {
         await this.onConnectionError(e as Error)
       }
@@ -455,7 +459,7 @@ export const useMachinesStore = defineStore({
       ) {
         // Try to reconnect instantly once if the machine is updating or performing an emergency stop
         if (useMachinesModelStore().state.status !== MachineStatus.updating) {
-          log(LogType.warning, i18n.t('events.reconnecting'))
+          log(LogType.warning, useI18n().t('events.reconnecting'))
         }
         this.reconnect()
       } else if (
@@ -523,7 +527,7 @@ export const useMachinesStore = defineStore({
             reply = translateResponse(reply)
 
             logCode(null, reply, this.connector ? this.connector.hostname : defaultMachine)
-            Root.$emit(Events.codeExecuted, {
+            eventbus.$emit(Events.codeExecuted, {
               machine: this.connector ? this.connector.hostname : defaultMachine,
               code: null,
               reply,
@@ -536,7 +540,7 @@ export const useMachinesStore = defineStore({
 
       // Merge updates into the object model
       useMachinesModelStore().update(payload)
-      Root.$emit(
+      eventbus.$emit(
         Events.machineModelUpdated,
         this.connector ? this.connector.hostname : defaultMachine,
       )
@@ -563,7 +567,7 @@ export const useMachinesStore = defineStore({
       // Is there a startup error to report?
       const startupError = machineModelState.state.startupError
       if (startupError !== null && lastStartupError !== JSON.stringify(startupError)) {
-        const errorMessage = i18n.t('error.startupError', [
+        const errorMessage = useI18n().t('error.startupError', [
           startupError.file,
           startupError.line,
           startupError.message,
@@ -578,7 +582,7 @@ export const useMachinesStore = defineStore({
       ) {
         log(
           LogType.warning,
-          i18n.t('events.emergencyStop'),
+          useI18n().t('events.emergencyStop'),
           undefined,
           this.connector?.hostname ?? DefaultHostname,
         )
@@ -623,10 +627,10 @@ export const useMachinesStore = defineStore({
       // try {
       // 	try {
       // 		await connector.installSystemPackage(filename, packageData, cancellationToken, onProgress);
-      // 		makeNotification(LogType.success, i18n.t("notification.systemPackageInstall.success", [filename]));
+      // 		makeNotification(LogType.success, useI18n().t("notification.systemPackageInstall.success", [filename]));
       // 	} catch (e) {
       // 		if (!(e instanceof OperationCancelledError)) {
-      // 			makeNotification(LogType.error, i18n.t("notification.systemPackageInstall.error", [filename]), getErrorMessage(e));
+      // 			makeNotification(LogType.error, useI18n().t("notification.systemPackageInstall.error", [filename]), getErrorMessage(e));
       // 			throw e;
       // 		}
       // 	}
@@ -646,31 +650,36 @@ export const useMachinesStore = defineStore({
     async sendCode(
       payload: string | { code: string; fromInput?: boolean; log?: boolean; noWait?: boolean },
     ) {
-      console.log('todo connector')
-      // if (connector === null) { throw new OperationFailedError("sendCode is not available in default machine module"); }
+      // console.log('todo connector')
 
-      // const code = (payload instanceof Object) ? payload.code : payload;
-      // const fromInput = (payload instanceof Object && payload.fromInput !== undefined) ? payload.fromInput : false;
-      // const doLog = (payload instanceof Object && payload.log !== undefined) ? payload.log : true;
-      // const noWait = (payload instanceof Object && payload.noWait !== undefined) ? payload.noWait : false;
-      // try {
-      // 	let reply = await connector.sendCode(code, noWait);
-      // 	if (typeof reply === "string") {
-      // 		reply = translateResponse(reply);
-      // 	}
+      if (this.connector === null) {
+        throw new OperationFailedError('sendCode is not available in default machine module')
+      }
 
-      // 	if (doLog && (fromInput || reply)) {
-      // 		logCode(code, reply || "", connector.hostname);
-      // 	}
-      // 	Root.$emit(Events.codeExecuted, { machine: connector.hostname, code, reply });
-      // 	return reply;
-      // } catch (e) {
-      // 	if (!(e instanceof DisconnectedError) && doLog) {
-      // 		const type = (e instanceof CodeBufferError) ? LogType.warning : LogType.error;
-      // 		log(type, code, getErrorMessage(e), connector.hostname);
-      // 	}
-      // 	throw e;
-      // }
+      const code = payload instanceof Object ? payload.code : payload
+      const fromInput =
+        payload instanceof Object && payload.fromInput !== undefined ? payload.fromInput : false
+      const doLog = payload instanceof Object && payload.log !== undefined ? payload.log : true
+      const noWait =
+        payload instanceof Object && payload.noWait !== undefined ? payload.noWait : false
+      try {
+        let reply = await this.connector.sendCode(code, noWait)
+        if (typeof reply === 'string') {
+          reply = translateResponse(reply)
+        }
+
+        if (doLog && (fromInput || reply)) {
+          logCode(code, reply || '', this.connector.hostname)
+        }
+        eventbus.$emit(Events.codeExecuted, { machine: this.connector.hostname, code, reply })
+        return reply
+      } catch (e) {
+        if (!(e instanceof DisconnectedError) && doLog) {
+          const type = e instanceof CodeBufferError ? LogType.warning : LogType.error
+          log(type, code, getErrorMessage(e), this.connector.hostname)
+        }
+        throw e
+      }
     },
 
     // Convert actions
@@ -688,19 +697,22 @@ export const useMachinesStore = defineStore({
      * @param payload.showError Show notification upon error (defaults to true)
      * @param payload.closeProgressOnSuccess Automatically close the progress indicator when finished (defaults to false)
      */
-    async upload(payload: {
-      filename?: string
-      content?: any
-      files?: Array<{ filename: string; content: any }>
-      showProgress?: boolean
-      showSuccess?: boolean
-      showError?: boolean
-      closeProgressOnSuccess?: boolean
-    }) {
+    async upload(
+      payload: {
+        filename?: string
+        content?: any
+        files?: Array<{ filename: string; content: any }>
+        showProgress?: boolean
+        showSuccess?: boolean
+        showError?: boolean
+        closeProgressOnSuccess?: boolean
+      },
+      _machineName?: string,
+    ) {
       // if (connector === null) { throw new OperationFailedError("upload is not available in default machine module"); }
 
-      let machineName = useRootStore().selectedMachine
-      const files = Vue.observable(new Array<FileTransferItem>()),
+      let machineName = _machineName ?? useRootStore().selectedMachine
+      const files = reactive(new Array<FileTransferItem>()),
         cancellationToken: CancellationToken = { cancel() {} }
       const showProgress = payload.showProgress !== undefined ? Boolean(payload.showProgress) : true
       const showSuccess = payload.showSuccess !== undefined ? Boolean(payload.showSuccess) : true
@@ -732,7 +744,7 @@ export const useMachinesStore = defineStore({
           )
         }
 
-        Root.$emit(Events.fileUploading, {
+        eventbus.$emit(Events.fileUploading, {
           machine: machineName,
           filename: payload.filename,
           content: payload.content,
@@ -761,7 +773,7 @@ export const useMachinesStore = defineStore({
           this.addFileBeingChanged(file.filename)
         }
 
-        Root.$emit(Events.multipleFilesUploading, {
+        eventbus.$emit(Events.multipleFilesUploading, {
           machine: machineName,
           files,
           showProgress,
@@ -832,7 +844,7 @@ export const useMachinesStore = defineStore({
               )
               log(
                 LogType.success,
-                i18n.t('notification.upload.success', [
+                useI18n().t('notification.upload.success', [
                   Path.extractFileName(filename),
                   displayTime(secondsPassed),
                 ]),
@@ -842,7 +854,7 @@ export const useMachinesStore = defineStore({
             }
 
             // File has been uploaded successfully, emit an event
-            Root.$emit(Events.fileUploaded, {
+            eventbus.$emit(Events.fileUploaded, {
               machine: machineName,
               filename,
               content,
@@ -851,7 +863,7 @@ export const useMachinesStore = defineStore({
             })
           } catch (e) {
             // Failed to upload a file, emit an event
-            Root.$emit(Events.fileUploadError, {
+            eventbus.$emit(Events.fileUploadError, {
               machine: machineName,
               filename,
               content,
@@ -863,7 +875,7 @@ export const useMachinesStore = defineStore({
               console.warn(e)
               log(
                 LogType.error,
-                i18n.t('notification.upload.error', [Path.extractFileName(filename)]),
+                useI18n().t('notification.upload.error', [Path.extractFileName(filename)]),
                 getErrorMessage(e),
                 machineName,
               )
@@ -882,7 +894,7 @@ export const useMachinesStore = defineStore({
         if (!payload.filename) {
           this.setMultiFileTransfer(false)
         }
-        Root.$emit(Events.filesOrDirectoriesChanged, {
+        eventbus.$emit(Events.filesOrDirectoriesChanged, {
           machine: machineName,
           files: files.map((file) => file.filename),
         })
@@ -903,161 +915,187 @@ export const useMachinesStore = defineStore({
      * @param payload.rawPath Obtain file from DWC base path instead of virtual SD card
      * @returns File transfer item if a single file was requested, else the files list plus content property
      */
-    async download(payload: {
-      filename?: string
-      type?: XMLHttpRequestResponseType
-      files?: Array<string>
-      showProgress?: boolean
-      showSuccess?: boolean
-      showError?: boolean
-      closeProgressOnSuccess?: boolean
-      rawPath?: boolean
-    }): Promise<FileTransferItem | Array<FileTransferItem>> {
-      console.log('todo')
-      return []
-      // if (connector === null) { throw new OperationFailedError("download is not available in default machine module"); }
+    async download(
+      payload: {
+        filename?: string
+        type?: XMLHttpRequestResponseType
+        files?: Array<string>
+        showProgress?: boolean
+        showSuccess?: boolean
+        showError?: boolean
+        closeProgressOnSuccess?: boolean
+        rawPath?: boolean
+      },
+      hostname?: string,
+    ): Promise<Array<FileTransferItem>> {
+      if (this.connector! === null) {
+        throw new OperationFailedError('download is not available in default machine module')
+      }
 
-      // const files = Vue.observable(new Array<FileTransferItem>), cancellationToken: CancellationToken = { cancel() { } };
-      // const showProgress = (payload.showProgress !== undefined) ? payload.showProgress : true;
-      // const showSuccess = (payload.showSuccess !== undefined) ? payload.showSuccess : true;
-      // const showError = (payload.showError !== undefined) ? payload.showError : true;
-      // const closeProgressOnSuccess = (payload.closeProgressOnSuccess !== undefined) ? payload.closeProgressOnSuccess : false;
-      // const rawPath = (payload.rawPath !== undefined) ? payload.rawPath : false;
+      const files = reactive(new Array<FileTransferItem>()),
+        cancellationToken: CancellationToken = { cancel() {} }
+      const showProgress = payload.showProgress !== undefined ? payload.showProgress : true
+      const showSuccess = payload.showSuccess !== undefined ? payload.showSuccess : true
+      const showError = payload.showError !== undefined ? payload.showError : true
+      const closeProgressOnSuccess =
+        payload.closeProgressOnSuccess !== undefined ? payload.closeProgressOnSuccess : false
+      const rawPath = payload.rawPath !== undefined ? payload.rawPath : false
 
-      // // Prepare the arguments and tell listeners that an upload is about to start
-      // let notification: Notification | null = null;
-      // if (payload.filename) {
-      // 	files.push({
-      // 		filename: payload.filename,
-      // 		content: null,
-      // 		type: payload.type || "json",
-      // 		startTime: null,
-      // 		retry: 0,
-      // 		progress: 0,
-      // 		speed: null,
-      // 		size: null,
-      // 		error: null
-      // 	});
-      // 	if (showProgress) {
-      // 		notification = makeFileTransferNotification(FileTransferType.download, payload.filename, cancellationToken);
-      // 	}
+      // Prepare the arguments and tell listeners that an upload is about to start
+      let notification: Notification | null = null
+      if (payload.filename) {
+        files.push({
+          filename: payload.filename,
+          content: null,
+          type: payload.type || 'json',
+          startTime: null,
+          retry: 0,
+          progress: 0,
+          speed: null,
+          size: null,
+          error: null,
+        })
+        if (showProgress) {
+          notification = makeFileTransferNotification(
+            FileTransferType.download,
+            payload.filename,
+            cancellationToken,
+          )
+        }
 
-      // 	Root.$emit(Events.fileDownloading, {
-      // 		machine: connector.hostname,
-      // 		filename: payload.filename,
-      // 		type: payload.type,
-      // 		showProgress,
-      // 		showSuccess,
-      // 		showError,
-      // 		cancellationToken,
-      // 		rawPath
-      // 	});
-      // } else if (payload.files instanceof Array) {
-      // 	if (state.transferringFiles) {
-      // 		throw new Error("Cannot perform two multi-file transfers at the same time");
-      // 	}
-      // 	commit("setMultiFileTransfer", true);
+        eventbus.$emit(Events.fileDownloading, {
+          machine: this.connector!.hostname,
+          filename: payload.filename,
+          type: payload.type,
+          showProgress,
+          showSuccess,
+          showError,
+          cancellationToken,
+          rawPath,
+        })
+      } else if (payload.files instanceof Array) {
+        if (this.transferringFiles) {
+          throw new Error('Cannot perform two multi-file transfers at the same time')
+        }
+        this.setMultiFileTransfer(true)
 
-      // 	for (const file of payload.files) {
-      // 		files.push({
-      // 			filename: file,
-      // 			content: null,
-      // 			type: payload.type || "blob",
-      // 			startTime: null,
-      // 			retry: 0,
-      // 			progress: 0,
-      // 			speed: null,
-      // 			size: null,
-      // 			error: null
-      // 		});
-      // 	}
+        for (const file of payload.files) {
+          files.push({
+            filename: file,
+            content: null,
+            type: payload.type || 'blob',
+            startTime: null,
+            retry: 0,
+            progress: 0,
+            speed: null,
+            size: null,
+            error: null,
+          })
+        }
 
-      // 	Root.$emit(Events.multipleFilesDownloading, {
-      // 		machine: connector.hostname,
-      // 		files,
-      // 		showProgress,
-      // 		closeProgressOnSuccess,
-      // 		cancellationToken,
-      // 		rawPath
-      // 	});
-      // }
+        eventbus.$emit(Events.multipleFilesDownloading, {
+          machine: this.connector!.hostname,
+          files,
+          showProgress,
+          closeProgressOnSuccess,
+          cancellationToken,
+          rawPath,
+        })
+      }
 
-      // // Download the file(s)
-      // try {
-      // 	for (let i = 0; i < files.length; i++) {
-      // 		const item = files[i], filename = item.filename, type = item.type;
-      // 		try {
-      // 			// Wait for download to finish
-      // 			item.startTime = new Date();
-      // 			const response = await connector.download(
-      // 				filename,
-      // 				type,
-      // 				cancellationToken,
-      // 				(loaded, total, retry) => {
-      // 					if (item.startTime === null) {
-      // 						item.startTime = new Date();
-      // 					}
-      // 					item.size = total;
-      // 					item.progress = loaded / total;
-      // 					item.speed = loaded / (((new Date()).getTime() - item.startTime.getTime()) / 1000);
-      // 					item.retry = retry;
-      // 					if (notification && notification.onProgress) {
-      // 						notification.onProgress(loaded, total, item.speed);
-      // 					}
-      // 				},
-      // 				rawPath
-      // 			);
-      // 			item.progress = 1;
+      // Download the file(s)
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const item = files[i],
+            filename = item.filename,
+            type = item.type
+          try {
+            // Wait for download to finish
+            item.startTime = new Date()
+            const response = await this.connector!.download(
+              filename,
+              type,
+              cancellationToken,
+              (loaded, total, retry) => {
+                if (item.startTime === null) {
+                  item.startTime = new Date()
+                }
+                item.size = total
+                item.progress = loaded / total
+                item.speed = loaded / ((new Date().getTime() - item.startTime.getTime()) / 1000)
+                item.retry = retry
+                if (notification && notification.onProgress) {
+                  notification.onProgress(loaded, total, item.speed)
+                }
+              },
+              rawPath,
+            )
+            item.progress = 1
 
-      // 			// Show success message
-      // 			if (payload.filename && showSuccess) {
-      // 				const secondsPassed = Math.round(((new Date()).getTime() - item.startTime.getTime()) / 1000);
-      // 				log(LogType.success, i18n.t("notification.download.success", [Path.extractFileName(filename), displayTime(secondsPassed)]), undefined, connector.hostname);
-      // 			}
+            // Show success message
+            if (payload.filename && showSuccess) {
+              const secondsPassed = Math.round(
+                (new Date().getTime() - item.startTime.getTime()) / 1000,
+              )
+              log(
+                LogType.success,
+                useI18n().t('notification.download.success', [
+                  Path.extractFileName(filename),
+                  displayTime(secondsPassed),
+                ]),
+                undefined,
+                this.connector.hostname,
+              )
+            }
 
-      // 			// File has been uploaded successfully, emit an event
-      // 			Root.$emit(Events.fileDownloaded, {
-      // 				machine: connector.hostname,
-      // 				filename,
-      // 				type,
-      // 				num: i,
-      // 				count: files.length
-      // 			});
+            // File has been uploaded successfully, emit an event
+            eventbus.$emit(Events.fileDownloaded, {
+              machine: this.connector!.hostname,
+              filename,
+              type,
+              num: i,
+              count: files.length,
+            })
 
-      // 			// Return the response if a single file was requested
-      // 			if (payload.filename) {
-      // 				return response;
-      // 			}
-      // 			item.content = response;
-      // 		} catch (e) {
-      // 			// Failed to download a file, emit an event
-      // 			Root.$emit(Events.fileDownloadError, {
-      // 				machine: connector.hostname,
-      // 				filename,
-      // 				type,
-      // 				error: e
-      // 			});
+            // Return the response if a single file was requested
+            if (payload.filename) {
+              return response
+            }
+            item.content = response
+          } catch (e) {
+            // Failed to download a file, emit an event
+            eventbus.$emit(Events.fileDownloadError, {
+              machine: this.connector.hostname,
+              filename,
+              type,
+              error: e,
+            })
 
-      // 			// Show an error if requested
-      // 			if (showError && !(e instanceof OperationCancelledError)) {
-      // 				console.warn(e);
-      // 				log(LogType.error, i18n.t("notification.download.error", [Path.extractFileName(filename)]), getErrorMessage(e), connector.hostname);
-      // 			}
+            // Show an error if requested
+            if (showError && !(e instanceof OperationCancelledError)) {
+              console.warn(e)
+              log(
+                LogType.error,
+                useI18n().t('notification.download.error', [Path.extractFileName(filename)]),
+                getErrorMessage(e),
+                this.connector.hostname,
+              )
+            }
 
-      // 			// Rethrow the error so the caller is notified
-      // 			item.error = e;
-      // 			throw e;
-      // 		}
-      // 	}
-      // } finally {
-      // 	if (notification) {
-      // 		notification.close();
-      // 	}
-      // 	if (!payload.filename) {
-      // 		commit("setMultiFileTransfer", false);
-      // 	}
-      // }
-      // return payload.filename ? files[0] : files;
+            // Rethrow the error so the caller is notified
+            item.error = e
+            throw e
+          }
+        }
+      } finally {
+        if (notification) {
+          notification.close()
+        }
+        if (!payload.filename) {
+          this.setMultiFileTransfer(false)
+        }
+      }
+      return files
     },
 
     /**
@@ -1067,28 +1105,31 @@ export const useMachinesStore = defineStore({
      * @param payload.filename Filename to delete
      * @param payload.recursive Delete directories recursively (optional)
      */
-    async delete(hostname: string, payload: string | { filename: string; recursive?: boolean }) {
+    async delete(
+      payload: string | { filename: string; recursive?: boolean },
+      machineName?: string,
+    ) {
       // if (connector === null) { throw new OperationFailedError("delete is not available in default machine module"); }
       console.log('todo')
       // if (payload instanceof Object) {
       // 	await connector.delete(payload.filename, payload.recursive);
-      // 	Root.$emit(Events.fileOrDirectoryDeleted, {
+      // 	eventbus.$emit(Events.fileOrDirectoryDeleted, {
       // 		machine: connector.hostname,
       // 		filename: payload.filename,
       // 		recursive: payload.recursive
       // 	});
-      // 	Root.$emit(Events.filesOrDirectoriesChanged, {
+      // 	eventbus.$emit(Events.filesOrDirectoriesChanged, {
       // 		machine: connector.hostname,
       // 		files: [payload.filename],
       // 	});
       // } else {
       // 	await connector.delete(payload);
-      // 	Root.$emit(Events.fileOrDirectoryDeleted, {
+      // 	eventbus.$emit(Events.fileOrDirectoryDeleted, {
       // 		machine: connector.hostname,
       // 		filename: payload,
       // 		recursive: false
       // 	});
-      // 	Root.$emit(Events.filesOrDirectoriesChanged, {
+      // 	eventbus.$emit(Events.filesOrDirectoriesChanged, {
       // 		machine: connector.hostname,
       // 		files: [payload]
       // 	});
@@ -1272,7 +1313,7 @@ export const useMachinesStore = defineStore({
      * @param context Action context
      * @param plugin Identifier of the plugin to unload
      */
-    async unloadDwcPlugin({ dispatch, commit }, plugin: string) {
+    async unloadDwcPlugin(plugin: string) {
       let machineName = useRootStore().selectedMachine
       let settingsStore = useSettingsStore()
 

@@ -1,5 +1,5 @@
 <template>
-  <v-row :dense="$vuetify.breakpoint.mobile">
+  <v-row :dense="$vuetify.display.mobile">
     <v-col cols="12" class="pt-1">
       <code-input solo />
     </v-col>
@@ -11,9 +11,10 @@
 
 <script lang="ts">
 import { useRootStore } from '@/stores'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   activated() {
     useRootStore().hideCodeReplyNotifications
   },

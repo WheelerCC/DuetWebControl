@@ -45,8 +45,8 @@
     <base-file-list
       ref="filelist"
       v-model="selection"
-      :directory.sync="directory"
-      :loading.sync="loading"
+      v-model:directory="directory"
+      v-model:loading="loading"
       sort-table="sys"
       :no-files-text="noFilesText"
       @fileClicked="fileClicked"
@@ -99,24 +99,24 @@
       </v-btn>
     </v-speed-dial>
 
-    <new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
-    <new-file-dialog :shown.sync="showNewFile" :directory="directory" />
-    <config-updated-dialog :shown.sync="showResetPrompt" />
+    <new-directory-dialog v-model:shown="showNewDirectory" :directory="directory" />
+    <new-file-dialog v-model:shown="showNewFile" :directory="directory" />
+    <config-updated-dialog v-model:shown="showResetPrompt" />
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
+import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useMachinesStore } from '@/stores/machines'
 import { isPrinting } from '@/utils/enums'
 import Path from '@/utils/path'
 import { UploadType } from '../buttons/UploadBtn.vue'
 import { BaseFileListItem } from './BaseFileList.vue'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useRootStore } from '@/stores'
-import { useMachinesStore } from '@/stores/machines'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       directory: Path.system,
@@ -279,10 +279,11 @@ export default Vue.extend({
       }
     },
     async editConfigTemplate() {
-      const jsonTemplate: string = await useMachinesStore().download({
+      const file = await useMachinesStore().download({
         filename: Path.combine(this.systemDirectory, 'config.json'),
         type: 'text',
       })
+      const jsonTemplate: string = file[0].content
 
       const form = document.createElement('form')
       form.method = 'POST'

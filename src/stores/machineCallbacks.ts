@@ -1,9 +1,10 @@
 import { BaseConnector, Callbacks } from '@duet3d/connectors'
-import { Commit, Dispatch } from 'vuex'
 
-import Root from '@/main'
+import eventbus from '@/utils/eventbus'
 import Events from '@/utils/events'
 import { closeNotifications } from '@/utils/notifications'
+import { useRootStore } from '.'
+import { useMachinesStore } from './machines'
 
 export default class MachineCallbacks implements Callbacks {
   /**
@@ -12,25 +13,13 @@ export default class MachineCallbacks implements Callbacks {
   private hostname: string
 
   /**
-   * Global Vuex commit method
-   */
-  private commit: Commit
-
-  /**
-   * Global Vuex dispatch method
-   */
-  private dispatch: Dispatch
-
-  /**
    * Constructor of this class
    * @param hostname Hostname of the connected machine
    * @param commit Global Vuex commit method
    * @param dispatch Global Vuex dispatch method
    */
-  constructor(hostname: string, commit: Commit, dispatch: Dispatch) {
+  constructor(hostname: string) {
     this.hostname = hostname
-    this.commit = commit
-    this.dispatch = dispatch
   }
 
   /**
@@ -40,7 +29,7 @@ export default class MachineCallbacks implements Callbacks {
    * @returns
    */
   onConnectProgress(connector: BaseConnector, progress: number) {
-    this.commit(`setConnectingProgress`, progress, { root: true })
+    useRootStore().connectingProgress = progress
   }
 
   /**
@@ -50,7 +39,7 @@ export default class MachineCallbacks implements Callbacks {
    * @param reason Reason for the connection loss
    */
   async onConnectionError(connector: BaseConnector, reason: unknown) {
-    await this.dispatch(`machines/${this.hostname}/onConnectionError`, reason)
+    await useMachinesStore().onConnectionError(reason as Error)
   }
 
   /**
@@ -67,7 +56,7 @@ export default class MachineCallbacks implements Callbacks {
    * Note that this is called before the final connector instance is returned!
    */
   onUpdate(connector: BaseConnector, data: any) {
-    this.dispatch(`machines/${this.hostname}/update`, data)
+    useMachinesStore().update(data)
   }
 
   /**
@@ -76,7 +65,7 @@ export default class MachineCallbacks implements Callbacks {
    * @param volumeIndex Index of the volume where files or directories have been changed
    */
   onVolumeChanged(connector: BaseConnector, volumeIndex: number) {
-    Root.$emit(Events.filesOrDirectoriesChanged, {
+    eventbus.$emit(Events.filesOrDirectoriesChanged, {
       machine: this.hostname,
       volume: volumeIndex,
     })

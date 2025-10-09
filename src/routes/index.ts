@@ -1,10 +1,10 @@
 import { MachineMode } from '@duet3d/objectmodel'
-import Vue, { Component } from 'vue'
-import VueRouter, { RouteConfig } from 'vue-router'
+import Vue, { Component, reactive } from 'vue'
+import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 
-import Status from './Control/StatusComponent.vue'
-import Dashboard from './Control/DashboardComponent.vue'
 import Console from './Control/ConsoleComponent.vue'
+import Dashboard from './Control/DashboardComponent.vue'
+import Status from './Control/StatusComponent.vue'
 
 import Filaments from './Files/FilamentsComponent.vue'
 import Jobs from './Files/JobsComponent.vue'
@@ -18,11 +18,10 @@ import General from './Settings/GeneralComponent.vue'
 import Machine from './Settings/MachineComponent.vue'
 import Plugins from './Settings/PluginsComponent.vue'
 
-import Page404 from './Page404Component.vue'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useSettingsStore } from '@/stores/settings'
-
-Vue.use(VueRouter)
+import { useDisplay } from 'vuetify'
+import Page404 from './Page404Component.vue'
 
 /**
  * Menu item
@@ -87,7 +86,7 @@ export interface MenuCategory {
 /**
  * Actual menu structure (name vs. category descriptor)
  */
-export const Menu = Vue.observable<Record<string, MenuCategory>>({
+export const Menu = reactive<Record<string, MenuCategory>>({
   Control: {
     icon: 'mdi-tune',
     caption: 'menu.control.caption',
@@ -95,7 +94,7 @@ export const Menu = Vue.observable<Record<string, MenuCategory>>({
       {
         icon: 'mdi-list-status',
         caption: 'menu.control.status',
-        condition: () => Vue.prototype.$vuetify && Vue.prototype.$vuetify.breakpoint.smAndDown,
+        condition: () => useDisplay().smAndDown.value,
         path: '/Status',
         component: Status,
       },
@@ -204,7 +203,7 @@ export const Menu = Vue.observable<Record<string, MenuCategory>>({
 /**
  * Registered routes
  */
-export const Routes: Array<RouteConfig> = []
+export const Routes: Array<RouteRecordRaw> = []
 
 /**
  * Register a new menu category
@@ -233,7 +232,7 @@ export async function registerCategory(
       })
     }
 
-    Vue.set(Menu, name, category)
+    Menu[name] = category
     await Vue.nextTick() // wait for the DOM to be updated so that more routes can be added safely
   }
 }
@@ -316,12 +315,12 @@ interface TabItem {
 /**
  * Tab items in the general settings
  */
-export const GeneralSettingTabs = Vue.observable<Array<TabItem>>([])
+export const GeneralSettingTabs = reactive<Array<TabItem>>([])
 
 /**
  * Tab items in the machine settings
  */
-export const MachineSettingTabs = Vue.observable<Array<TabItem>>([])
+export const MachineSettingTabs = reactive<Array<TabItem>>([])
 
 /**
  * Register a new settings page and a Vue component
@@ -364,9 +363,8 @@ export function registerSettingTab(
 /**
  * Router instance
  */
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
   routes: Routes,
 })
 
@@ -386,7 +384,8 @@ for (const category in Menu) {
 }
 
 router.addRoute({
-  path: '*',
+  path: '/:pathMatch(.*)*',
+  name: 'NotFound',
   component: Page404,
 })
 

@@ -200,7 +200,7 @@
 
           <filament-dialog
             v-if="toolIndex === 0"
-            :shown.sync="filamentDialogShown"
+            v-model:shown="filamentDialogShown"
             :run-macros="filamentRunMacros"
             :tool="filamentDialogTool"
           />
@@ -221,17 +221,16 @@
 import { Heater, HeaterState, MachineStatus, SpindleState, Tool } from '@duet3d/objectmodel'
 import { computed, ref } from 'vue'
 
-import i18n from '@/i18n'
-
-import { getHeaterColor } from '@/utils/colors'
-import { DisconnectedError, getErrorMessage } from '@/utils/errors'
-import { log, LogType } from '@/utils/logging'
-import { displaySensorValue } from '@/utils/display'
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
-import { useSettingsStore } from '@/stores/settings'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { useMachinesStore } from '@/stores/machines'
+import { useSettingsStore } from '@/stores/settings'
+import { getHeaterColor } from '@/utils/colors'
+import { displaySensorValue } from '@/utils/display'
+import { DisconnectedError, getErrorMessage } from '@/utils/errors'
+import { log, LogType } from '@/utils/logging'
+import { useI18n } from 'vue-i18n'
 
 const emit = defineEmits<{
   (e: 'resetHeaterFault', heater: number): void
@@ -479,7 +478,7 @@ function getHeaterName(heater: Heater | null, heaterIndex: number) {
       return sensor.name
     }
   }
-  return i18n.t('panel.tools.heater', [heaterIndex])
+  return useI18n().t('panel.tools.heater', [heaterIndex])
 }
 
 function getHeaterValue(heater: Heater | null) {
@@ -493,7 +492,7 @@ function getHeaterValue(heater: Heater | null) {
       return displaySensorValue(sensor)
     }
   }
-  return i18n.t('generic.noValue')
+  return useI18n().t('generic.noValue')
 }
 
 async function toolHeaterClick(tool: Tool, heater: Heater) {

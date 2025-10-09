@@ -27,20 +27,22 @@
 </template>
 
 <script lang="ts">
+import { log, logToConsole } from '@/utils/logging'
 import semver from 'semver'
-import Vue from 'vue'
 
 import packageInfo from '../../../package.json'
 
-import { LogType } from '@/utils/logging'
-import { MachineStatus } from '@duet3d/objectmodel'
+import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
-import { useRootStore } from '@/stores'
+import { LogType } from '@/utils/logging'
+import { MachineStatus } from '@duet3d/objectmodel'
 
 const patchDiffs: Array<semver.ReleaseType | null> = ['patch', 'prepatch', 'prerelease']
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       checkVersionsTimeout: null as NodeJS.Timeout | null,
@@ -161,13 +163,13 @@ export default Vue.extend({
 
           this.shown = versionMismatch
           if (versionMismatch) {
-            this.$logToConsole(
+            logToConsole(
               LogType.error,
               this.$t('dialog.incompatibleVersions.title'),
               this.$t('dialog.incompatibleVersions.prompt'),
             )
           } else if (patchVersionMismatch) {
-            this.$log(
+            log(
               LogType.warning,
               this.$t('dialog.incompatibleVersions.title'),
               this.$t('dialog.incompatibleVersions.prompt'),

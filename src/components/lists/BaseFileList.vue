@@ -9,8 +9,8 @@
       show-select
       :loading="loading || innerLoading"
       :custom-sort="sort"
-      :sort-by.sync="internalSortBy"
-      :sort-desc.sync="internalSortDesc"
+      v-model:sort-by="internalSortBy"
+      v-model:sort-desc="internalSortDesc"
       must-sort
       disable-pagination
       hide-default-footer
@@ -100,7 +100,7 @@
                   </span>
                 </template>
 
-                {{ $display(props.item[header.value], 1, 'mm') }}
+                {{ display(props.item[header.value], 1, 'mm') }}
               </v-tooltip>
             </template>
             <template v-else-if="header.unit === 'time'">
@@ -156,18 +156,18 @@
 
     <file-edit-dialog
       v-model="editDialog.content"
-      :shown.sync="editDialog.shown"
+      v-model:shown="editDialog.shown"
       :filename="editDialog.filename"
       @editComplete="$emit('fileEdited', $event)"
     />
     <confirm-dialog
-      :shown.sync="forceMoveDialog.shown"
+      v-model:shown="forceMoveDialog.shown"
       :title="$t('dialog.forceMove.title')"
       :prompt="$t('dialog.forceMove.prompt')"
       @confirmed="forceMove"
     />
     <confirm-dialog
-      :shown.sync="removeDialog.shown"
+      v-model:shown="removeDialog.shown"
       :title="$tc('dialog.deleteFiles.title', removeDialog.items.length)"
       :prompt="
         removeDialog.items.length > 1
@@ -179,7 +179,7 @@
       @confirmed="removeCallback"
     />
     <input-dialog
-      :shown.sync="renameDialog.shown"
+      v-model:shown="renameDialog.shown"
       :title="$t('dialog.renameFile.title')"
       :prompt="$t('dialog.renameFile.prompt')"
       :preset="renameDialog.item && renameDialog.item.name"
@@ -192,11 +192,10 @@
 import { FileListItem } from '@duet3d/connectors'
 import JSZip from 'jszip'
 import saveAs from 'file-saver'
-import Vue, { PropType } from 'vue'
-import { DataItemProps, DataTableHeader } from 'vuetify'
-import { VDataTable } from 'vuetify/lib'
-
-import i18n from '@/i18n'
+import { VDataTable } from 'vuetify/components'
+import Vue, { defineComponent, PropType } from 'vue'
+import { DataTableHeader } from 'vuetify'
+import { log, logToConsole, logCode, logGlobal } from '@/utils/logging'
 
 import { DisconnectedError, getErrorMessage, OperationCancelledError } from '@/utils/errors'
 import Events from '@/utils/events'
@@ -232,8 +231,12 @@ export function isBaseFileListDataTransfer(data: any): data is BaseFileListDataT
     data.type === 'dwcFiles' && typeof data.directory === 'string' && data.items instanceof Array
   )
 }
+import eventbus from '@/utils/eventbus'
+import { makeNotification } from '@/utils/notifications'
+import { display, displayTime } from '@/utils/display'
+import { useI18n } from 'vue-i18n'
 
-export default VDataTable.extend({
+export default defineComponent({
   props: {
     headers: Array as PropType<Array<BaseFileListHeader>>,
     sortTable: String,
@@ -281,18 +284,16 @@ export default VDataTable.extend({
     defaultHeaders(): Array<BaseFileListHeader> {
       return [
         {
-          class: 'pl-0',
-          cellClass: 'pl-0',
-          text: i18n.t('list.baseFileList.fileName'),
+          title: useI18n().t('list.baseFileList.fileName'),
           value: 'name',
         },
         {
-          text: i18n.t('list.baseFileList.size'),
+          title: useI18n().t('list.baseFileList.size'),
           value: 'size',
           unit: 'bytes',
         },
         {
-          text: i18n.t('list.baseFileList.lastModified'),
+          title: useI18n().t('list.baseFileList.lastModified'),
           value: 'lastModified',
           unit: 'date',
         },
@@ -384,6 +385,7 @@ export default VDataTable.extend({
     }
   },
   methods: {
+    display,
     toggleAll() {
       this.innerValue = this.innerValue.length ? [] : this.innerFilelist.slice()
     },
@@ -467,8 +469,8 @@ export default VDataTable.extend({
         if (this.headers) {
           for (const file of files) {
             for (const header of this.headers) {
-              if (!(header.value in file)) {
-                Vue.set(file, header.value, undefined)
+              if (header.value && typeof header.value === 'string' && !(header.value in file)) {
+                file[header.value] = undefined
               }
             }
           }
@@ -491,7 +493,7 @@ export default VDataTable.extend({
       } catch (e) {
         if (!(e instanceof DisconnectedError)) {
           console.warn(e)
-          this.$makeNotification(
+          makeNotification(
             LogType.error,
             this.$t('error.filelistRequestFailed'),
             getErrorMessage(e),
@@ -538,11 +540,9 @@ export default VDataTable.extend({
         return ''
       }
       const itemValue = item[prop]
-      return typeof itemValue === 'number'
-        ? this.$displayTime(itemValue)
-        : this.$t('generic.noValue')
+      return typeof itemValue === 'number' ? displayTime(itemValue) : this.$t('generic.noValue')
     },
-    onItemTouchStart(props: DataItemProps, e: TouchEvent) {
+    onItemTouchStart(props: any, e: TouchEvent) {
       const that = this
       this.contextMenu.touchTimer = setTimeout(function () {
         that.contextMenu.touchTimer = null
@@ -561,14 +561,14 @@ export default VDataTable.extend({
         this.contextMenu.touchTimer = null
       }
     },
-    onItemClick(props: DataItemProps) {
+    onItemClick(props) {
       if (props.item.isDirectory) {
         this.loadDirectory(Path.combine(this.innerDirectory, props.item.name))
       } else {
         this.$emit('fileClicked', props.item)
       }
     },
-    onItemContextmenu(props: DataItemProps, e: MouseEvent) {
+    onItemContextmenu(props, e: MouseEvent) {
       if (this.contextMenu.shown) {
         return
       }
@@ -645,7 +645,7 @@ export default VDataTable.extend({
           row.remove()
         }
       }, this)
-      tableClone.style.backgroundColor = this.$vuetify.theme.dark ? '#424242' : '#FFFFFF'
+      tableClone.style.backgroundColor = this.$vuetify.theme.name == 'dark' ? '#424242' : '#FFFFFF'
       tableClone.style.position = 'absolute'
       tableClone.style.top = '-1000px'
       tableClone.style.left = '0px'
@@ -706,7 +706,7 @@ export default VDataTable.extend({
                 this.forceMoveDialog.to = to
                 this.forceMoveDialog.shown = true
               } else {
-                this.$makeNotification(
+                makeNotification(
                   LogType.error,
                   `Failed to move ${dragItem.name} to ${directory}`,
                   getErrorMessage(e),
@@ -726,7 +726,7 @@ export default VDataTable.extend({
           force: true,
         })
       } catch (e) {
-        this.$makeNotification(
+        makeNotification(
           LogType.error,
           `Failed to move ${this.forceMoveDialog.from} to ${this.forceMoveDialog.to}`,
           getErrorMessage(e),
@@ -736,10 +736,11 @@ export default VDataTable.extend({
     async download(item: BaseFileListItem) {
       try {
         const filename = item && item.name ? item.name : this.innerValue[0].name
-        const blob: Blob = await useMachinesStore().download({
+        const files = await useMachinesStore().download({
           filename: Path.combine(this.innerDirectory, filename),
           type: 'blob',
         })
+        const blob: Blob = files[0].content
         saveAs(blob, filename)
       } catch (e) {
         if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError)) {
@@ -751,13 +752,13 @@ export default VDataTable.extend({
     async edit(item: BaseFileListItem) {
       try {
         const filename = Path.combine(this.innerDirectory, item.name)
-        const response: string = await useMachinesStore().download({
+        const response = await useMachinesStore().download({
           filename,
           type: 'text',
           showSuccess: false,
         })
         this.editDialog.filename = filename
-        this.editDialog.content = response
+        this.editDialog.content = response[0].content
         this.editDialog.shown = true
       } catch (e) {
         if (!(e instanceof DisconnectedError) && !(e instanceof OperationCancelledError)) {
@@ -783,13 +784,13 @@ export default VDataTable.extend({
           from: Path.combine(this.renameDialog.directory, oldFilename),
           to: Path.combine(this.renameDialog.directory, newFilename),
         })
-        this.$makeNotification(
+        makeNotification(
           LogType.success,
           this.$t('notification.rename.success', [oldFilename, newFilename]),
         )
       } catch (e) {
         console.warn(e)
-        this.$log(
+        log(
           LogType.error,
           this.$t('notification.rename.error', [oldFilename, newFilename]),
           getErrorMessage(e),
@@ -825,7 +826,7 @@ export default VDataTable.extend({
             (file) => file.isDirectory !== item.isDirectory || file.name !== item.name,
           )
         } catch (e) {
-          this.$makeNotification(
+          makeNotification(
             LogType.error,
             this.$t('notification.delete.errorTitle', [item.name]),
             getErrorMessage(e),
@@ -834,7 +835,7 @@ export default VDataTable.extend({
       }
 
       if (deletedItems.length) {
-        this.$log(
+        log(
           LogType.success,
           deletedItems.length > 1
             ? this.$t('notification.delete.successMultiple', [deletedItems.length])
@@ -865,7 +866,7 @@ export default VDataTable.extend({
       }
 
       // Compress downloaded files and save the new archive
-      const notification = this.$makeNotification(
+      const notification = makeNotification(
         LogType.info,
         this.$t('notification.compress.title'),
         this.$t('notification.compress.message'),
@@ -881,7 +882,7 @@ export default VDataTable.extend({
         saveAs(zipBlob, 'download.zip')
       } catch (e) {
         console.warn(e)
-        this.$makeNotification(
+        makeNotification(
           LogType.error,
           this.$t('notification.compress.errorTitle'),
           getErrorMessage(e),
@@ -920,11 +921,11 @@ export default VDataTable.extend({
     }
 
     // Keep track of file changes
-    this.$root.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
+    eventbus.$on(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // No longer keep track of file changes
-    this.$root.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
+    eventbus.$off(Events.filesOrDirectoriesChanged, this.filesOrDirectoriesChanged)
   },
   watch: {
     isConnected(to: boolean) {

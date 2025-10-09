@@ -12,7 +12,7 @@
     </v-card-title>
 
     <v-card-text>
-      <v-row :dense="$vuetify.breakpoint.mobile">
+      <v-row :dense="$vuetify.display.mobile">
         <v-col cols="12" sm="6">
           <v-switch
             v-model="settingsStorageLocal"
@@ -53,7 +53,7 @@
     </v-card-text>
 
     <confirm-dialog
-      :shown.sync="showResetConfirmation"
+      v-model:shown="showResetConfirmation"
       :title="$t('dialog.factoryReset.title')"
       :prompt="$t('dialog.factoryReset.prompt')"
       @confirmed="reset"
@@ -62,13 +62,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
-import { localStorageSupported } from '@/utils/localStorage'
-import { SettingsState, useSettingsStore } from '@/stores/settings'
 import { useRootStore } from '@/stores'
+import { SettingsState, useSettingsStore } from '@/stores/settings'
+import { localStorageSupported } from '@/utils/localStorage'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       showResetConfirmation: false,

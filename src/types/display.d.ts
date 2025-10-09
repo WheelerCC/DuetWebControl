@@ -1,5 +1,3 @@
-import Vue from 'vue'
-
 import { Axis } from '@duet3d/objectmodel'
 
 declare module 'vue/types/vue' {

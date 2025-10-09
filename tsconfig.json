@@ -15,9 +15,8 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "vue-router",
-      "vuetify",
-      "webpack-env"
+      "webpack-env",
+      "@vue/runtime-core"
     ],
     "typeRoots": [
       "./node_modules/@types",
@@ -38,7 +37,7 @@
     "resolveJsonModule": true
   },
   "vueCompilerOptions": {
-    "target": 2.7
+    "target": 3
   },
   "include": [
     "src/**/*.ts",
@@ -49,6 +48,6 @@
   ],
   
   "exclude": [
-    "node_modules"
+    "node_modules",
   ]
 }

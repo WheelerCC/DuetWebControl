@@ -5,7 +5,7 @@
     </v-card-title>
 
     <v-card-text>
-      <v-row :dense="$vuetify.breakpoint.mobile">
+      <v-row :dense="$vuetify.display.mobile">
         <v-col cols="12" lg="6">
           <v-text-field
             v-model.number="babystepAmount"
@@ -83,15 +83,15 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
 import {
   MachineSettingsState,
   ToolChangeMacro,
   useMachinesSettingsStore,
 } from '@/stores/machineSettings'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       toolChangeMacroList: [

@@ -196,9 +196,9 @@
       {{ $t('panel.movement.noAxes') }}
     </v-alert>
 
-    <mesh-edit-dialog :shown.sync="showMeshEditDialog" />
+    <mesh-edit-dialog v-model:shown="showMeshEditDialog" />
     <input-dialog
-      :shown.sync="moveStepDialog.shown"
+      v-model:shown="moveStepDialog.shown"
       :title="$t('dialog.changeMoveStep.title')"
       :prompt="$t('dialog.changeMoveStep.prompt')"
       :preset="moveStepDialog.preset"
@@ -214,9 +214,10 @@ import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { Axis, AxisLetter, KinematicsName, MoveCompensationType } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       showMeshEditDialog: false,

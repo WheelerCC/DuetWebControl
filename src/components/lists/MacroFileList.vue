@@ -46,8 +46,8 @@
     <base-file-list
       ref="filelist"
       v-model="selection"
-      :directory.sync="directory"
-      :loading.sync="loading"
+      v-model:directory="directory"
+      v-model:loading="loading"
       sort-table="macros"
       no-files-text="list.macro.noMacros"
       @fileClicked="fileClicked"
@@ -93,10 +93,10 @@
       </upload-btn>
     </v-speed-dial>
 
-    <new-directory-dialog :shown.sync="showNewDirectory" :directory="directory" />
-    <new-file-dialog :shown.sync="showNewFile" :directory="directory" />
+    <new-directory-dialog v-model:shown="showNewDirectory" :directory="directory" />
+    <new-file-dialog v-model:shown="showNewFile" :directory="directory" />
     <confirm-dialog
-      :shown.sync="runMacroDialog.shown"
+      v-model:shown="runMacroDialog.shown"
       :title="runMacroDialog.title"
       :prompt="runMacroDialog.prompt"
       @confirmed="runFile(runMacroDialog.filename)"
@@ -105,16 +105,16 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-
 import Path, { escapeFilename } from '@/utils/path'
 
-import { BaseFileListItem } from './BaseFileList.vue'
-import { useMachinesModelStore } from '@/stores/machineModel'
 import { useRootStore } from '@/stores'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { BaseFileListItem } from './BaseFileList.vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       directory: Path.macros,

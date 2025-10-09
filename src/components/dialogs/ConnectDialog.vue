@@ -51,9 +51,10 @@
 <script lang="ts">
 import { useRootStore } from '@/stores'
 import { useSettingsStore } from '@/stores/settings'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       hostname: location.host,

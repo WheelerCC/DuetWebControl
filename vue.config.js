@@ -84,11 +84,14 @@ module.exports = {
 			] : [])
 		],
 		resolve: {
-			extensions: [".ts", ".js"]
+			extensions: [".ts", ".js"],
+			alias: {
+                'vue': '@vue/compat'
+            }
 		}
 	},
 	chainWebpack: config => {
-		config.resolve.alias.set('vue', '@vue/compat');
+		// config.resolve.alias.set('vue', '@vue/compat');
 
 		config.module.rule('vue')
 			.use('vue-loader')
@@ -97,7 +100,46 @@ module.exports = {
 				...options,
 				compilerOptions: {
 					compatConfig: {
-						MODE: 2
+						MODE: 2,
+						GLOBAL_MOUNT: false,
+						GLOBAL_EXTEND: false,
+						GLOBAL_PROTOTYPE: false,
+						GLOBAL_SET: true,
+						GLOBAL_DELETE: true,
+						GLOBAL_OBSERVABLE: false,
+						CONFIG_KEY_CODES: true,
+						CONFIG_WHITESPACE: true,
+						INSTANCE_SET: true,
+						INSTANCE_DELETE: true,
+						INSTANCE_EVENT_EMITTER: true,
+						INSTANCE_EVENT_HOOKS: true,
+						INSTANCE_CHILDREN: true,
+						INSTANCE_LISTENERS: true,
+						INSTANCE_SCOPED_SLOTS: true,
+						INSTANCE_ATTRS_CLASS_STYLE: true,
+						OPTIONS_DATA_FN: true,
+						OPTIONS_DATA_MERGE: true,
+						OPTIONS_BEFORE_DESTROY: true,
+						OPTIONS_DESTROYED: true,
+						WATCH_ARRAY: true,
+						V_ON_KEYCODE_MODIFIER: true,
+						CUSTOM_DIR: true,
+						ATTR_FALSE_VALUE: true,
+						ATTR_ENUMERATED_COERCION: true,
+						TRANSITION_GROUP_ROOT: true,
+						COMPONENT_ASYNC: true,
+						COMPONENT_FUNCTIONAL: true,
+						COMPONENT_V_MODEL: true,
+						RENDER_FUNCTION: true,
+						FILTERS: true,
+						COMPILER_IS_ON_ELEMENT: true,
+						COMPILER_V_BIND_SYNC: true,
+						COMPILER_V_BIND_PROP: true,
+						COMPILER_V_BIND_OBJECT_ORDER: true,
+						COMPILER_V_ON_NATIVE: true,
+						COMPILER_V_FOR_REF: true,
+						COMPILER_NATIVE_TEMPLATE: true,
+						COMPILER_FILTERS: true,
 					}
 				}
 				}

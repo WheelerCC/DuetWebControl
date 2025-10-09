@@ -94,14 +94,15 @@
 <script lang="ts">
 import { RestConnector } from '@duet3d/connectors'
 import { Board, NetworkInterfaceType } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import packageInfo from '../../../package.json'
+import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
-import { useRootStore } from '@/stores'
+import packageInfo from '../../../package.json'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   data() {
     return {
       buildDateTime: process.env.BUILD_DATETIME,

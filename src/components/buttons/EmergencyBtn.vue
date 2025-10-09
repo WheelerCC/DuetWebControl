@@ -15,9 +15,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import eventbus from '@/utils/eventbus'
+import { defineComponent } from 'vue'
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     color: {
       type: String,
@@ -30,10 +31,10 @@ export default Vue.extend({
     }
   },
   mounted() {
-    this.$root.$on('dialog-closing', this.onDialogClosing)
+    eventbus.$on('dialog-closing', this.onDialogClosing)
   },
-  beforeDestroy() {
-    this.$root.$off('dialog-closing', this.onDialogClosing)
+  beforeUnmount() {
+    eventbus.$off('dialog-closing', this.onDialogClosing)
   },
   methods: {
     onDialogClosing() {

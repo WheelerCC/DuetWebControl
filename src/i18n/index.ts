@@ -1,5 +1,5 @@
-import Vue from 'vue'
-import VueI18n, { LocaleMessages } from 'vue-i18n'
+import { reactive } from 'vue'
+import { createI18n, LocaleMessages, useI18n } from 'vue-i18n'
 
 import de from './de.json'
 import en from './en.json'
@@ -15,13 +15,11 @@ import tr from './tr.json'
 import uk from './uk.json'
 import zh_cn from './zh_cn.json'
 
-Vue.use(VueI18n)
-
 /**
  * Supported i18n messages
  */
-const messages: LocaleMessages & Record<string, { plugins: Record<string, object> }> =
-  Vue.observable({
+const messages: LocaleMessages<any> & Record<string, { plugins: Record<string, object> }> =
+  reactive({
     de,
     en,
     es,
@@ -73,17 +71,19 @@ export function registerPluginLocalization(plugin: string, language: string, dat
   if (messages[language].plugins[plugin] !== undefined) {
     throw new Error('Plugin i18n for the given plugin already exists')
   }
-  Vue.set(messages[language].plugins, plugin, data)
+  messages[language].plugins[plugin] = data
 }
 
 /**
  * Initialize i18n engine
  */
-const i18n = new VueI18n({
+const i18n = createI18n({
+  legacy: true,
   locale: getBrowserLocale(),
   fallbackLocale: 'en',
   messages,
 })
+
 export default i18n
 
 /**
@@ -96,23 +96,23 @@ export function translateResponse(message: string): string {
   const matches = /^#(.*)#$/.exec(message.trim())
   if (matches !== null) {
     const args = matches[1].split('#')
-    return i18n.t(args[0], args.slice(1))
+    return useI18n().t(args[0], args.slice(1))
   }
 
   // Allow built-in RRF strings to be translated using RegExps.
   // To achieve this create a new "responses" key in "en" with regular expressions matching the non-English target.
   // These regular expressions must match dynamic parameters (e.g. /Heater (\d+) faulted/) so they can be passed back as args to $t().
   // When done, create the same key in "responses" for your target language (e.g. German -> "Heizer {0} gestört")
-  if (i18n.locale !== 'en') {
+  if (useI18n().locale.value !== 'en') {
     if (
       messages.en.responses instanceof Object &&
-      messages[i18n.locale].responses instanceof Object
+      messages[useI18n().locale.value].responses instanceof Object
     ) {
       for (const key in messages.en.responses) {
         const regex = new RegExp((messages.en.responses as Record<string, string>)[key])
         const matches = regex.exec(message)
         if (matches !== null) {
-          return i18n.t('responses.' + key, matches.slice(1))
+          return useI18n().t('responses.' + key, matches.slice(1))
         }
       }
     }

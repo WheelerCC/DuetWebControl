@@ -1,5 +1,3 @@
-import Vue from 'vue'
-
 /**
  * Check if a value is a number.
  * This is becoming obsolete due to the transition to TypeScript
@@ -15,6 +13,3 @@ export function isNumber(value: any) {
     isFinite(value as number)
   )
 }
-
-// Note: This isn't registered via d.ts (yet?)
-Vue.prototype.isNumber = isNumber

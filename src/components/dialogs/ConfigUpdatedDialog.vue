@@ -35,9 +35,10 @@
 
 <script lang="ts">
 import { useMachinesStore } from '@/stores/machines'
-import Vue from 'vue'
 
-export default Vue.extend({
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     shown: {
       type: Boolean,

@@ -1,12 +1,9 @@
-import { Store } from 'vuex'
-import { defaultMachine } from './misc'
-import { watch } from 'vue'
-import { InternalRootState, useRootStore } from '.'
-import { useMachinesStore } from './machines'
-import { SubscriptionCallback, SubscriptionCallbackMutation } from 'pinia'
+import { SubscriptionCallbackMutation } from 'pinia'
+import { useRootStore } from '.'
 import { useMachinesCacheStore } from './machineCache'
+import { useMachinesStore } from './machines'
 import { useMachinesSettingsStore } from './machineSettings'
-import { useMachinesModelStore } from './machineModel'
+import { defaultMachine } from './misc'
 import { useSettingsStore } from './settings'
 
 let settingsTimer: NodeJS.Timeout | null = null
