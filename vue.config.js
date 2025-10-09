@@ -5,6 +5,7 @@ const fs = require("fs"), path = require("path");
 const { EnvironmentPlugin } = require("webpack");
 const EventHooksPlugin = require("event-hooks-webpack-plugin");
 const ZipPlugin = require("zip-webpack-plugin");
+const { VuetifyPlugin } = require('webpack-plugin-vuetify')
 
 module.exports = {
 	lintOnSave: true,
@@ -37,6 +38,9 @@ module.exports = {
 			hints: false
 		},
 		plugins: [
+			new VuetifyPlugin({
+				styles: { configFile: 'src/scss/variables.scss' }
+			}),
 			new AutoImportsPlugin(),
 			new EnvironmentPlugin({
 				"BUILD_DATETIME": (new Date()).toString()
@@ -84,6 +88,21 @@ module.exports = {
 		}
 	},
 	chainWebpack: config => {
+		config.resolve.alias.set('vue', '@vue/compat');
+
+		config.module.rule('vue')
+			.use('vue-loader')
+			.tap((options) => {
+				return {
+				...options,
+				compilerOptions: {
+					compatConfig: {
+						MODE: 2
+					}
+				}
+				}
+			})
+			
 		config.optimization.minimizer("terser").tap(args => {
 			const { terserOptions } = args[0];
 			terserOptions.keep_classnames = true;

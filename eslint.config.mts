@@ -40,7 +40,7 @@ export default defineConfig([
     },
     plugins: { vue: pluginVue },
     extends: [
-      pluginVue.configs["flat/vue2-recommended"],
+      pluginVue.configs["flat/essential"],
       eslintPluginPrettierRecommended
     ],
     rules: {
