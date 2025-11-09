@@ -1,85 +1,102 @@
 <template>
-  <div class="d-flex flex-column">
-    <job-progress />
+  <div class="w-full grid grid-cols-4 gap-2">
+    <Card class="col-span-full">
+      <CardContent>
+        <JobProgress />
+      </CardContent>
+    </Card>
 
-    <v-row class="mt-0" :dense="$vuetify.display.mobile">
-      <v-col order="1" order-md="1" cols="12" sm="6" md="3" xl="2">
-        <v-row align="center" :dense="$vuetify.display.mobile">
-          <v-col cols="12">
-            <job-control-panel />
-          </v-col>
-          <v-col cols="12">
-            <z-babystep-panel />
-          </v-col>
-          <v-col class="hidden-sm-and-down">
-            <job-info-panel />
-          </v-col>
-          <v-col cols="12" class="d-none d-sm-block d-md-none">
-            <speed-factor-panel />
-          </v-col>
-          <v-col cols="12" class="d-none d-sm-block d-md-none">
-            <extrusion-factors-panel />
-          </v-col>
-        </v-row>
-      </v-col>
+    <div class="h-full flex flex-col gap-2">
+      <Card class="flex-grow col-span-1">
+        <CardHeader>
+          <CardTitle class="flex flex-row items-center gap-2">
+            <Wrench :size="18" />
+            {{ $t('panel.jobControl.caption') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <JobControlPanel />
+        </CardContent>
+      </Card>
 
-      <v-col order="0" order-md="2" cols="12" md="5" xl="7" class="d-none d-sm-flex flex-column">
-        <layer-chart class="chart-height-limit mb-5" />
+      <Card class="flex-grow col-span-full">
+        <CardHeader>
+          <CardTitle class="flex flex-row items-center gap-2">
+            <FoldVertical :size="18" />
+            {{ $t('panel.babystepping.caption') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ZBabystepPanel />
+        </CardContent>
+      </Card>
 
-        <v-row class="flex-grow-0 flex-shrink-1 d-none d-md-flex">
-          <v-col cols="12">
-            <job-estimations-panel />
-          </v-col>
-          <v-col cols="12">
-            <job-data-panel />
-          </v-col>
-        </v-row>
+      <Card class="flex-grow col-span-full">
+        <CardHeader>
+          <CardTitle class="flex flex-row items-center gap-2">
+            <Info :size="18" />
+            {{ $t('panel.jobInfo.caption') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <JobInfoPanel />
+        </CardContent>
+      </Card>
+    </div>
 
-        <v-row class="flex-grow-0 flex-shrink-1 hidden-sm-and-up mt-3">
-          <v-col cols="6" md="6">
-            <fans-panel />
-          </v-col>
-          <v-col cols="6" md="6">
-            <speed-factor-panel />
-          </v-col>
-        </v-row>
-      </v-col>
+    <div class="col-span-2 h-full flex flex-col gap-2">
+      <Card class="col-span-full flex-grow">
+        <LayerChart />
+      </Card>
+      <Card class="col-span-full">
+        <CardHeader>
+          <CardTitle class="flex flex-row items-center gap-2">
+            <Clock :size="18" />
+            {{ $t('panel.jobEstimations.caption') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <JobEstimationsPanel />
+        </CardContent>
+      </Card>
+      <Card class="col-span-full">
+        <CardHeader>
+          <CardTitle class="flex flex-row items-center gap-2">
+            <Ellipsis :size="18" />
+            {{ $t('panel.jobData.caption') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <JobDataPanel />
+        </CardContent>
+      </Card>
+    </div>
 
-      <v-col order="2" order-md="3" cols="12" sm="6" md="4" xl="3">
-        <v-row :dense="$vuetify.display.mobile">
-          <v-col cols="12" class="hidden-md-and-up">
-            <job-estimations-panel />
-          </v-col>
-          <v-col cols="12" class="hidden-md-and-up">
-            <job-data-panel />
-          </v-col>
-          <v-col cols="12" class="hidden-md-and-up">
-            <job-info-panel />
-          </v-col>
-
-          <v-col cols="12" class="hidden-sm-only">
-            <speed-factor-panel />
-          </v-col>
-          <v-col cols="12">
-            <fans-panel />
-          </v-col>
-          <v-col cols="12" class="hidden-sm-only">
-            <extrusion-factors-panel />
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
+    <div class="h-full flex flex-col gap-2">
+      <Card class="flex-grow col-span-full">
+        <SpeedFactorPanel />
+      </Card>
+      <Card class="flex-grow col-span-full">
+        <FansPanel />
+      </Card>
+      <Card class="flex-grow col-span-full">
+        <ExtrusionFactorsPanel />
+      </Card>
+    </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-
-export default defineComponent({})
+<script setup lang="ts">
+import LayerChart from '@/components/charts/LayerChart.vue'
+import JobProgress from '@/components/misc/JobProgress.vue'
+import ExtrusionFactorsPanel from '@/components/panels/ExtrusionFactorsPanel.vue'
+import FansPanel from '@/components/panels/FansPanel.vue'
+import JobControlPanel from '@/components/panels/JobControlPanel.vue'
+import JobDataPanel from '@/components/panels/JobDataPanel.vue'
+import JobEstimationsPanel from '@/components/panels/JobEstimationsPanel.vue'
+import JobInfoPanel from '@/components/panels/JobInfoPanel.vue'
+import SpeedFactorPanel from '@/components/panels/SpeedFactorPanel.vue'
+import ZBabystepPanel from '@/components/panels/ZBabystepPanel.vue'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Clock, Ellipsis, FoldVertical, Info, Wrench } from 'lucide-vue-next'
 </script>
-
-<style scoped>
-.chart-height-limit {
-  max-height: 320px;
-}
-</style>

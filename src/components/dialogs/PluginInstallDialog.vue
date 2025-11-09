@@ -245,6 +245,9 @@ import eventbus from '@/utils/eventbus'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       shown: false,

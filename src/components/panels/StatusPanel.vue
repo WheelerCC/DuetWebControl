@@ -1,472 +1,396 @@
 <template>
-  <v-card>
-    <v-card-title class="py-2">
-      <v-icon small class="mr-1"> mdi-information </v-icon>
+  <CardHeader>
+    <CardTitle class="flex flex-row gap-2 items-center">
+      <InfoIcon :size="18" />
       {{ $t('panel.status.caption') }}
 
-      <v-spacer />
+      <StatusLabel v-if="state.status" class="mx-auto" />
 
-      <status-label v-if="model.state.status" />
-
-      <v-spacer />
-
-      <span v-if="model.state.machineMode">
-        {{ $t('panel.status.mode', [model.state.machineMode.toUpperCase()]) }}
+      <span v-if="state.machineMode">
+        {{ $t('panel.status.mode', [state.machineMode.toUpperCase()]) }}
       </span>
-    </v-card-title>
+    </CardTitle>
+  </CardHeader>
+  <CardContent
+    v-if="sensorsPresent || visibleAxes.length + move.extruders.length > 0"
+    class="w-full"
+  >
+    <div class="w-full flex flex-col gap-4">
+      <div class="w-full flex flex-row gap-5 items-center" v-if="visibleAxes.length > 0">
+        <a
+          href="javascript:void(0)"
+          @click="displayToolPosition = !displayToolPosition"
+          class="mr-auto"
+        >
+          {{
+            $t(displayToolPosition ? 'panel.status.toolPosition' : 'panel.status.machinePosition')
+          }}
+        </a>
 
-    <v-card-text
-      v-if="sensorsPresent || visibleAxes.length + model.move.extruders.length > 0"
-      class="px-0 pt-0 pb-2 content text-xs-center"
-    >
-      <!-- Axis Positions -->
-      <template v-if="visibleAxes.length > 0">
-        <v-row no-gutters class="flex-nowrap">
-          <v-col tag="strong" class="category-header">
-            <a href="javascript:void(0)" @click="displayToolPosition = !displayToolPosition">
-              {{
-                $t(
-                  displayToolPosition
-                    ? 'panel.status.toolPosition'
-                    : 'panel.status.machinePosition',
-                )
-              }}
-            </a>
-          </v-col>
+        <div v-for="(axis, index) in visibleAxes" :key="index" class="flex flex-col items-center">
+          <span :class="axisSpanClasses(index)">
+            {{ axis.letter }}
+          </span>
+          <span>
+            {{ displayAxisPosition(axis, !displayToolPosition) }}
+          </span>
+        </div>
+      </div>
 
-          <v-col>
-            <v-row align-content="center" no-gutters>
-              <v-col
-                v-for="(axis, index) in visibleAxes"
-                :key="index"
-                class="d-flex flex-column align-center"
-              >
-                <span class="axis-span font-weight-bold" :class="axisSpanClasses(index)">
-                  {{ axis.letter }}
-                </span>
-                <span>
-                  {{ $displayAxisPosition(axis, !displayToolPosition) }}
-                </span>
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </template>
+      <Separator v-if="visibleAxes.length > 0" />
 
       <!-- Extruders -->
-      <template v-if="model.move.extruders.length > 0">
-        <v-divider v-if="visibleAxes.length > 0" class="my-2" />
+      <div v-if="move.extruders.length > 0" class="flex flex-row items-center gap-5">
+        <a
+          href="javascript:void(0)"
+          @click="displayVirtualEPos = !displayVirtualEPos"
+          class="mr-auto"
+        >
+          {{ $t(displayVirtualEPos ? 'panel.status.virtualEPos' : 'panel.status.extruders') }}
+        </a>
 
-        <v-row align-content="center" no-gutters class="flex-nowrap">
-          <v-col tag="strong" class="category-header">
-            <a href="javascript:void(0)" @click="displayVirtualEPos = !displayVirtualEPos">
-              {{ $t(displayVirtualEPos ? 'panel.status.virtualEPos' : 'panel.status.extruders') }}
-            </a>
-          </v-col>
+        <div v-if="displayVirtualEPos">
+          {{ display(virtualEPos, 1) }}
+        </div>
 
-          <v-col v-if="displayVirtualEPos" class="d-flex align-center justify-center">
-            {{ $display(virtualEPos, 1) }}
-          </v-col>
-          <v-col v-else>
-            <v-row align-content="center" no-gutters>
-              <v-col
-                v-for="(extruder, index) in model.move.extruders"
-                :key="index"
-                class="d-flex flex-column align-center"
-              >
-                <strong>
-                  {{ $t('panel.status.extruderDrive', [index]) }}
-                  <v-icon v-if="isFilamentSensorPresent(index)" small>
-                    {{ isFilamentPresent(index) ? 'mdi-check' : 'mdi-window-close' }}
-                  </v-icon>
-                </strong>
-                <span>
-                  {{ $display(extruder.position, 1) }}
-                </span>
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </template>
+        <div
+          v-else
+          v-for="(extruder, index) in move.extruders"
+          :key="index"
+          class="flex flex-col items-center"
+        >
+          <strong>
+            {{ $t('panel.status.extruderDrive', [index]) }}
+            <component
+              v-if="isFilamentSensorPresent(index)"
+              :is="isFilamentPresent(index) ? CheckIcon : XIcon"
+            />
+          </strong>
+          <span>
+            {{ display(extruder.position, 1) }}
+          </span>
+        </div>
+      </div>
+
+      <Separator v-if="visibleAxes.length + move.extruders.length > 0" />
 
       <!-- Speeds -->
-      <template
-        v-if="
-          isFinite(model.move.currentMove.requestedSpeed) ||
-          isFinite(model.move.currentMove.topSpeed)
-        "
+      <div
+        v-if="isFinite(move.currentMove.requestedSpeed) || isFinite(move.currentMove.topSpeed)"
+        class="flex flex-row items-center gap-5"
       >
-        <v-divider v-if="visibleAxes.length + model.move.extruders.length > 0" class="my-2" />
+        <div class="mr-auto">{{ $t('panel.status.speeds') }}</div>
 
-        <v-row align-content="center" no-gutters class="flex-nowrap">
-          <v-col tag="strong" class="category-header">
-            {{ $t('panel.status.speeds') }}
-          </v-col>
+        <div v-if="isFinite(move.currentMove.requestedSpeed)" class="flex flex-col items-center">
+          <strong>
+            {{ $t('panel.status.requestedSpeed') }}
+          </strong>
+          <span class="text-no-wrap">
+            {{ displayMoveSpeed(move.currentMove.requestedSpeed) }}
+          </span>
+        </div>
 
-          <v-col>
-            <v-row align-content="center" no-gutters>
-              <v-col
-                v-if="isFinite(model.move.currentMove.requestedSpeed)"
-                class="d-flex flex-column align-center"
-              >
-                <strong>
-                  {{ $t('panel.status.requestedSpeed') }}
-                </strong>
-                <span class="text-no-wrap">
-                  {{ $displayMoveSpeed(model.move.currentMove.requestedSpeed) }}
-                </span>
-              </v-col>
+        <div v-if="isFinite(move.currentMove.topSpeed)" class="flex flex-col items-center">
+          <strong>
+            {{ $t('panel.status.topSpeed') }}
+          </strong>
+          <span class="text-no-wrap">
+            {{ displayMoveSpeed(move.currentMove.topSpeed) }}
+          </span>
+        </div>
 
-              <v-col
-                v-if="isFinite(model.move.currentMove.topSpeed)"
-                class="d-flex flex-column align-center"
-              >
-                <strong>
-                  {{ $t('panel.status.topSpeed') }}
-                </strong>
-                <span class="text-no-wrap">
-                  {{ $displayMoveSpeed(model.move.currentMove.topSpeed) }}
-                </span>
-              </v-col>
+        <div
+          v-if="isFinite(move.currentMove.extrusionRate) && isFFForUnset"
+          class="flex flex-col items-center"
+        >
+          <strong>
+            <a href="javascript:void(0)" @click="displayVolumetricFlow = !displayVolumetricFlow">
+              {{
+                displayVolumetricFlow
+                  ? $t('panel.status.volumetricFlow')
+                  : $t('panel.status.extrusionRate')
+              }}
+            </a>
+          </strong>
+          <span class="text-no-wrap">
+            {{
+              displayVolumetricFlow
+                ? display(volumetricFlow, 1, 'mm³/s')
+                : displayMoveSpeed(move.currentMove.extrusionRate)
+            }}
+          </span>
+        </div>
+      </div>
 
-              <v-col
-                v-if="isFinite(model.move.currentMove.extrusionRate) && isFFForUnset"
-                class="d-flex flex-column align-center"
-              >
-                <strong>
-                  <a
-                    href="javascript:void(0)"
-                    @click="displayVolumetricFlow = !displayVolumetricFlow"
-                  >
-                    {{
-                      displayVolumetricFlow
-                        ? $t('panel.status.volumetricFlow')
-                        : $t('panel.status.extrusionRate')
-                    }}
-                  </a>
-                </strong>
-                <span class="text-no-wrap">
-                  {{
-                    displayVolumetricFlow
-                      ? $display(volumetricFlow, 1, 'mm³/s')
-                      : $displayMoveSpeed(model.move.currentMove.extrusionRate)
-                  }}
-                </span>
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </template>
+      <Separator
+        v-if="
+          move.axes.length + move.extruders.length > 0 ||
+          isFinite(move.currentMove.requestedSpeed) ||
+          isFinite(move.currentMove.topSpeed)
+        "
+      />
 
       <!-- Sensors -->
-      <template v-if="sensorsPresent">
-        <v-divider
-          v-if="
-            model.move.axes.length + model.move.extruders.length > 0 ||
-            isFinite(model.move.currentMove.requestedSpeed) ||
-            isFinite(model.move.currentMove.topSpeed)
-          "
-          class="my-2"
-        />
+      <div v-if="sensorsPresent" class="flex flex-row items-center gap-5">
+        <div class="mr-auto">
+          {{ $t('panel.status.sensors') }}
+        </div>
 
-        <v-row align-content="center" no-gutters class="flex-nowrap">
-          <v-col tag="strong" class="category-header">
-            {{ $t('panel.status.sensors') }}
-          </v-col>
-
-          <v-col>
-            <v-row align-content="center" justify="center" no-gutters>
-              <template v-if="mainboard !== null">
-                <v-col v-if="mainboard.vIn !== null" class="d-flex flex-column align-center">
-                  <strong>
-                    {{ $t('panel.status.vIn') }}
-                  </strong>
-                  <v-tooltip bottom>
-                    <template #activator="{ on }">
-                      <span class="text-no-wrap" v-on="on">
-                        {{ $display(mainboard.vIn.current, 1, 'V') }}
-                      </span>
-                    </template>
-
-                    {{
-                      $t('panel.status.minMax', [
-                        $display(mainboard.vIn.min, 1, 'V'),
-                        $display(mainboard.vIn.max, 1, 'V'),
-                      ])
-                    }}
-                  </v-tooltip>
-                </v-col>
-
-                <v-col v-if="mainboard.v12 !== null" class="d-flex flex-column align-center">
-                  <strong>
-                    {{ $t('panel.status.v12') }}
-                  </strong>
-                  <v-tooltip bottom>
-                    <template #activator="{ on }">
-                      <span class="text-no-wrap" v-on="on">
-                        {{ $display(mainboard.v12.current, 1, 'V') }}
-                      </span>
-                    </template>
-
-                    {{
-                      $t('panel.status.minMax', [
-                        $display(mainboard.v12.min, 1, 'V'),
-                        $display(mainboard.v12.max, 1, 'V'),
-                      ])
-                    }}
-                  </v-tooltip>
-                </v-col>
-
-                <v-col v-if="mainboard.mcuTemp !== null" class="d-flex flex-column align-center">
-                  <strong class="text-no-wrap">
-                    {{ $t('panel.status.mcuTemp') }}
-                  </strong>
-                  <v-tooltip bottom>
-                    <template #activator="{ on }">
-                      <span class="text-no-wrap" v-on="on">
-                        {{ $display(mainboard.mcuTemp.current, 1, '°C') }}
-                      </span>
-                    </template>
-
-                    {{
-                      $t('panel.status.minMax', [
-                        $display(mainboard.mcuTemp.min, 1, '°C'),
-                        $display(mainboard.mcuTemp.max, 1, '°C'),
-                      ])
-                    }}
-                  </v-tooltip>
-                </v-col>
-              </template>
-
-              <v-col v-if="fanRPM.length > 0" class="d-flex flex-column align-center">
-                <strong>
-                  {{ $t('panel.status.fanRPM') }}
-                </strong>
-
-                <div class="d-flex flex-row">
-                  <template v-for="(item, index) in fanRPM" :key="index">
-                    <template v-if="index !== 0"> , </template>
-                    <span :title="item.name" class="mx-0">
-                      {{ item.rpm }}
-                    </span>
-                  </template>
-                </div>
-              </v-col>
-
-              <v-col v-if="validProbes.length > 0" class="d-flex flex-column align-center">
-                <strong>
-                  {{ $tc('panel.status.probe', validProbes.length) }}
-                </strong>
-                <div class="d-flex">
-                  <span
-                    v-for="(probe, index) in validProbes"
-                    :key="index"
-                    class="pa-1 probe-span"
-                    :class="probeSpanClasses(probe, index === 0)"
-                  >
-                    {{ formatProbeValues(probe.value) }}
+        <template v-if="mainboard !== null">
+          <div v-if="mainboard.vIn !== null" class="flex flex-col items-center">
+            <strong>
+              {{ $t('panel.status.vIn') }}
+            </strong>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <span class="text-no-wrap">
+                    {{ display(mainboard.vIn.current, 1, 'V') }}
                   </span>
-                </div>
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </template>
-    </v-card-text>
-    <v-card-text v-else class="pa-0">
-      <v-alert :value="true" type="info">
-        {{ $t('panel.status.noStatus') }}
-      </v-alert>
-    </v-card-text>
-  </v-card>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {{
+                    $t('panel.status.minMax', [
+                      display(mainboard.vIn.min, 1, 'V'),
+                      display(mainboard.vIn.max, 1, 'V'),
+                    ])
+                  }}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div v-if="mainboard.v12 !== null" class="flex flex-col items-center">
+            <strong>
+              {{ $t('panel.status.v12') }}
+            </strong>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <span class="text-no-wrap">
+                    {{ display(mainboard.v12.current, 1, 'V') }}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {{
+                    $t('panel.status.minMax', [
+                      display(mainboard.v12.min, 1, 'V'),
+                      display(mainboard.v12.max, 1, 'V'),
+                    ])
+                  }}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div v-if="mainboard.mcuTemp !== null" class="flex flex-col items-center">
+            <strong class="text-no-wrap">
+              {{ $t('panel.status.mcuTemp') }}
+            </strong>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <span class="text-no-wrap">
+                    {{ display(mainboard.mcuTemp.current, 1, '°C') }}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {{
+                    $t('panel.status.minMax', [
+                      display(mainboard.mcuTemp.min, 1, '°C'),
+                      display(mainboard.mcuTemp.max, 1, '°C'),
+                    ])
+                  }}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </template>
+
+        <div v-if="fanRPM.length > 0" class="flex flex-col items-center">
+          <strong>
+            {{ $t('panel.status.fanRPM') }}
+          </strong>
+
+          <div class="flex flex-row">
+            <template v-for="(item, index) in fanRPM" :key="index">
+              <template v-if="index !== 0"> , </template>
+              <span :title="item.name" class="mx-0">
+                {{ item.rpm }}
+              </span>
+            </template>
+          </div>
+        </div>
+
+        <div v-if="validProbes.length > 0" class="flex flex-col items-center">
+          <strong>
+            {{ $t('panel.status.probe', validProbes.length) }}
+          </strong>
+          <div class="d-flex">
+            <span
+              v-for="(probe, index) in validProbes"
+              :key="index"
+              class="pa-1 probe-span"
+              :class="probeSpanClasses(probe, index === 0)"
+            >
+              {{ formatProbeValues(probe.value) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Axis Positions -->
+  </CardContent>
+
+  <CardContent v-else>
+    <v-alert :value="true" type="info">
+      {{ $t('panel.status.noStatus') }}
+    </v-alert>
+  </CardContent>
 </template>
 
-<script lang="ts">
-import ObjectModel, { Axis, Board, MachineMode, Probe, ProbeType } from '@duet3d/objectmodel'
+<script setup lang="ts">
+import { MachineMode, Probe, ProbeType } from '@duet3d/objectmodel'
 
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { DashboardMode, useSettingsStore } from '@/stores/settings'
 import { isPrinting } from '@/utils/enums'
 
-import { defineComponent } from 'vue'
+import { display, displayAxisPosition, displayMoveSpeed } from '@/utils/display'
+import { CheckIcon, InfoIcon, XIcon } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import StatusLabel from '../misc/StatusLabel.vue'
+import { CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Separator } from '../ui/separator'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
-export default defineComponent({
-  data() {
-    return {
-      displayToolPosition: true,
-      displayVirtualEPos: false,
-      displayVolumetricFlow: true,
-    }
-  },
-  computed: {
-    isConnected(): boolean {
-      return useRootStore().isConnected
-    },
-    model(): ObjectModel {
-      return useMachinesModelStore()[useRootStore().selectedMachine]
-    },
-    isFFForUnset(): boolean {
-      if (useSettingsStore().dashboardMode === DashboardMode.default) {
-        return !this.model.state.machineMode || this.model.state.machineMode === MachineMode.fff
-      }
-      return useSettingsStore().dashboardMode === DashboardMode.fff
-    },
-    virtualEPos(): number {
-      return useMachinesModelStore().move.virtualEPos
-    },
-    volumetricFlow(): number {
-      if (
-        this.model.state.currentTool >= 0 &&
-        this.model.state.currentTool < this.model.tools.length
-      ) {
-        const selectedTool = this.model.tools[this.model.state.currentTool]
-        if (selectedTool !== null) {
-          // Get the average extruder diameter x mix ratio
-          let numExtruders = 0,
-            filamentArea = 0
-          for (let i = 0; i < selectedTool.extruders.length; i++) {
-            const extruderIndex = selectedTool.extruders[i]
-            if (extruderIndex >= 0 && extruderIndex < this.model.move.extruders.length) {
-              const extruder = this.model.move.extruders[extruderIndex]
-              if (extruder !== null) {
-                filamentArea +=
-                  selectedTool.mix[i] * (Math.PI * Math.pow(extruder.filamentDiameter / 2, 2))
-                numExtruders++
-              }
-            }
-          }
+let displayToolPosition = ref(true)
+let displayVirtualEPos = ref(false)
+let displayVolumetricFlow = ref(true)
 
-          // Compute volumetric flow
-          if (numExtruders > 0) {
-            filamentArea /= numExtruders
-            return filamentArea * this.model.move.currentMove.extrusionRate
-          }
-        }
-      }
-      return NaN
-    },
-    fanRPM(): Array<{ name: string; rpm: number }> {
-      return useMachinesModelStore()
-        .fans.filter((fan) => fan !== null && fan.rpm >= 0)
-        .map(
-          (fan, index) => ({
-            name: fan!.name || this.$t('panel.fan.fan', [index]),
-            rpm: fan!.rpm,
-          }),
-          this,
-        )
-    },
-    validProbes(): Array<Probe> {
-      return useMachinesModelStore().sensors.probes.filter(
-        (probe) => probe !== null && probe.type !== ProbeType.none,
-      ) as Array<Probe>
-    },
-    mainboard(): Board | null {
-      return this.model.boards.find((board) => !board.canAddress) ?? null
-    },
-    sensorsPresent(): boolean {
-      return (
-        (this.mainboard !== null &&
-          (this.mainboard.vIn !== null ||
-            this.mainboard.v12 !== null ||
-            this.mainboard.mcuTemp !== null)) ||
-        this.fanRPM.length > 0 ||
-        this.validProbes.length > 0
-      )
-    },
-    visibleAxes(): Array<Axis> {
-      return this.model.move.axes.filter((axis) => axis.visible)
-    },
-    darkTheme(): boolean {
-      return useSettingsStore().darkTheme
-    },
-  },
-  methods: {
-    axisSpanClasses(axisIndex: number) {
-      if (
-        axisIndex >= 0 &&
-        axisIndex < useMachinesModelStore().sensors.endstops.length &&
-        useMachinesModelStore().sensors.endstops[axisIndex]?.triggered
-      ) {
-        return this.darkTheme ? 'light-green darken-3' : 'light-green lighten-4'
-      }
-      return null
-    },
-    isFilamentSensorPresent(extruderIndex: number) {
-      return (
-        extruderIndex >= 0 &&
-        extruderIndex < this.model.sensors.filamentMonitors.length &&
-        this.model.sensors.filamentMonitors[extruderIndex] !== null &&
-        this.model.sensors.filamentMonitors[extruderIndex]!.enabled &&
-        typeof (this.model.sensors.filamentMonitors[extruderIndex] as any).filamentPresent ===
-          'boolean'
-      )
-    },
-    isFilamentPresent(extruderIndex: number) {
-      return (this.model.sensors.filamentMonitors[extruderIndex] as any).filamentPresent
-    },
-    formatProbeValues(values: Array<number>) {
-      if (values.length === 1) {
-        return values[0]
-      }
-      return `${values[0]} (${values.slice(1).join(', ')})`
-    },
-    isValidProbe(probe: Probe | null) {
-      return probe !== null && probe.type !== ProbeType.none
-    },
-    probeSpanClasses(probe: Probe, isFirstItem: boolean) {
-      let result: string[] = [] // todo correctly type
-      if (!isFirstItem) {
-        result.push('ml-2')
-      }
-      if (!isPrinting(this.model.state.status) && probe.value.length > 0) {
-        if (probe.value[0] >= probe.threshold) {
-          result.push('red')
-          result.push(this.darkTheme ? 'darken-3' : 'lighten-4')
-        } else if (probe.value[0] > probe.threshold * 0.9) {
-          result.push('orange')
-          result.push(this.darkTheme ? 'darken-2' : 'lighten-4')
-        }
-      }
-      return result
-    },
-  },
+let { isConnected } = storeToRefs(useRootStore())
+let { darkTheme, dashboardMode } = storeToRefs(useSettingsStore())
+let { move, state, tools, boards, sensors } = storeToRefs(useMachinesModelStore())
+let { t } = useI18n()
+let isFFForUnset = computed(() => {
+  if (dashboardMode.value === DashboardMode.default) {
+    return !state.value.machineMode || state.value.machineMode === MachineMode.fff
+  }
+  return useSettingsStore().dashboardMode === DashboardMode.fff
 })
+let virtualEPos = computed(() => {
+  return move.value.virtualEPos
+})
+let volumetricFlow = computed(() => {
+  if (state.value.currentTool >= 0 && state.value.currentTool < tools.value.length) {
+    const selectedTool = tools.value[state.value.currentTool]
+    if (selectedTool !== null) {
+      // Get the average extruder diameter x mix ratio
+      let numExtruders = 0,
+        filamentArea = 0
+      for (let i = 0; i < selectedTool.extruders.length; i++) {
+        const extruderIndex = selectedTool.extruders[i]
+        if (extruderIndex >= 0 && extruderIndex < move.value.extruders.length) {
+          const extruder = move.value.extruders[extruderIndex]
+          if (extruder !== null) {
+            filamentArea +=
+              selectedTool.mix[i] * (Math.PI * Math.pow(extruder.filamentDiameter / 2, 2))
+            numExtruders++
+          }
+        }
+      }
+
+      // Compute volumetric flow
+      if (numExtruders > 0) {
+        filamentArea /= numExtruders
+        return filamentArea * move.value.currentMove.extrusionRate
+      }
+    }
+  }
+  return NaN
+})
+
+let fanRPM = computed(() => {
+  return useMachinesModelStore()
+    .fans.filter((fan) => fan !== null && fan.rpm >= 0)
+    .map(
+      (fan, index) => ({
+        name: fan!.name || t('panel.fan.fan', [index]),
+        rpm: fan!.rpm,
+      }),
+      this,
+    )
+})
+let validProbes = computed(() => {
+  return useMachinesModelStore().sensors.probes.filter(
+    (probe) => probe !== null && probe.type !== ProbeType.none,
+  ) as Array<Probe>
+})
+let mainboard = computed(() => {
+  return boards.value.find((board) => !board.canAddress) ?? null
+})
+let visibleAxes = computed(() => {
+  return move.value.axes.filter((axis) => axis.visible)
+})
+let sensorsPresent = computed(() => {
+  return (
+    (mainboard.value !== null &&
+      (mainboard.value.vIn !== null ||
+        mainboard.value.v12 !== null ||
+        mainboard.value.mcuTemp !== null)) ||
+    fanRPM.value.length > 0 ||
+    validProbes.value.length > 0
+  )
+})
+
+function axisSpanClasses(axisIndex: number) {
+  if (
+    axisIndex >= 0 &&
+    axisIndex < useMachinesModelStore().sensors.endstops.length &&
+    useMachinesModelStore().sensors.endstops[axisIndex]?.triggered
+  ) {
+    return darkTheme.value ? 'light-green darken-3' : 'light-green lighten-4'
+  }
+  return null
+}
+function isFilamentSensorPresent(extruderIndex: number) {
+  return (
+    extruderIndex >= 0 &&
+    extruderIndex < sensors.value.filamentMonitors.length &&
+    sensors.value.filamentMonitors[extruderIndex] !== null &&
+    sensors.value.filamentMonitors[extruderIndex]!.enabled &&
+    typeof (sensors.value.filamentMonitors[extruderIndex] as any).filamentPresent === 'boolean'
+  )
+}
+function isFilamentPresent(extruderIndex: number) {
+  return (sensors.value.filamentMonitors[extruderIndex] as any).filamentPresent
+}
+function formatProbeValues(values: Array<number>) {
+  if (values.length === 1) {
+    return values[0]
+  }
+  return `${values[0]} (${values.slice(1).join(', ')})`
+}
+function isValidProbe(probe: Probe | null) {
+  return probe !== null && probe.type !== ProbeType.none
+}
+function probeSpanClasses(probe: Probe, isFirstItem: boolean) {
+  let result: string[] = [] // todo correctly type
+  if (!isFirstItem) {
+    result.push('ml-2')
+  }
+  if (!isPrinting(state.value.status) && probe.value.length > 0) {
+    if (probe.value[0] >= probe.threshold) {
+      result.push('red')
+      result.push(darkTheme.value ? 'darken-3' : 'lighten-4')
+    } else if (probe.value[0] > probe.threshold * 0.9) {
+      result.push('orange')
+      result.push(darkTheme.value ? 'darken-2' : 'lighten-4')
+    }
+  }
+  return result
+}
 </script>
-
-<style scoped>
-.axis-span {
-  border-radius: 5px;
-}
-
-strong {
-  align-self: center;
-  text-align: center;
-}
-
-.category-header {
-  flex: 0 0 100px;
-}
-
-a:not(:hover) {
-  color: inherit;
-}
-
-.content span,
-.content strong {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-
-.probe-span {
-  border-radius: 5px;
-  text-align: center;
-  white-space: nowrap;
-  width: 60px;
-}
-
-.probe-span:not(:last-child) {
-  margin-right: 8px;
-}
-</style>

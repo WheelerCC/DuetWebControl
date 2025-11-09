@@ -92,6 +92,9 @@ import {
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       toolChangeMacroList: [

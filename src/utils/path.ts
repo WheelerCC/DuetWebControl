@@ -32,7 +32,7 @@ export function combine(...args: any[]) {
  * @param b Second path
  * @returns Whether both paths are equal
  */
-export function equals(a: string, b: string) {
+export function equals(a: string | null, b: string) {
   if (a && b) {
     if (a.startsWith('/')) {
       a = '0:' + a
@@ -125,7 +125,7 @@ export function getVolume(path: string) {
  * @param value Expected start
  * @returns Whether the path starts with a given value
  */
-export function startsWith(path: string, value: string) {
+export function startsWith(path: string | null, value: string) {
   if (path && value) {
     if (path.startsWith('/')) {
       path = '0:' + path
@@ -218,7 +218,7 @@ export function escapeFilename(filename: string) {
  * Enumeration of default directories and files.
  * It exposes the functions above as well
  */
-const pathObj = {
+export const pathObj = {
   filaments: '0:/filaments',
   firmware: '0:/sys',
   gCodes: '0:/gcodes',
@@ -244,18 +244,4 @@ const pathObj = {
 
   accelerometer: '0:/sys/accelerometer',
   closedLoop: '0:/sys/closed-loop',
-
-  combine,
-  equals,
-  extractDirectory,
-  extractFileName,
-  filesAffectDirectory,
-  getVolume,
-  startsWith,
-
-  isGCodePath,
-  isSdPath,
-  stripMacroFilename,
 }
-
-export default pathObj

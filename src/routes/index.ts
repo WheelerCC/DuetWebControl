@@ -1,27 +1,24 @@
-import { MachineMode } from '@duet3d/objectmodel'
-import Vue, { Component, reactive } from 'vue'
+import { Component, nextTick, reactive } from 'vue'
 import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 
-import Console from './Control/ConsoleComponent.vue'
-import Dashboard from './Control/DashboardComponent.vue'
-import Status from './Control/StatusComponent.vue'
+import Console from '@/routes/Control/ConsoleComponent.vue'
+import Dashboard from '@/routes/Control/DashboardComponent.vue'
 
-import Filaments from './Files/FilamentsComponent.vue'
-import Jobs from './Files/JobsComponent.vue'
-import Macros from './Files/MacrosComponent.vue'
-import System from './Files/SystemComponent.vue'
+import Filaments from '@/routes/Files/FilamentsComponent.vue'
+import Jobs from '@/routes/Files/JobsComponent.vue'
+import Macros from '@/routes/Files/MacrosComponent.vue'
+import System from '@/routes/Files/SystemComponent.vue'
 
-import JobStatus from './Job/StatusComponent.vue'
-import Webcam from './Job/WebcamComponent.vue'
+import JobStatus from '@/routes/Job/StatusComponent.vue'
+import Webcam from '@/routes/Job/WebcamComponent.vue'
 
-import General from './Settings/GeneralComponent.vue'
-import Machine from './Settings/MachineComponent.vue'
-import Plugins from './Settings/PluginsComponent.vue'
+import General from '@/routes/Settings/GeneralComponent.vue'
+import Machine from '@/routes/Settings/MachineComponent.vue'
+import Plugins from '@/routes/Settings/PluginsComponent.vue'
 
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useSettingsStore } from '@/stores/settings'
-import { useDisplay } from 'vuetify'
-import Page404 from './Page404Component.vue'
+// import { useMachinesModelStore } from '@/stores/machineModel'
+// import { useSettingsStore } from '@/stores/settings'
+import Page404 from '@/routes/Page404Component.vue'
 
 /**
  * Menu item
@@ -30,7 +27,7 @@ export interface MenuItem {
   /**
    * Icon of the menu item
    */
-  icon: string
+  icon: Component
 
   /**
    * Caption of the menu item
@@ -65,7 +62,7 @@ export interface MenuCategory {
   /**
    * Category icon
    */
-  icon: string
+  icon: Component
 
   /**
    * Category caption
@@ -82,30 +79,27 @@ export interface MenuCategory {
    */
   translated: boolean
 }
+import { ChevronDown, Settings, ChartLine, LayoutDashboard, Code, Info, Save, Printer, SlidersHorizontal, Database, Play, Disc, FileCode, Wrench, Blocks, Puzzle, Bug, Plug, Camera } from 'lucide-vue-next'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { MachineMode } from '@duet3d/objectmodel'
+import DebugComponent from './Settings/DebugComponent.vue'
 
 /**
  * Actual menu structure (name vs. category descriptor)
  */
 export const Menu = reactive<Record<string, MenuCategory>>({
   Control: {
-    icon: 'mdi-tune',
+    icon: SlidersHorizontal,
     caption: 'menu.control.caption',
     pages: [
       {
-        icon: 'mdi-list-status',
-        caption: 'menu.control.status',
-        condition: () => useDisplay().smAndDown.value,
-        path: '/Status',
-        component: Status,
-      },
-      {
-        icon: 'mdi-view-dashboard',
+        icon: LayoutDashboard,
         caption: 'menu.control.dashboard',
         path: '/',
         component: Dashboard,
       },
       {
-        icon: 'mdi-code-tags',
+        icon: Code,
         caption: 'menu.control.console',
         path: '/Console',
         component: Console,
@@ -114,31 +108,30 @@ export const Menu = reactive<Record<string, MenuCategory>>({
     translated: false,
   },
   Job: {
-    icon: 'mdi-printer',
+    icon: Printer,
     caption: 'menu.job.caption',
     pages: [
       {
-        icon: 'mdi-information',
+        icon: Info,
         caption: 'menu.job.status',
         path: '/Job/Status',
         component: JobStatus,
       },
       {
-        icon: 'mdi-webcam',
+        icon: Camera,
         caption: 'menu.job.webcam',
         path: '/Job/Webcam',
-        condition: () => useSettingsStore().webcam.enabled,
         component: Webcam,
       },
     ],
     translated: false,
   },
   Files: {
-    icon: 'mdi-sd',
+    icon: Save,
     caption: 'menu.files.caption',
     pages: [
       {
-        icon: 'mdi-database',
+        icon: Disc,
         caption: 'menu.files.filaments',
         path: '/Files/Filaments',
         condition: () =>
@@ -147,19 +140,19 @@ export const Menu = reactive<Record<string, MenuCategory>>({
         component: Filaments,
       },
       {
-        icon: 'mdi-play',
+        icon: Play,
         caption: 'menu.files.jobs',
         path: '/Files/Jobs',
         component: Jobs,
       },
       {
-        icon: 'mdi-polymer',
+        icon: FileCode,
         caption: 'menu.files.macros',
         path: '/Files/Macros',
         component: Macros,
       },
       {
-        icon: 'mdi-cog',
+        icon: Settings,
         caption: 'menu.files.system',
         path: '/Files/System',
         component: System,
@@ -168,32 +161,39 @@ export const Menu = reactive<Record<string, MenuCategory>>({
     translated: false,
   },
   Settings: {
-    icon: 'mdi-wrench',
+    icon: Wrench,
     caption: 'menu.settings.caption',
     pages: [
       {
-        icon: 'mdi-tune',
+        icon: SlidersHorizontal,
         caption: 'menu.settings.general',
         path: '/Settings/General',
         component: General,
       },
       {
-        icon: 'mdi-cogs',
+        icon: Settings,
         caption: 'menu.settings.machine',
         path: '/Settings/Machine',
         component: Machine,
       },
       {
-        icon: 'mdi-power-plug',
+        icon: Plug,
         caption: 'menu.plugins.caption',
         path: '/Settings/Plugins',
         component: Plugins,
+      },
+      // TODO internationalisation
+      {
+        icon: Bug,
+        caption: 'menu.settings.debug',
+        path: '/Settings/Debug',
+        component: DebugComponent,
       },
     ],
     translated: false,
   },
   Plugins: {
-    icon: 'mdi-puzzle',
+    icon: Puzzle,
     caption: 'menu.plugins.caption',
     pages: [],
     translated: false,
@@ -214,7 +214,7 @@ export const Routes: Array<RouteRecordRaw> = []
  */
 export async function registerCategory(
   name: string,
-  icon: string,
+  icon: Component,
   caption: string | (() => string),
   translated = false,
 ) {
@@ -233,7 +233,7 @@ export async function registerCategory(
     }
 
     Menu[name] = category
-    await Vue.nextTick() // wait for the DOM to be updated so that more routes can be added safely
+    await nextTick() // wait for the DOM to be updated so that more routes can be added safely
   }
 }
 
@@ -315,50 +315,26 @@ interface TabItem {
 /**
  * Tab items in the general settings
  */
-export const GeneralSettingTabs = reactive<Array<TabItem>>([])
+export const GeneralSettingTabs = reactive<Array<TabItem>>([
+  {
+    caption: 'tabs.generalSettings.caption',
+    component: 'settings-general-tab',
+    translated: false,
+    // icon: ,
+  },
+])
 
 /**
  * Tab items in the machine settings
  */
-export const MachineSettingTabs = reactive<Array<TabItem>>([])
-
-/**
- * Register a new settings page and a Vue component
- * @param general Whether to register the tab on the general settings page
- * @param name Name of the component
- * @param component Component to register
- * @param caption Caption of the tab
- * @param translated Whether the caption is already translated (defaults to false)
- * @param icon Optional icon for the tab caption
- */
-export function registerSettingTab(
-  general: boolean,
-  name: string,
-  component: Component,
-  caption: string | (() => string),
-  translated = false,
-  icon?: string,
-) {
-  const tab: TabItem = {
-    caption: caption as string,
-    icon,
-    component: name,
-    translated,
-  }
-
-  if (caption instanceof Function) {
-    Object.defineProperty(tab, 'caption', {
-      get: caption,
-    })
-  }
-
-  Vue.component(name, component as any)
-  if (general) {
-    GeneralSettingTabs.push(tab)
-  } else {
-    MachineSettingTabs.push(tab)
-  }
-}
+export const MachineSettingTabs = reactive<Array<TabItem>>([
+  {
+    caption: 'tabs.machineSettings.caption',
+    component: 'settings-machine-tab',
+    translated: false,
+    // icon: ,
+  },
+])
 
 /**
  * Router instance

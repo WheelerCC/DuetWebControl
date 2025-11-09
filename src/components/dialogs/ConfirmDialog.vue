@@ -28,6 +28,9 @@
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     title: {
       type: String,

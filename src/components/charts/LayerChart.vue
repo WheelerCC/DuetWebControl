@@ -1,12 +1,10 @@
 <template>
-  <v-card class="d-flex flex-column flex-grow-1">
-    <v-card-title>
-      <span>
-        <v-icon small class="mr-1">mdi-vector-polyline</v-icon>
-        {{ $t('chart.layer.caption') }}
-      </span>
-      <v-spacer />
+  <CardHeader>
+    <CardTitle class="flex flex-row items-center gap-2">
+      <ChartNoAxesColumn />
+      {{ $t('chart.layer.caption') }}
       <a
+        class="ml-auto"
         v-show="layers.length > 2"
         href="javascript:void(0)"
         @click.prevent="showAllLayers = !showAllLayers"
@@ -17,15 +15,16 @@
             : $t('chart.layer.showAllLayers')
         }}
       </a>
-    </v-card-title>
-
-    <v-card-text class="content flex-grow-1 px-2 py-0">
-      <canvas ref="chart" />
-    </v-card-text>
-  </v-card>
+    </CardTitle>
+  </CardHeader>
+  <CardContent class="h-full">
+    <canvas ref="chartElement" />
+  </CardContent>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Layer, ModelCollection } from '@duet3d/objectmodel'
 import {
   CategoryScale,
@@ -37,6 +36,8 @@ import {
   PointElement,
   TimeScale,
 } from 'chart.js'
+
+const chartElement = useTemplateRef('chartElement')
 
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useSettingsStore } from '@/stores/settings'
@@ -53,43 +54,32 @@ Chart.register(
   CategoryScale,
 )
 
-import { defineComponent } from 'vue'
+import { ChartNoAxesColumn } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+import { computed, onMounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+// TODO chart may be broken, see
+// https://stackoverflow.com/questions/68602389/maximum-call-stack-error-when-attempting-to-update-chart-in-vue-js/68609820#68609820
+let chart
+let showAllLayers = ref(false)
+let { darkTheme, language } = storeToRefs(useSettingsStore())
+let { job } = storeToRefs(useMachinesModelStore())
 
-export default defineComponent({
-  data() {
-    return {
-      chart: null as Chart<'line', number[], unknown> | null,
-      showAllLayers: false,
-    }
-  },
-  computed: {
-    darkTheme(): boolean {
-      return useSettingsStore().darkTheme
-    },
-    language(): string {
-      return useSettingsStore().language
-    },
-    layers(): ModelCollection<Layer> {
-      return useMachinesModelStore().job.layers
-    },
-  },
-  watch: {
-    darkTheme(to: boolean) {
-      this.applyDarkTheme(to)
-    },
-    language() {
-      this.chart!.data.datasets![0].label = this.$t('chart.layer.layerTime')
-    },
-    layers() {
-      this.updateChart()
-    },
-    showAllLayers() {
-      this.updateChart()
-    },
-  },
-  mounted() {
-    const that = this
-    this.chart = new Chart(this.$refs.chart as HTMLCanvasElement, {
+let layers = computed(() => {
+  return job.value.layers as ModelCollection<Layer>
+})
+
+let { t } = useI18n()
+
+onMounted(() => {
+  const _chartElement = chartElement.value
+  if (!_chartElement) {
+    console.log('_chartElement null')
+    return
+  }
+
+  chart = shallowRef(
+    new Chart(_chartElement, {
       type: 'line',
       options: {
         elements: {
@@ -104,31 +94,26 @@ export default defineComponent({
           tooltip: {
             displayColors: false,
             callbacks: {
-              title: (tooltipItems) =>
-                that.$t('chart.layer.layer', [tooltipItems![0].dataIndex! + 1]),
+              title: (tooltipItems) => t('chart.layer.layer', [tooltipItems![0].dataIndex! + 1]),
               label(tooltipItem) {
-                const layer = that.layers[tooltipItem.dataIndex!]
-                let result = [
-                  that.$t('chart.layer.layerDuration', [displayTime(layer.duration, false)]),
-                ]
+                const layer = layers.value[tooltipItem.dataIndex!]
+                let result = [t('chart.layer.layerDuration', [displayTime(layer.duration, false)])]
                 if (layer.height) {
-                  result.push(that.$t('chart.layer.layerHeight', [displayZ(layer.height)]))
+                  result.push(t('chart.layer.layerHeight', [displayZ(layer.height)]))
                 }
                 if (layer.filament) {
-                  result.push(
-                    that.$t('chart.layer.filamentUsage', [display(layer.filament, 1, 'mm')]),
-                  )
+                  result.push(t('chart.layer.filamentUsage', [display(layer.filament, 1, 'mm')]))
                 }
                 if (layer.fractionPrinted) {
                   result.push(
-                    that.$t('chart.layer.fractionPrinted', [
+                    t('chart.layer.fractionPrinted', [
                       display(layer.fractionPrinted * 100, 1, '%'),
                     ]),
                   )
                 }
                 if (layer.temperatures) {
                   result.push(
-                    that.$t('chart.layer.temperatures', [
+                    t('chart.layer.temperatures', [
                       layer.temperatures.map((temp) => display(temp, 1, 'C')).join(', '),
                     ]),
                   )
@@ -184,53 +169,53 @@ export default defineComponent({
             borderColor: 'rgba(0, 129, 214, 0.8)',
             backgroundColor: 'rgba(0, 129, 214, 0.8)',
             fill: false,
-            label: this.$t('chart.layer.layerTime'),
+            label: t('chart.layer.layerTime'),
           },
         ],
       },
-    })
-    this.applyDarkTheme(this.darkTheme)
-    this.updateChart()
-  },
-  methods: {
-    updateChart() {
-      this.chart!.data.labels = this.layers.map((_, index) => index + 1)
-      this.chart!.data.datasets![0].data = this.layers.map((layer) => layer.duration)
+    }),
+  )
+  applyDarkTheme(darkTheme.value)
+  updateChart()
+})
+function updateChart() {
+  chart.value!.data.labels = layers.value.map((_, index) => index + 1)
+  chart.value!.data.datasets![0].data = layers.value.map((layer) => layer.duration)
 
-      if (this.showAllLayers) {
-        this.chart!.config.options!.scales!.x!.min = 1
-        this.chart!.config.options!.scales!.x!.max = this.layers.length
-      } else {
-        this.chart!.config.options!.scales!.x!.min = Math.max(
-          this.layers.length > 2 ? 2 : 1,
-          this.layers.length - 30,
-        )
-        this.chart!.config.options!.scales!.x!.max = Math.max(30, this.layers.length)
-      }
-      this.chart!.update()
-    },
-    applyDarkTheme(active: boolean) {
-      const ticksColor = active ? '#FFF' : '#666'
-      this.chart!.config.options!.scales!.x!.ticks!.color = ticksColor
-      this.chart!.config.options!.scales!.y!.ticks!.color = ticksColor
+  if (showAllLayers.value) {
+    chart.value!.config.options!.scales!.x!.min = 1
+    chart.value!.config.options!.scales!.x!.max = layers.value.length
+  } else {
+    chart.value!.config.options!.scales!.x!.min = Math.max(
+      layers.value.length > 2 ? 2 : 1,
+      layers.value.length - 30,
+    )
+    chart.value!.config.options!.scales!.x!.max = Math.max(30, layers.value.length)
+  }
+  chart.value!.update()
+}
+function applyDarkTheme(active: boolean) {
+  const ticksColor = active ? '#FFF' : '#666'
+  chart.value!.config.options!.scales!.x!.ticks!.color = ticksColor
+  chart.value!.config.options!.scales!.y!.ticks!.color = ticksColor
 
-      const gridLineColor = active ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-      this.chart!.config.options!.scales!.x!.grid!.color = gridLineColor
-      this.chart!.config.options!.scales!.y!.grid!.color = gridLineColor
+  const gridLineColor = active ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+  chart.value!.config.options!.scales!.x!.grid!.color = gridLineColor
+  chart.value!.config.options!.scales!.y!.grid!.color = gridLineColor
 
-      this.chart!.update()
-    },
-  },
+  chart.value!.update()
+}
+
+watch(darkTheme, (newVal, oldVal) => {
+  applyDarkTheme(newVal)
+})
+watch(language, (newVal, oldVal) => {
+  chart.value!.data.datasets![0].label = t('chart.layer.layerTime')
+})
+watch(layers, (newVal, oldVal) => {
+  updateChart()
+})
+watch(showAllLayers, (newVal, oldVal) => {
+  updateChart()
 })
 </script>
-
-<style scoped>
-.content {
-  position: relative;
-  min-height: 180px;
-}
-
-.content > canvas {
-  position: absolute;
-}
-</style>

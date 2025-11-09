@@ -5,8 +5,6 @@ import { getErrorMessage, InvalidPasswordError } from '@/utils/errors'
 import Events from '@/utils/events'
 import { logGlobal, logToConsole, LogType } from '@/utils/logging'
 import { closeNotifications, makeNotification } from '@/utils/notifications'
-import Path from '@/utils/path'
-import { useI18n } from 'vue-i18n'
 
 import packageInfo from '../../package.json'
 
@@ -65,6 +63,11 @@ export interface InternalRootState {
    * Bottom margin to add for the on-screen keyboard
    */
   bottomMargin: number
+
+  /**
+   * Expanded groups in the left navigation
+   */
+  openGroups: any[]
 }
 
 /**
@@ -87,6 +90,7 @@ export enum PluginDataType {
   machineSetting = 'machineSetting',
 }
 
+import i18n from '@/i18n'
 import eventbus from '@/utils/eventbus'
 import ObjectModel from '@duet3d/objectmodel'
 import { defineStore } from 'pinia'
@@ -96,6 +100,8 @@ import { useMachinesSettingsStore } from './machineSettings'
 import { useMachinesStore } from './machines'
 import { defaultMachine, defaultPassword, defaultUsername } from './misc'
 import { useSettingsStore } from './settings'
+import { pathObj } from '@/utils/path'
+import { useMachinesSamplesStore } from './machineSamples'
 export const useRootStore = defineStore('root', {
   state: (): InternalRootState => ({
     isConnecting: false,
@@ -109,6 +115,7 @@ export const useRootStore = defineStore('root', {
     hideCodeReplyNotifications: false,
     oskEnabled: false,
     bottomMargin: 0,
+    openGroups: [],
   }),
   getters: {
     // Remove any getters that return state under the same name (eg. firstName: (state) => state.firstName), these are not necessary as you can access any state directly from the store instance
@@ -177,7 +184,7 @@ export const useRootStore = defineStore('root', {
           baseURL: hostname === location.hostname ? (process.env.BASE_URL ?? '/') : '/',
           username: '',
           password,
-          pluginsFile: Path.dwcPluginsFile,
+          pluginsFile: pathObj.dwcPluginsFile,
 
           // The following are all defined by the machine settings
           maxRetries: DefaultSettings.maxRetries,
@@ -195,7 +202,6 @@ export const useRootStore = defineStore('root', {
         this.addMachine({ hostname, connector })
         this.setSelectedMachine(hostname)
 
-        console.log('todo idk if this will work after adding it to the machine?')
         // Set up event callbacks before loading the settings
         connector.setCallbacks({
           onConnectProgress(connector: BaseConnector, progress: number) {
@@ -213,7 +219,7 @@ export const useRootStore = defineStore('root', {
           },
           onUpdate(connector: BaseConnector, _data: any) {
             let data = _data as Partial<ObjectModel>
-            console.log('callback from connector called onUpdate')
+            // console.log('callback from connector called onUpdate')
             useMachinesStore().update(data)
           },
           onVolumeChanged(connector: BaseConnector, volumeIndex: number) {
@@ -241,7 +247,7 @@ export const useRootStore = defineStore('root', {
         }
 
         // Perform post-connect tasks
-        logGlobal(LogType.success, useI18n().t('events.connected', [hostname]))
+        logGlobal(LogType.success, i18n.global.t('events.connected', [hostname]))
 
         if (settingsStore.lastHostname !== location.host || hostname !== location.host) {
           const _settingsStore = useSettingsStore()
@@ -252,7 +258,7 @@ export const useRootStore = defineStore('root', {
         if (!isPasswordError || password !== defaultPassword) {
           logGlobal(
             isPasswordError ? LogType.warning : LogType.error,
-            useI18n().t('error.connect', [hostname]),
+            i18n.global.t('error.connect', [hostname]),
             getErrorMessage(e),
           )
         }
@@ -300,12 +306,12 @@ export const useRootStore = defineStore('root', {
         this.setDisconnecting(true)
         try {
           await machinesStore.disconnect()
-          logGlobal(LogType.success, useI18n().t('events.disconnected', [hostname]))
+          logGlobal(LogType.success, i18n.global.t('events.disconnected', [hostname]))
           // Disconnecting must always work - even if it does not always happen cleanly
         } catch (e) {
           logGlobal(
             LogType.warning,
-            useI18n().t('error.disconnect', [hostname]),
+            i18n.global.t('error.disconnect', [hostname]),
             getErrorMessage(e),
           )
           console.warn(e)
@@ -342,14 +348,14 @@ export const useRootStore = defineStore('root', {
      */
     async onConnectionError({ hostname, error }: { hostname: string; error: Error }) {
       if (error instanceof InvalidPasswordError) {
-        logGlobal(LogType.error, useI18n().t('events.connectionLost', [hostname]), error.message)
+        logGlobal(LogType.error, i18n.global.t('events.connectionLost', [hostname]), error.message)
         await this.disconnect(hostname, false)
         this.askForPassword()
       } else if (process.env.NODE_ENV !== 'production') {
-        logGlobal(LogType.error, useI18n().t('events.connectionLost', [hostname]), error.message)
+        logGlobal(LogType.error, i18n.global.t('events.connectionLost', [hostname]), error.message)
         await this.disconnect(hostname, false)
       } else {
-        logGlobal(LogType.warning, useI18n().t('events.reconnecting', [hostname]), error.message)
+        logGlobal(LogType.warning, i18n.global.t('events.reconnecting', [hostname]), error.message)
         useMachinesStore().reconnect()
       }
     },
@@ -438,8 +444,8 @@ export const useRootStore = defineStore('root', {
         this.setDwcPluginsLoading(true)
         const notification = makeNotification(
           LogType.primary,
-          useI18n().t('notification.pluginLoad.title'),
-          useI18n().t('notification.pluginLoad.message'),
+          i18n.global.t('notification.pluginLoad.title'),
+          i18n.global.t('notification.pluginLoad.message'),
           0,
           null,
           'mdi-connection',
@@ -537,7 +543,7 @@ export const useRootStore = defineStore('root', {
     // 			}
     // 		}
     // 		this.setDwcPluginsLoading(true);
-    // 		const notification = makeNotification(LogType.primary, useI18n().t("notification.pluginLoad.title"), useI18n().t("notification.pluginLoad.message"), 0, null, "mdi-connection");
+    // 		const notification = makeNotification(LogType.primary, i18n.global.t("notification.pluginLoad.title"), i18n.global.t("notification.pluginLoad.message"), 0, null, "mdi-connection");
     // 		let loadedPlugins = 0;
     // 		for (let i = 0; i < pluginList.length; i++) {
     // 			try {
@@ -587,15 +593,16 @@ export const useRootStore = defineStore('root', {
     // - A common mutation is to reset the state back to its initial state. This is built in functionality with the store's $reset method. Note that this functionality only exists for option stores.
     /**
      * Show the connect dialog asking for target hostname etc.
-     * @param state Vuex state
+
      */
     showConnectDialog() {
+      console.log('[rootStore]showConnectDialog') 
       this.connectDialogShown = true
     },
 
     /**
      * Hide the connect dialog and password prompt again
-     * @param state Vuex state
+
      */
     hideConnectDialog() {
       this.connectDialogShown = false
@@ -604,7 +611,7 @@ export const useRootStore = defineStore('root', {
 
     /**
      * Ask for a password on connect
-     * @param state Vuex state
+
      */
     askForPassword() {
       this.connectDialogShown = true
@@ -631,22 +638,23 @@ export const useRootStore = defineStore('root', {
 
     /**
      * Add a new machine module to the Vuex store (via machines)
-     * @param state Vuex state
+
      * @param payload Mutation payload
      * @param payload.hostname Hostname of the machine to add
      * @param payload.module Machine module (Vuex)
      */
     addMachine({ hostname, connector }: { hostname: string; connector: BaseConnector }) {
-      console.log('todo use connector')
       let machinesStore = useMachinesStore()
       let machinesModelStore = useMachinesModelStore()
       let machinesCacheStore = useMachinesCacheStore()
       let machineSettingsStore = useMachinesSettingsStore()
+      let machinesSamplesStore = useMachinesSamplesStore()
 
       machinesStore[hostname] = machinesStore[defaultMachine]
       machinesModelStore[hostname] = machinesModelStore[defaultMachine]
       machinesCacheStore[hostname] = machinesCacheStore[defaultMachine]
       machineSettingsStore[hostname] = machineSettingsStore[defaultMachine]
+      machinesSamplesStore[hostname] = machinesSamplesStore[defaultMachine]
 
       machinesStore.setConnector(connector, hostname)
 
@@ -655,7 +663,7 @@ export const useRootStore = defineStore('root', {
 
     /**
      * Flag if a connection is being terminated
-     * @param state Vuex state
+
      * @param disconnecting If a machine is being disconnected from
      */
     setDisconnecting(disconnecting: boolean) {
@@ -664,7 +672,7 @@ export const useRootStore = defineStore('root', {
 
     /**
      * Remove an existing machine from the Vuex store (from machines)
-     * @param state Vuex state
+
      * @param hostname Hostname of the machine to remove
      */
     removeMachine(hostname: string) {
@@ -676,22 +684,24 @@ export const useRootStore = defineStore('root', {
       let machinesModelStore = useMachinesModelStore()
       let machinesCacheStore = useMachinesCacheStore()
       let machineSettingsStore = useMachinesSettingsStore()
+      let machinesSamplesStore = useMachinesSamplesStore()
 
       delete machinesStore[hostname]
       delete machinesModelStore[hostname]
       delete machinesCacheStore[hostname]
       delete machineSettingsStore[hostname]
+      delete machinesSamplesStore[hostname]
 
       eventbus.$emit(Events.machineRemoved, hostname)
     },
 
     /**
      * Set the currently selected machine
-     * @param state Vuex state
+
      * @param hostname Hostname of the machine to select
      */
-    setSelectedMachine(hostname: string) {
-      if (!hostname) {
+    setSelectedMachine(hostname: string | null) {
+      if (!hostname || !this.connectedMachines.includes(hostname)) {
         throw new Error('Invalid hostname')
       }
       this.selectedMachine = hostname
@@ -706,7 +716,7 @@ export const useRootStore = defineStore('root', {
 
     /**
      * Callback to be called when a DWC plugin has been loaded
-     * @param state Vuex state
+
      * @param plugin Plugin identifier of the loaded plugin
      */
     dwcPluginLoaded(plugin: string) {
@@ -714,24 +724,7 @@ export const useRootStore = defineStore('root', {
     },
 
     /**
-     * Do not show upcoming code reply notifications
-     * @param state Vuex state
-     */
-    doHideCodeReplyNotifications() {
-      this.hideCodeReplyNotifications = true
-    },
-
-    /**
-     * Show upcoming code reply notifications again
-     * @param state Vuex state
-     */
-    showCodeReplyNotifications() {
-      this.hideCodeReplyNotifications = false
-    },
-
-    /**
      * Called by OSK plugins to announce OSK functionality
-     * @param state Vuex state
      */
     doOskEnabled() {
       this.oskEnabled = true
@@ -739,7 +732,6 @@ export const useRootStore = defineStore('root', {
 
     /**
      * Set the new bottom margin (reserved for OSK plugins)
-     * @param state Vuex state
      * @param value New bottom margin in px
      */
     setBottomMargin(value: number) {

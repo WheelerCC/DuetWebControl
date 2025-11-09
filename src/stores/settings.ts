@@ -7,7 +7,6 @@ import {
   setLocalSetting,
 } from '@/utils/localStorage'
 import patch from '@/utils/patch'
-import Path from '@/utils/path'
 
 export enum DashboardMode {
   default = 'Default',
@@ -197,6 +196,7 @@ import { useMachinesModelStore } from './machineModel'
 import { useMachinesStore } from './machines'
 import { useMachinesSettingsStore } from './machineSettings'
 import { resetSettingsTimer } from './observer'
+import { pathObj } from '@/utils/path'
 
 export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
@@ -212,7 +212,7 @@ export const useSettingsStore = defineStore('settings', {
     numericInputs: false,
     iconMenu: false,
     displayUnits: UnitOfMeasure.metric,
-    decimalPlaces: 1,
+    decimalPlaces: 3,
 
     settingsStorageLocal: false,
     settingsSaveDelay: 500,
@@ -356,7 +356,7 @@ export const useSettingsStore = defineStore('settings', {
       removeLocalSetting('settings')
       removeLocalSetting(`machines/${machineName}`)
       try {
-        await useMachinesStore().delete(Path.dwcSettingsFile)
+        await useMachinesStore().delete(pathObj.dwcSettingsFile)
       } catch (e) {
         console.warn(e)
       }
@@ -364,7 +364,7 @@ export const useSettingsStore = defineStore('settings', {
       // Delete cache
       removeLocalSetting(`cache/${machineName}`)
       try {
-        await useMachinesStore().delete(Path.dwcCacheFile)
+        await useMachinesStore().delete(pathObj.dwcCacheFile)
       } catch (e) {
         console.warn(e)
       }
@@ -372,13 +372,13 @@ export const useSettingsStore = defineStore('settings', {
       // Check if there is a factory defaults file
       try {
         const defaults = await useMachinesStore().download({
-          filename: Path.dwcFactoryDefaults,
+          filename: pathObj.dwcFactoryDefaults,
           showProgress: false,
           showSuccess: false,
           showError: false,
         })[0]
         await useMachinesStore().upload({
-          filename: Path.dwcSettingsFile,
+          filename: pathObj.dwcSettingsFile,
           content: new Blob([defaults]),
           showProgress: false,
           showSuccess: false,

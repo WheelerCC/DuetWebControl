@@ -1,172 +1,152 @@
 <template>
-  <tbody>
-    <template v-if="singleControl && firstHeater !== null">
-      <!-- Single Heater Control-->
-      <tr>
-        <!-- Heater item name -->
-        <th class="pl-2">
-          <v-menu bottom offset-y :disabled="disabled">
-            <template #activator="{ on, attrs }">
-              <a
-                href="javascript:void(0)"
-                v-bind="attrs"
-                :classes="{ disabled: disabled }"
-                v-on="on"
-              >
-                {{ singleHeaterCaption }}
-                <v-icon dense class="ms-n1">mdi-menu-down</v-icon>
-              </a>
-            </template>
-            <v-list>
-              <v-list-item @click="selectHeater(-1, null, -1)">
-                <v-list-item-title>
-                  <v-icon small>
-                    {{ props.type === 'bed' ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
-                  </v-icon>
-                  {{
-                    props.type === 'bed' ? $t('panel.tools.allBeds') : $t('panel.tools.allChambers')
-                  }}
-                </v-list-item-title>
-              </v-list-item>
+  <template v-if="singleControl && firstHeater !== null">
+    <!-- Single Heater Control-->
 
-              <template v-for="{ heater, heaterIndex, index } in heaterItems">
-                <v-list-item
-                  v-if="heater !== null"
-                  :key="index"
-                  @click="selectHeater(index, heater, heaterIndex)"
-                >
-                  <v-list-item-title>
-                    <v-icon class="mr-1">
-                      {{ props.type === 'bed' ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
-                    </v-icon>
-                    {{
-                      props.type === 'bed'
-                        ? $t('panel.tools.bed', [index])
-                        : $t('panel.tools.chamber', [index])
-                    }}
-                  </v-list-item-title>
-                </v-list-item>
-              </template>
-            </v-list>
-          </v-menu>
-        </th>
+    <!-- Heater item name -->
+    HELLO HELLO
+    <v-menu bottom offset-y :disabled="disabled">
+      <template #activator="{ props }">
+        <a v-bind="props" href="javascript:void(0)" :classes="{ disabled: disabled }">
+          {{ singleHeaterCaption }}
+          <ChevronDown :size="18" />
+        </a>
+      </template>
+      <v-list>
+        <div @click="selectHeater(-1, null, -1)">
+          <component :is="props.type === 'bed' ? HeaterIcon : AirVentIcon" />
+
+          {{ props.type === 'bed' ? $t('panel.tools.allBeds') : $t('panel.tools.allChambers') }}
+        </div>
+
+        <template v-for="{ heater, heaterIndex, index } in heaterItems">
+          <div
+            v-if="heater !== null"
+            :key="index"
+            @click="selectHeater(index, heater, heaterIndex)"
+          >
+            <component :is="props.type === 'bed' ? HeaterIcon : AirVentIcon" />
+
+            {{
+              props.type === 'bed'
+                ? $t('panel.tools.bed', [index])
+                : $t('panel.tools.chamber', [index])
+            }}
+          </div>
+        </template>
+      </v-list>
+    </v-menu>
+
+    <!-- Heater name -->
+    <th v-if="selectedHeater !== null">
+      <a
+        href="javascript:void(0)"
+        :class="getHeaterClasses(selectedHeaterIndex)"
+        @click="heaterClick(selectedIndex, selectedHeater)"
+      >
+        {{ getHeaterName(selectedHeater, selectedHeaterIndex) }}
+      </a>
+      <br />
+      <span class="font-weight-regular caption">
+        {{ $t(`generic.heaterStates.${selectedHeater.state}`) }}
+      </span>
+    </th>
+    <th v-else>
+      <a href="javascript:void(0)" @click="allHeatersClick">
+        {{ $t(`generic.heaterStates.${firstHeater.state}`) }}
+      </a>
+    </th>
+
+    <!-- Heater value -->
+    <td>
+      {{ getHeaterValue(firstHeater) }}
+    </td>
+
+    <!-- Heater active -->
+    <td class="pl-2 pr-1">
+      <ControlInput
+        type="all"
+        :control-beds="type === 'bed' && useMachinesSettingsStore().singleBedControl"
+        :control-chambers="type == 'chamber' && useMachinesSettingsStore().singleChamberControl"
+        active
+      />
+    </td>
+
+    <!-- Heater standby -->
+    <td class="pl-1 pr-2">
+      <ControlInput
+        type="all"
+        :control-beds="type === 'bed' && useMachinesSettingsStore().singleBedControl"
+        :control-chambers="type == 'chamber' && useMachinesSettingsStore().singleChamberControl"
+        standby
+      />
+    </td>
+  </template>
+  <template v-else-if="heaterItems.some((item) => item.heater !== null)">
+    <template v-for="{ index, heater, heaterIndex } in heaterItems" :key="`tool-${heaterIndex}`">
+      <!-- Individual Heater Control-->
+      <template v-if="heater !== null">
+        <!-- Heater -->
+        <!-- Heater item name -->
+        <a
+          :key="`heater-${index}-${heaterIndex}`"
+          href="javascript:void(0)"
+          class="flex flex-row gap-1 items-center justify-center bg-yellow-300"
+          :class="{ disabled: disabled }"
+          @click="heaterClick(index, heater)"
+        >
+          <component :is="props.type === 'bed' ? HeaterIcon : AirVentIcon" :size="14" />
+
+          {{
+            props.type === 'bed'
+              ? $t('panel.tools.bed', [heaterItems.length === 1 ? '' : index])
+              : $t('panel.tools.chamber', [heaterItems.length === 1 ? '' : index])
+          }}
+        </a>
 
         <!-- Heater name -->
-        <th v-if="selectedHeater !== null">
+        <div class="bg-blue-700 text-center flex flex-col justify-center">
           <a
+            class="text-nowrap"
+            :class="getHeaterClasses(heaterIndex)"
             href="javascript:void(0)"
-            :class="getHeaterClasses(selectedHeaterIndex)"
-            @click="heaterClick(selectedIndex, selectedHeater)"
+            @click="heaterClick(index, heater)"
           >
-            {{ getHeaterName(selectedHeater, selectedHeaterIndex) }}
+            {{ getHeaterName(heater, heaterIndex) }}
           </a>
-          <br />
-          <span class="font-weight-regular caption">
-            {{ $t(`generic.heaterStates.${selectedHeater.state}`) }}
+
+          <span class="text-xs">
+            {{ $t(`generic.heaterStates.${heater.state}`) }}
           </span>
-        </th>
-        <th v-else>
-          <a href="javascript:void(0)" class="font-weight-regular" @click="allHeatersClick">
-            {{ $t(`generic.heaterStates.${firstHeater.state}`) }}
-          </a>
-        </th>
+        </div>
 
         <!-- Heater value -->
-        <td>
-          {{ getHeaterValue(firstHeater) }}
-        </td>
+        <div class="bg-green-400 text-center flex flex-col justify-center">
+          {{ getHeaterValue(heater) }}
+        </div>
 
         <!-- Heater active -->
-        <td class="pl-2 pr-1">
-          <control-input
-            type="all"
-            :control-beds="type === 'bed' && useMachinesSettingsStore().singleBedControl"
-            :control-chambers="type == 'chamber' && useMachinesSettingsStore().singleChamberControl"
-            active
-          />
-        </td>
+        <ControlInput :type="props.type" :index="index" active />
 
         <!-- Heater standby -->
-        <td class="pl-1 pr-2">
-          <control-input
-            type="all"
-            :control-beds="type === 'bed' && useMachinesSettingsStore().singleBedControl"
-            :control-chambers="type == 'chamber' && useMachinesSettingsStore().singleChamberControl"
-            standby
-          />
-        </td>
-      </tr>
-    </template>
-    <template v-else-if="heaterItems.some((item) => item.heater !== null)">
-      <template v-for="{ index, heater, heaterIndex } in heaterItems">
-        <!-- Individual Heater Control-->
-        <template v-if="heater !== null">
-          <!-- Heater -->
-          <tr :key="index">
-            <!-- Heater item name -->
-            <th class="pl-2">
-              <a
-                href="javascript:void(0)"
-                :class="{ disabled: disabled }"
-                @click="heaterClick(index, heater)"
-              >
-                <v-icon small>
-                  {{ props.type === 'bed' ? 'mdi-radiator' : 'mdi-heat-pump-outline' }}
-                </v-icon>
-                {{
-                  props.type === 'bed'
-                    ? $t('panel.tools.bed', [heaterItems.length === 1 ? '' : index])
-                    : $t('panel.tools.chamber', [heaterItems.length === 1 ? '' : index])
-                }}
-              </a>
-            </th>
-
-            <!-- Heater name -->
-            <th>
-              <a
-                href="javascript:void(0)"
-                :class="getHeaterClasses(heaterIndex)"
-                @click="heaterClick(index, heater)"
-              >
-                {{ getHeaterName(heater, heaterIndex) }}
-              </a>
-              <br />
-              <span class="font-weight-regular caption">
-                {{ $t(`generic.heaterStates.${heater.state}`) }}
-              </span>
-            </th>
-
-            <!-- Heater value -->
-            <td>
-              {{ getHeaterValue(heater) }}
-            </td>
-
-            <!-- Heater active -->
-            <td class="pl-2 pr-1">
-              <control-input :type="props.type" :index="index" active />
-            </td>
-
-            <!-- Heater standby -->
-            <td class="pl-1 pr-2">
-              <control-input :type="props.type" :index="index" standby />
-            </td>
-          </tr>
-        </template>
+        <ControlInput :type="props.type" :index="index" standby />
       </template>
     </template>
-  </tbody>
+  </template>
 </template>
 
 <script setup lang="ts">
 import { Heater, HeaterState, MachineStatus } from '@duet3d/objectmodel'
 import { computed, PropType, ref } from 'vue'
 
+import ControlInput from '@/components/inputs/ControlInput.vue'
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { getHeaterColor } from '@/utils/colors'
 import { displaySensorValue } from '@/utils/display'
+import { AirVentIcon, ChevronDown, HeaterIcon } from 'lucide-vue-next'
+import { WritableDeep } from 'type-fest'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -180,20 +160,21 @@ const emit = defineEmits<{
   (e: 'resetHeaterFault', heater: number): void
 }>()
 
-const disabled = computed<boolean>(
-  () =>
+const disabled = computed(() => {
+  return (
     useRootStore().uiFrozen ||
     [MachineStatus.pausing, MachineStatus.processing, MachineStatus.resuming].includes(
       useMachinesModelStore().state.status,
-    ),
-)
+    )
+  )
+})
 
 // Settings
-const singleControl = computed(() =>
-  props.type === 'bed'
+const singleControl = computed(() => {
+  return props.type === 'bed'
     ? useMachinesSettingsStore().singleBedControl
-    : useMachinesSettingsStore().singleChamberControl,
-)
+    : useMachinesSettingsStore().singleChamberControl
+})
 
 // Heater abstraction
 const heaterItems = computed(() => {
@@ -201,7 +182,11 @@ const heaterItems = computed(() => {
     props.type === 'bed'
       ? useMachinesModelStore().heat.bedHeaters
       : useMachinesModelStore().heat.chamberHeaters
-  const heaterList: Array<{ index: number; heater: Heater; heaterIndex: number }> = []
+  const heaterList: {
+    index: number
+    heater: Heater | WritableDeep<Heater>
+    heaterIndex: number
+  }[] = []
   for (let index = 0; index < heaterIndices.length; index++) {
     const heaterIndex = heaterIndices[index]
     if (heaterIndex >= 0 && heaterIndex < useMachinesModelStore().heat.heaters.length) {
@@ -223,10 +208,14 @@ const firstHeater = computed(() =>
 
 // Single heater control
 const selectedIndex = ref(-1),
-  selectedHeater = ref<Heater | null>(null),
+  selectedHeater = ref<Heater | WritableDeep<Heater> | null>(null),
   selectedHeaterIndex = ref(-1)
 
-function selectHeater(index: number, heater: Heater | null, heaterIndex: number) {
+function selectHeater(
+  index: number,
+  heater: Heater | WritableDeep<Heater> | null,
+  heaterIndex: number,
+) {
   selectedIndex.value = index
   selectedHeater.value = heater
   selectedHeaterIndex.value = heaterIndex
@@ -323,7 +312,7 @@ function getHeaterClasses(heater: number) {
   return classes
 }
 
-function getHeaterName(heater: Heater | null, heaterIndex: number) {
+function getHeaterName(heater: Heater | WritableDeep<Heater> | null, heaterIndex: number) {
   if (
     heater !== null &&
     heater.sensor >= 0 &&
@@ -341,7 +330,7 @@ function getHeaterName(heater: Heater | null, heaterIndex: number) {
   return useI18n().t('panel.tools.heater', [heaterIndex])
 }
 
-function getHeaterValue(heater: Heater | null) {
+function getHeaterValue(heater: Heater | WritableDeep<Heater> | null) {
   if (
     heater !== null &&
     heater.sensor >= 0 &&
@@ -355,7 +344,7 @@ function getHeaterValue(heater: Heater | null) {
   return useI18n().t('generic.noValue')
 }
 
-async function heaterClick(index: number, heater: Heater | null) {
+async function heaterClick(index: number, heater: Heater | WritableDeep<Heater> | null) {
   if (disabled.value || !heater) {
     return
   }

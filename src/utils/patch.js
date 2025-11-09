@@ -2,8 +2,6 @@
 
 // This file is now obsolete - it will be removed from v3.6
 
-import Vue from 'vue'
-
 export class Dictionary {
   constructor(initData) {
     for (let key in initData) {
@@ -74,7 +72,7 @@ export function patch(a, b, skipNonexistentFields = false, fullPath = '') {
           if (a[i] && b[i] && a[i] instanceof Object) {
             patch(a[i], b[i], skipNonexistentFields, fullPath + '/' + i)
           } else {
-            Vue.set(a, i, b[i])
+            a[i] = b[i]
             //console.log(`[patch] ${fullPath}/${i} (${typeof b[i]})`);
           }
         }
@@ -93,7 +91,7 @@ export function patch(a, b, skipNonexistentFields = false, fullPath = '') {
           )
         }
       } else if (b[key] === null) {
-        Vue.set(a, key, null)
+        a[key] = null
       } else {
         if (typeof a[key] === 'boolean' && typeof b[key] === 'number') {
           // RRF may report bools as ints so convert them if necessary
@@ -121,9 +119,9 @@ export function patch(a, b, skipNonexistentFields = false, fullPath = '') {
             fullPath + '/' + key,
           )
         } else if (a[key] === null && b[key] instanceof Object) {
-          Vue.set(a, key, JSON.parse(JSON.stringify(b[key])))
+          a[key] = JSON.parse(JSON.stringify(b[key]))
         } else if (a[key] !== b[key]) {
-          Vue.set(a, key, b[key])
+          a[key] = b[key]
           //console.log(`[patch] ${fullPath}/${key} (${typeof b[key]})`);
         }
       }

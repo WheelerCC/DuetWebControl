@@ -6,12 +6,14 @@
 import { useRootStore } from '@/stores'
 import { useSettingsStore } from '@/stores/settings'
 import Keyboard from 'simple-keyboard'
-import 'simple-keyboard/build/css/index.css'
 import Vue from 'vue'
 
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       input: null as HTMLInputElement | HTMLTextAreaElement | null,

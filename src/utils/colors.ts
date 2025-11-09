@@ -24,10 +24,5 @@ export function getExtraColor(sensorIndex: number) {
 }
 
 export function getRealHeaterColor(heaterIndex: number, isExtra: boolean) {
-  const ghostSpan = document.createElement('span')
-  document.body.querySelector('#app')!.appendChild(ghostSpan)
-  ghostSpan.classList.add(isExtra ? getExtraColor(heaterIndex) : getHeaterColor(heaterIndex))
-  const trueColor = window.getComputedStyle(ghostSpan).color
-  ghostSpan.remove()
-  return trueColor
+  return isExtra ? getExtraColor(heaterIndex) : getHeaterColor(heaterIndex);
 }

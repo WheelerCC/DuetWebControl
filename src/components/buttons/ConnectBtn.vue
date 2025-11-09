@@ -1,72 +1,55 @@
 <template>
-  <v-btn
-    v-bind="$props"
-    :color="buttonColor"
-    :variant="isBusy ? 'flat' : undefined"
-    @click="clicked"
-  >
-    <v-icon v-show="!isBusy">
-      {{ buttonIcon }}
-    </v-icon>
-    <v-progress-circular v-show="isBusy" size="20" indeterminate />
-    <span class="ml-2" v-text="caption" />
-  </v-btn>
+  <Button class="cursor-pointer" @click="clicked" :variant="buttonVariant">
+    <component v-if="!isBusy" :is="buttonIcon" /> {{ caption }}
+    <Spinner v-show="isBusy" size="20" indeterminate />
+  </Button>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { Button } from '@/components/ui/button'
 import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
+import { CircleX, Power } from 'lucide-vue-next'
 
-import { defineComponent } from 'vue'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { Spinner } from '../ui/spinner'
 
-export default defineComponent({
-  computed: {
-    isConnected(): boolean {
-      return useRootStore().isConnected
-    },
-    isBusy(): boolean {
-      return (
-        useRootStore().isConnecting ||
-        useMachinesStore().isReconnecting ||
-        useRootStore().isDisconnecting
-      )
-    },
-    buttonColor(): string {
-      return this.isBusy ? 'warning' : this.isConnected ? 'success' : 'primary'
-    },
-    buttonIcon(): string {
-      return this.isConnected ? 'mdi-close-circle-outline' : 'mdi-power'
-    },
-    caption(): string {
-      return this.$t(
-        useRootStore().isConnecting || useMachinesStore().isReconnecting
-          ? 'button.connect.connecting'
-          : useRootStore().isDisconnecting
-            ? 'button.connect.disconnecting'
-            : this.isConnected
-              ? 'button.connect.disconnect'
-              : 'button.connect.connect',
-      )
-    },
-  },
-  methods: {
-    async clicked() {
-      if (this.isBusy) {
-        // Cannot disable this button because that messes up the color
-        return
-      }
+const rootStore = useRootStore()
+const machinesStore = useMachinesStore()
+const { t } = useI18n()
+console.log('todo button colour')
 
-      if (this.isConnected) {
-        // Disconnect from the current machine
-        await useRootStore().disconnect()
-      } else if (process.env.NODE_ENV === 'development') {
-        // Ask user for hostname before connecting
-        await useRootStore().showConnectDialog()
-      } else {
-        // Connect to the host this is running on
-        await useRootStore().connect()
-      }
-    },
-  },
-})
+const isConnected = computed(() => rootStore.isConnected)
+const isBusy = computed(
+  () => rootStore.isConnecting || machinesStore.isReconnecting || rootStore.isDisconnecting,
+)
+const buttonVariant = computed(() =>
+  isBusy.value ? 'ghost' : isConnected.value ? 'secondary' : 'default',
+)
+const buttonIcon = computed(() => (isConnected.value ? CircleX : Power))
+const caption = computed(() =>
+  t(
+    rootStore.isConnecting || machinesStore.isReconnecting
+      ? 'button.connect.connecting'
+      : rootStore.isDisconnecting
+        ? 'button.connect.disconnecting'
+        : isConnected.value
+          ? 'button.connect.disconnect'
+          : 'button.connect.connect',
+  ),
+)
+
+async function clicked() {
+  if (isBusy.value) {
+    return
+  }
+  if (isConnected.value) {
+    await rootStore.disconnect()
+  } else if (process.env.NODE_ENV === 'development') {
+    await rootStore.showConnectDialog()
+  } else {
+    await rootStore.connect()
+  }
+}
 </script>

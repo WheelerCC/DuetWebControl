@@ -1,4 +1,4 @@
-import { translateResponse } from '@/i18n'
+import { translateResponse } from '@/i18n/utils'
 import { makeFileTransferNotification, Notification, showMessage } from '@/utils/notifications'
 import {
   BaseConnector,
@@ -16,7 +16,6 @@ import { markRaw, reactive } from 'vue'
 
 import Plugins, { checkVersion, loadDwcResources } from '@/plugins'
 import Events from '@/utils/events'
-import Path from '@/utils/path'
 import packageInfo from '../../package.json'
 
 import { log, logCode, LogType } from '@/utils/logging'
@@ -61,6 +60,7 @@ import { useMachinesModelStore } from './machineModel'
 import { useMachinesSettingsStore } from './machineSettings'
 import { defaultMachine } from './misc'
 import { useSettingsStore } from './settings'
+import { combine, equals, extractFileName, pathObj } from '@/utils/path'
 
 /**
  * State of the machine module
@@ -151,15 +151,16 @@ export const useMachinesStore = defineStore('machines', {
   state: (): Record<string, MachineState & { _connector?: BaseConnector | null }> => ({
     [defaultMachine]: {
       boardBeingUpdated: -1,
-      boardsBeingUpdated: new Array<number>(),
-      events: new Array<MachineEvent>(),
+      boardsBeingUpdated: [],
+      events: [],
       isReconnecting: false,
-      filesBeingChanged: new Array<string>(),
+      filesBeingChanged: [],
       transferringFiles: false,
       _connector: null, // Store connector as non-reactive
     },
   }),
   getters: {
+    connectedMachines: (state) => Object.keys(state),
     boardBeingUpdated: (state) => state[useRootStore().selectedMachine].boardBeingUpdated,
     boardsBeingUpdated: (state) => state[useRootStore().selectedMachine].boardsBeingUpdated,
     events: (state) => state[useRootStore().selectedMachine].events,
@@ -184,13 +185,13 @@ export const useMachinesStore = defineStore('machines', {
       }),
   },
   actions: {
+
     /**
      * Set the connector for a specific machine
      * @param hostname Machine hostname
      * @param connector Connector instance (will be marked as non-reactive)
      */
     setConnector(connector: BaseConnector | null, hostname: string) {
-      console.log('setConnector')
       // markRaw prevents Vue from making the connector reactive
       this[hostname]._connector = connector ? markRaw(connector) : null
     },
@@ -355,7 +356,7 @@ export const useMachinesStore = defineStore('machines', {
       if (this.connector === null) {
         throw new OperationFailedError('getFileInfo is not available in default machine module')
       }
-
+      
       return this.connector.getFileInfo(filename, readThumbnailContent)
     },
 
@@ -479,7 +480,7 @@ export const useMachinesStore = defineStore('machines', {
      * @param payload Updated model data
      */
     async update(payload: Partial<ObjectModel>) {
-      console.log('useMachinesStore->update')
+      // console.log('useMachinesStore->update')
       // console.log('todo')
       const machineState = this[useRootStore().selectedMachine]
       const machineModelState = useMachinesModelStore()[useRootStore().selectedMachine]
@@ -712,7 +713,7 @@ export const useMachinesStore = defineStore('machines', {
       // if (connector === null) { throw new OperationFailedError("upload is not available in default machine module"); }
 
       let machineName = _machineName ?? useRootStore().selectedMachine
-      const files = reactive(new Array<FileTransferItem>()),
+      const files = reactive([] as FileTransferItem[]),
         cancellationToken: CancellationToken = { cancel() {} }
       const showProgress = payload.showProgress !== undefined ? Boolean(payload.showProgress) : true
       const showSuccess = payload.showSuccess !== undefined ? Boolean(payload.showSuccess) : true
@@ -793,14 +794,14 @@ export const useMachinesStore = defineStore('machines', {
             content = item.content
           try {
             // Check if config.g needs to be backed up
-            const configFile = Path.combine(
+            const configFile = combine(
               machinesModelStore[machineName].directories.system,
-              Path.configFile,
+              pathObj.configFile,
             )
-            if (Path.equals(filename, configFile)) {
-              const configFileBackup = Path.combine(
+            if (equals(filename, configFile)) {
+              const configFileBackup = combine(
                 machinesModelStore[machineName].directories.system,
-                Path.configBackupFile,
+                pathObj.configBackupFile,
               )
               try {
                 console.log('todo connector')
@@ -845,7 +846,7 @@ export const useMachinesStore = defineStore('machines', {
               log(
                 LogType.success,
                 useI18n().t('notification.upload.success', [
-                  Path.extractFileName(filename),
+                  extractFileName(filename),
                   displayTime(secondsPassed),
                 ]),
                 undefined,
@@ -875,7 +876,7 @@ export const useMachinesStore = defineStore('machines', {
               console.warn(e)
               log(
                 LogType.error,
-                useI18n().t('notification.upload.error', [Path.extractFileName(filename)]),
+                useI18n().t('notification.upload.error', [extractFileName(filename)]),
                 getErrorMessage(e),
                 machineName,
               )
@@ -932,7 +933,7 @@ export const useMachinesStore = defineStore('machines', {
         throw new OperationFailedError('download is not available in default machine module')
       }
 
-      const files = reactive(new Array<FileTransferItem>()),
+      const files = reactive([] as FileTransferItem[]),
         cancellationToken: CancellationToken = { cancel() {} }
       const showProgress = payload.showProgress !== undefined ? payload.showProgress : true
       const showSuccess = payload.showSuccess !== undefined ? payload.showSuccess : true
@@ -1040,7 +1041,7 @@ export const useMachinesStore = defineStore('machines', {
               log(
                 LogType.success,
                 useI18n().t('notification.download.success', [
-                  Path.extractFileName(filename),
+                  extractFileName(filename),
                   displayTime(secondsPassed),
                 ]),
                 undefined,
@@ -1076,7 +1077,7 @@ export const useMachinesStore = defineStore('machines', {
               console.warn(e)
               log(
                 LogType.error,
-                useI18n().t('notification.download.error', [Path.extractFileName(filename)]),
+                useI18n().t('notification.download.error', [extractFileName(filename)]),
                 getErrorMessage(e),
                 this.connector.hostname,
               )
@@ -1142,7 +1143,7 @@ export const useMachinesStore = defineStore('machines', {
     // - A common mutation is to reset the state back to its initial state. This is built in functionality with the store's $reset method. Note that this functionality only exists for option stores.
     /**
      * Mark a file as being modified to
-     * @param state Vuex state
+
      * @param filename Name of the file being modified
      */
     addFileBeingChanged(filename: string) {
@@ -1151,7 +1152,7 @@ export const useMachinesStore = defineStore('machines', {
     },
     /**
      * Clear the list of files being changed
-     * @param state Vuex state
+
      */
     clearFilesBeingChanged() {
       let machineName = useRootStore().selectedMachine
@@ -1160,7 +1161,7 @@ export const useMachinesStore = defineStore('machines', {
 
     /**
      * Set the CAN address of the current board being updated
-     * @param state Vuex state
+
      * @param board Current board being updated
      */
     setBoardBeingUpdated(board: number) {
@@ -1170,7 +1171,7 @@ export const useMachinesStore = defineStore('machines', {
 
     /**
      * Set the list of board CAN addresses being updated
-     * @param state Vuex state
+
      * @param boards List of board indices being updated
      */
     setBoardsBeingUpdated(boards: Array<number>) {
@@ -1180,7 +1181,7 @@ export const useMachinesStore = defineStore('machines', {
 
     /**
      * Flag if multiple files are being transferred
-     * @param state Vuex state
+
      * @param transferring Whether multiple files are being transferred
      */
     setMultiFileTransfer(transferring: boolean) {
@@ -1190,7 +1191,7 @@ export const useMachinesStore = defineStore('machines', {
 
     /**
      * Clear all logged events
-     * @param state Vuex state
+
      */
     clearLog() {
       let machineName = useRootStore().selectedMachine
@@ -1199,7 +1200,7 @@ export const useMachinesStore = defineStore('machines', {
 
     /**
      * Log a custom event
-     * @param state Vuex state
+
      * @param payload Machine event to log
      */
     log(payload: MachineEvent, hostname?: string) {
@@ -1209,7 +1210,7 @@ export const useMachinesStore = defineStore('machines', {
 
     /**
      * Flag if the machine is attempting to reconnect
-     * @param state Vuex state
+
      * @param reconnecting Whether the machine is attempting to reconnect
      */
     setReconnecting(reconnecting: boolean) {
@@ -1294,7 +1295,7 @@ export const useMachinesStore = defineStore('machines', {
 
       // Load the required web module
       if (process.env.NODE_ENV === 'production') {
-        await loadDwcResources(plugin)
+        await loadDwcResources(plugin as Plugin)
       } else {
         console.warn(
           `Cannot load DWC chunks of plugin ${plugin.id}. External JavaScript chunks are only supported in production mode`,
@@ -1319,6 +1320,21 @@ export const useMachinesStore = defineStore('machines', {
 
       settingsStore.disableDwcPlugin(plugin)
       await settingsStore.save(machineName)
+    },
+    async setActiveRPM(spindleIndex: number, value: number) {
+      const {spindles} = useMachinesModelStore()
+      await this.sendCode(
+        `${spindles[spindleIndex] ? 'M4' : 'M3'} P${spindleIndex} S${value}`,
+      )
+    },
+    async spindleOn(spindleIndex: number) {
+      const {spindles} = useMachinesModelStore()
+      this.sendCode(
+        `${spindles[spindleIndex] ? 'M4' : 'M3'} P${spindleIndex} S${spindles[spindleIndex]!.active}`,
+      )
+    },
+    async spindleOff(spindleIndex: number) {
+      await this.sendCode(`M5 P${spindleIndex}`)
     },
   },
 })

@@ -10,11 +10,13 @@
       <v-card-text>
         <table ref="fileTable" class="mt-3">
           <thead>
-            <th>{{ $t('dialog.fileTransfer.filename') }}</th>
-            <th class="px-3">
-              {{ $t('dialog.fileTransfer.size') }}
-            </th>
-            <th>{{ $t('dialog.fileTransfer.progress') }}</th>
+            <tr>
+              <th>{{ $t('dialog.fileTransfer.filename') }}</th>
+              <th class="px-3">
+                {{ $t('dialog.fileTransfer.size') }}
+              </th>
+              <th>{{ $t('dialog.fileTransfer.progress') }}</th>
+            </tr>
           </thead>
           <tbody>
             <tr v-for="file in files" :key="file.filename">
@@ -90,6 +92,9 @@ import eventbus from '@/utils/eventbus'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       isMachineUploading: {} as Record<string, boolean>,

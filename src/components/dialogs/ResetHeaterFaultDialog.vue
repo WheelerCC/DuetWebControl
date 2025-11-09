@@ -1,30 +1,28 @@
 <template>
-  <v-dialog v-model="innerShown" max-width="360">
-    <v-card>
-      <v-card-title class="headline">
-        <v-icon class="mr-1"> mdi-alert </v-icon> {{ $t('dialog.resetHeaterFault.title') }}
-      </v-card-title>
+  <Dialog v-model:open="innerShown">
+    <DialogContent class="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle class="flex flex-row gap-2 items-center">
+          <AlertCircleIcon :size="18" /> {{ $t('dialog.resetHeaterFault.title') }}</DialogTitle
+        >
+      </DialogHeader>
 
-      <v-card-text>
-        {{ $t('dialog.resetHeaterFault.prompt', [heater]) }}
-      </v-card-text>
+      {{ $t('dialog.resetHeaterFault.prompt', [heater]) }}
 
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn color="blue darken-1" text :disabled="!!counter" @click="resetFault">
+      <DialogFooter>
+        <Button color="blue darken-1" text :disabled="!!counter" @click="resetFault">
           {{ $t('dialog.resetHeaterFault.resetFault') + (counter ? ` (${counter})` : '') }}
-        </v-btn>
+        </Button>
 
-        <v-btn color="blue darken-1" text @click="hide">
+        <Button color="blue darken-1" text @click="hide">
           {{ $t('generic.cancel') }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useMachinesStore } from '@/stores/machines'
 
 /**
@@ -32,64 +30,65 @@ import { useMachinesStore } from '@/stores/machines'
  */
 const countdownSeconds = 5
 
-import { defineComponent } from 'vue'
+import { ref, watch } from 'vue'
 
-export default defineComponent({
-  props: {
-    shown: {
-      type: Boolean,
-      required: true,
-    },
-    heater: {
-      type: Number,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      counter: countdownSeconds,
-      resetHeaters: new Array<number>(),
-      timer: null as NodeJS.Timeout | null,
-      innerShown: this.shown,
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { AlertCircleIcon } from 'lucide-vue-next'
+import { Button } from '../ui/button'
+
+let { shown, heater } = defineProps<{
+  shown: boolean
+  heater: number
+}>()
+
+let counter = ref(countdownSeconds)
+let resetHeaters = ref<number[]>([])
+let timer = ref<NodeJS.Timeout | null>(null)
+let innerShown = ref(shown)
+let emit = defineEmits(['update:shown'])
+watch(
+  () => shown,
+  (newVal, oldVal) => {
+    if (innerShown.value !== newVal) {
+      innerShown.value = newVal
+    }
+    if (newVal) {
+      if (!timer.value && !resetHeaters.value.includes(heater)) {
+        counter.value = countdownSeconds
+        countDown()
+      }
+    } else if (timer.value) {
+      clearTimeout(timer.value)
+      timer.value = null
     }
   },
-  watch: {
-    shown(to: boolean) {
-      if (this.innerShown !== to) {
-        this.innerShown = to
-      }
-      if (to) {
-        if (!this.timer && !this.resetHeaters.includes(this.heater)) {
-          this.counter = countdownSeconds
-          this.countDown()
-        }
-      } else if (this.timer) {
-        clearTimeout(this.timer)
-        this.timer = null
-      }
-    },
-    innerShown(to: boolean) {
-      if (this.shown !== to) {
-        this.$emit('update:shown', to)
-      }
-    },
-  },
-  methods: {
-    async resetFault() {
-      try {
-        await useMachinesStore().sendCode(`M562 P${this.heater}`)
-        this.resetHeaters.push(this.heater)
-      } finally {
-        this.hide()
-      }
-    },
-    hide() {
-      this.innerShown = false
-    },
-    countDown() {
-      this.counter--
-      this.timer = this.counter > 0 ? setTimeout(this.countDown.bind(this), 1000) : null
-    },
-  },
+)
+
+watch(innerShown, (newVal, oldVal) => {
+  if (shown !== newVal) {
+    emit('update:shown', newVal)
+  }
 })
+
+async function resetFault() {
+  try {
+    await useMachinesStore().sendCode(`M562 P${heater}`)
+    resetHeaters.value.push(heater)
+  } finally {
+    hide()
+  }
+}
+function hide() {
+  innerShown.value = false
+}
+function countDown() {
+  counter.value--
+  timer.value = counter.value > 0 ? setTimeout(countDown, 1000) : null
+}
 </script>

@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { createI18n, LocaleMessages, useI18n } from 'vue-i18n'
+import { createI18n, LocaleMessages } from 'vue-i18n'
 
 import de from './de.json'
 import en from './en.json'
@@ -18,7 +18,7 @@ import zh_cn from './zh_cn.json'
 /**
  * Supported i18n messages
  */
-const messages: LocaleMessages<any> & Record<string, { plugins: Record<string, object> }> =
+export const messages: LocaleMessages<any> & Record<string, { plugins: Record<string, object> }> =
   reactive({
     de,
     en,
@@ -78,44 +78,10 @@ export function registerPluginLocalization(plugin: string, language: string, dat
  * Initialize i18n engine
  */
 const i18n = createI18n({
-  legacy: true,
+  legacy: false,
   locale: getBrowserLocale(),
   fallbackLocale: 'en',
   messages,
 })
 
 export default i18n
-
-/**
- * Attempt to translate a string from DSF/RRF returning either the translated response or the original message
- * @param message Message to translate
- * @returns Translated message
- */
-export function translateResponse(message: string): string {
-  // Check for message in format #<i18n.str>#arg1(#arg2...)# first
-  const matches = /^#(.*)#$/.exec(message.trim())
-  if (matches !== null) {
-    const args = matches[1].split('#')
-    return useI18n().t(args[0], args.slice(1))
-  }
-
-  // Allow built-in RRF strings to be translated using RegExps.
-  // To achieve this create a new "responses" key in "en" with regular expressions matching the non-English target.
-  // These regular expressions must match dynamic parameters (e.g. /Heater (\d+) faulted/) so they can be passed back as args to $t().
-  // When done, create the same key in "responses" for your target language (e.g. German -> "Heizer {0} gestört")
-  if (useI18n().locale.value !== 'en') {
-    if (
-      messages.en.responses instanceof Object &&
-      messages[useI18n().locale.value].responses instanceof Object
-    ) {
-      for (const key in messages.en.responses) {
-        const regex = new RegExp((messages.en.responses as Record<string, string>)[key])
-        const matches = regex.exec(message)
-        if (matches !== null) {
-          return useI18n().t('responses.' + key, matches.slice(1))
-        }
-      }
-    }
-  }
-  return message
-}

@@ -1,143 +1,146 @@
 <template>
-  <v-dialog v-model="shown" persistent no-click-animation width="360">
-    <v-card>
-      <v-form ref="form" @submit.prevent="submit">
-        <v-card-title class="headline">
-          {{ $t('dialog.connect.title') }}
-        </v-card-title>
-
-        <v-card-text>
-          {{ $t('dialog.connect.prompt') }}
-
-          <v-text-field
-            v-show="!passwordRequired"
+  <Dialog v-model:open="shown">
+    <DialogContent class="max-w-sm">
+      <form ref="form" @submit.prevent="submit" class="flex flex-col gap-7">
+        <DialogHeader>
+          <DialogTitle>{{ t('dialog.connect.title') }}</DialogTitle>
+          <DialogDescription>
+            {{ t('dialog.connect.prompt') }}
+          </DialogDescription>
+        </DialogHeader>
+        <div class="flex flex-col gap-5">
+          <Input
+            v-if="!passwordRequired"
             v-model="hostname"
             :autofocus="!passwordRequired"
-            :placeholder="$t('dialog.connect.hostPlaceholder')"
-            :rules="hostnameRules"
+            :placeholder="t('dialog.connect.hostPlaceholder')"
+            autocomplete="username"
             required
           />
-          <v-text-field
+          <Input
             v-model="password"
             type="password"
             :placeholder="
-              $t(
+              t(
                 passwordRequired
                   ? 'dialog.connect.passwordPlaceholder'
                   : 'dialog.connect.passwordPlaceholderOptional',
               )
             "
             :autofocus="passwordRequired"
-            :rules="passwordRules"
+            autocomplete="current-password"
             :required="passwordRequired"
           />
-          <v-checkbox v-model="rememberPassword" :label="$t('dialog.connect.rememberPassword')" />
-        </v-card-text>
+          <div class="flex items-center space-x-2">
+            <Checkbox v-model="rememberPassword" id="terms" />
+            <label
+              for="terms"
+              class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              {{ t('dialog.connect.rememberPassword') }}
+            </label>
+          </div>
+        </div>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn v-show="!passwordRequired" color="blue darken-1" text @click="close">
-            {{ $t('generic.cancel') }}
-          </v-btn>
-          <v-btn color="blue darken-1" text type="submit">
-            {{ $t('dialog.connect.connect') }}
-          </v-btn>
-        </v-card-actions>
-      </v-form>
-    </v-card>
-  </v-dialog>
+        <DialogFooter
+          ><div class="flex flex-row justify-end gap-4">
+            <DialogClose as-child>
+              <Button type="submit">
+                {{ t('dialog.connect.connect') }}
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { useRootStore } from '@/stores'
 import { useSettingsStore } from '@/stores/settings'
+import { storeToRefs } from 'pinia'
+import { onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-import { defineComponent } from 'vue'
+const { t } = useI18n()
 
-export default defineComponent({
-  data() {
-    return {
-      hostname: location.host,
-      hostnameRules: [
-        (value: string): string | boolean =>
-          value ? true : this.$t('dialog.connect.hostRequired'),
-      ],
-      password: '',
-      passwordRules: [
-        (value: string): string | boolean =>
-          !value && useRootStore().passwordRequired
-            ? this.$t('dialog.connect.passwordRequired')
-            : true,
-      ],
-      rememberPassword: false,
-      shown: false,
-    }
-  },
-  computed: {
-    connectDialogShown(): boolean {
-      return useRootStore().connectDialogShown
-    },
-    lastHostname(): string {
-      return useSettingsStore().lastHostname
-    },
-    passwordRequired(): boolean {
-      return useRootStore().passwordRequired
-    },
-  },
-  watch: {
-    connectDialogShown(to: boolean) {
-      this.shown = to
-      if (to) {
-        this.loadPassword()
-      }
-    },
-    lastHostname(to: string) {
-      this.hostname = to
-    },
-  },
-  mounted() {
-    this.hostname = this.passwordRequired ? location.host : this.lastHostname
-    this.shown = this.connectDialogShown
-    this.loadPassword()
-  },
-  methods: {
-    async submit() {
-      if (this.shown && (this.$refs.form as HTMLFormElement).validate()) {
-        this.close()
+const hostname = ref(location.host)
+const password = ref('')
+const rememberPassword = ref(false)
+const shown = ref(false)
+const form = ref<HTMLFormElement | null>(null)
 
-        try {
-          await useRootStore().connect({
-            hostname: this.hostname,
-            password: this.password,
-          })
-          if (this.rememberPassword) {
-            this.savePassword()
-          } else {
-            this.clearPassword()
-          }
-          this.password = ''
-        } catch (e) {
-          console.warn(e)
-          useRootStore().showConnectDialog()
-        }
-      }
-    },
-    close() {
-      useRootStore().hideConnectDialog()
-    },
-    savePassword() {
-      localStorage.setItem('dwc-password', this.password)
-    },
-    loadPassword() {
-      const savedPassword = localStorage.getItem('dwc-password')
-      if (savedPassword) {
-        this.password = savedPassword
-        this.rememberPassword = true
-      }
-    },
-    clearPassword() {
-      localStorage.removeItem('dwc-password')
-    },
-  },
+const { passwordRequired, connectDialogShown } = storeToRefs(useRootStore())
+const { lastHostname } = storeToRefs(useSettingsStore())
+
+watch(connectDialogShown, (newVal, oldVal) => {
+  console.log('connectDialogShown Changed')
+  shown.value = newVal
+  if (newVal) loadPassword()
 })
+
+watch(lastHostname, (to) => {
+  hostname.value = to
+})
+
+watch(shown, (newVal, oldVal) => {
+  if (!newVal) {
+    close()
+  }
+})
+
+onMounted(() => {
+  hostname.value = passwordRequired.value ? location.host : lastHostname.value
+  shown.value = connectDialogShown.value
+  loadPassword()
+})
+
+async function submit() {
+  // Add your own validation logic if needed
+  if (!hostname.value) return
+  if (passwordRequired.value && !password.value) return
+
+  close()
+  try {
+    await useRootStore().connect({
+      hostname: hostname.value,
+      password: password.value,
+    })
+    if (rememberPassword.value) {
+      localStorage.setItem('dwc-password', password.value)
+    } else {
+      localStorage.removeItem('dwc-password')
+    }
+    password.value = ''
+  } catch (e) {
+    console.warn(e)
+    useRootStore().showConnectDialog()
+  }
+}
+
+function close() {
+  useRootStore().hideConnectDialog()
+}
+
+function loadPassword() {
+  const savedPassword = localStorage.getItem('dwc-password')
+  if (savedPassword) {
+    password.value = savedPassword
+    rememberPassword.value = true
+  }
+}
 </script>

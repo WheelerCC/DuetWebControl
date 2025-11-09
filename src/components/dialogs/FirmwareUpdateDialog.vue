@@ -1,5 +1,6 @@
 <template>
-  <v-dialog v-model="internalShown" persistent width="720" @keydown.escape="dismissed">
+  <div>
+    <!-- <v-dialog v-model="internalShown" persistent width="720" @keydown.escape="dismissed">
     <v-card>
       <v-card-title>
         <span class="headline">
@@ -34,67 +35,62 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </v-dialog> -->
+  </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useMachinesModelStore } from '@/stores/machineModel'
+import { computed, ref, watch } from 'vue'
 
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  props: {
-    multipleUpdates: Boolean,
-    updateWiFiFirmware: Boolean,
-    shown: {
-      type: Boolean,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      includesWiFiFirmware: false,
-    }
-  },
-  computed: {
-    isDuetFirmware(): boolean {
-      return useMachinesModelStore().boards.length > 0 &&
-        useMachinesModelStore().boards[0].firmwareFileName
-        ? useMachinesModelStore().boards[0].firmwareFileName.startsWith('Duet')
-        : true
-    },
-    dsfVersion(): string | null {
-      return useMachinesModelStore().sbc?.dsf.version ?? null
-    },
-    internalShown: {
-      get(): boolean {
-        return this.shown
-      },
-      set(value: boolean) {
-        if (value) {
-          this.confirmed()
-        } else {
-          this.dismissed()
-        }
-      },
-    },
-  },
-  watch: {
-    shown(value: boolean) {
-      if (value) {
-        this.includesWiFiFirmware = this.multipleUpdates && this.updateWiFiFirmware
-      }
-    },
-  },
-  methods: {
-    confirmed() {
-      this.$emit('confirmed')
-      this.$emit('update:shown', false)
-    },
-    dismissed() {
-      this.$emit('dismissed')
-      this.$emit('update:shown', false)
-    },
+const emit = defineEmits(['confirmed', 'dismissed', 'update:shown'])
+const props = defineProps({
+  multipleUpdates: Boolean,
+  updateWiFiFirmware: Boolean,
+  initshown: {
+    type: Boolean,
+    required: true,
   },
 })
+
+const _shown = ref(props.initshown)
+const includesWiFiFirmware = ref(false)
+const shown = ref({
+  get(): boolean {
+    return _shown.value
+  },
+  set(value: boolean) {
+    _shown.value = value
+    if (value) {
+      confirmed()
+    } else {
+      dismissed()
+    }
+  },
+})
+
+watch(shown, (newVal, oldVal) => {
+  if (newVal) {
+    includesWiFiFirmware.value = props.multipleUpdates && props.updateWiFiFirmware
+  }
+})
+
+const isDuetFirmware = computed(() => {
+  return useMachinesModelStore().boards.length > 0 &&
+    useMachinesModelStore().boards[0].firmwareFileName
+    ? useMachinesModelStore().boards[0].firmwareFileName.startsWith('Duet')
+    : true
+})
+const dsfVersion = computed(() => {
+  return useMachinesModelStore().sbc?.dsf.version ?? null
+})
+
+function confirmed() {
+  emit('confirmed')
+  emit('update:shown', false)
+}
+function dismissed() {
+  emit('dismissed')
+  emit('update:shown', false)
+}
 </script>

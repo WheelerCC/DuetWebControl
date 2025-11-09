@@ -10,11 +10,11 @@
         <p>
           {{ $t('dialog.incompatibleVersions.prompt') }}
         </p>
-        <i18n tag="p" path="dialog.incompatibleVersions.upgradeNotice" class="mb-0">
+        <i18n-t tag="p" keypath="dialog.incompatibleVersions.upgradeNotice" class="mb-0">
           <template #docs>
             <a :href="upgradeDocs" target="_blank">docs</a>
           </template>
-        </i18n>
+        </i18n-t>
       </v-card-text>
 
       <v-card-actions>
@@ -43,6 +43,9 @@ const patchDiffs: Array<semver.ReleaseType | null> = ['patch', 'prepatch', 'prer
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       checkVersionsTimeout: null as NodeJS.Timeout | null,

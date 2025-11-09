@@ -69,6 +69,9 @@ import { localStorageSupported } from '@/utils/localStorage'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       showResetConfirmation: false,

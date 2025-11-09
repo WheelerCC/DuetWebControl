@@ -78,6 +78,9 @@ import { SettingsState, useSettingsStore, WebcamFlip } from '@/stores/settings'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       rotationItems: [

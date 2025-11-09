@@ -13,11 +13,14 @@
 
 <script lang="ts">
 import { useRootStore } from '@/stores'
-import Path from '@/utils/path'
+import { combine } from '@/utils/path'
 
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     shown: {
       type: Boolean,
@@ -69,7 +72,7 @@ export default defineComponent({
       this.$emit('update:shown', false)
     },
     showEditor(filename: string) {
-      this.filename = Path.combine(this.directory, filename)
+      this.filename = combine(this.directory, filename)
       this.content = ''
       this.showEditorDialog = true
     },

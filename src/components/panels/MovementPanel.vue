@@ -187,7 +187,7 @@
     />
 
     <v-alert :value="unhomedAxes.length !== 0" type="warning" class="mb-0">
-      {{ $tc('panel.movement.axesNotHomed', unhomedAxes.length) }}
+      {{ $t('panel.movement.axesNotHomed', unhomedAxes.length) }}
       <strong>
         {{ unhomedAxes.map((axis) => axis.letter).join(', ') }}
       </strong>
@@ -215,6 +215,9 @@ import {
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       showMeshEditDialog: false,
@@ -237,7 +240,7 @@ export default defineComponent({
       return (axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)
     },
     numMoveSteps(): number {
-      return useMachinesSettingsStore().numMoveSteps()
+      return useMachinesSettingsStore().numMoveSteps
     },
     isCompensationEnabled(): boolean {
       return useMachinesModelStore().move.compensation.type !== MoveCompensationType.none
@@ -245,8 +248,8 @@ export default defineComponent({
     compensationType(): MoveCompensationType {
       return useMachinesModelStore().move.compensation.type
     },
-    visibleAxes(): Array<Axis> {
-      return useMachinesModelStore().move.axes.filter((axis) => axis.visible)
+    visibleAxes(): Axis[] {
+      return useMachinesModelStore().move.axes.filter((axis) => axis.visible) as Axis[]
     },
     isDelta(): boolean {
       return [KinematicsName.delta, KinematicsName.rotaryDelta].includes(
@@ -261,8 +264,10 @@ export default defineComponent({
         useMachinesModelStore().state.status !== MachineStatus.resuming
       )
     },
-    unhomedAxes(): Array<Axis> {
-      return useMachinesModelStore().move.axes.filter((axis) => axis.visible && !axis.homed)
+    unhomedAxes(): Axis[] {
+      return useMachinesModelStore().move.axes.filter(
+        (axis) => axis.visible && !axis.homed,
+      ) as Axis[]
     },
   },
   watch: {

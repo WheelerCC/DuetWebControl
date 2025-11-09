@@ -1,75 +1,73 @@
 <template>
-  <span class="px-2 subtitle-2" :class="statusClass">
+  <Badge :class="statusClass">
     {{ statusText }}
-  </span>
+  </Badge>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useSettingsStore } from '@/stores/settings'
 import { MachineMode, MachineStatus } from '@duet3d/objectmodel'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { Badge } from '../ui/badge'
 
-import { defineComponent } from 'vue'
+let { t } = useI18n()
+let { darkTheme } = storeToRefs(useSettingsStore())
+let { state } = storeToRefs(useMachinesModelStore())
 
-export default defineComponent({
-  computed: {
-    statusText(): string {
-      let type: string = useMachinesModelStore().state.status
-      console.log(useMachinesModelStore().state)
-      if (!type) {
-        type = 'unknown'
-      } else if (
-        type === MachineStatus.processing &&
-        useMachinesModelStore().state.machineMode === MachineMode.fff
-      ) {
-        type = 'printing'
-      }
-      console.log(type)
-      return this.$t(`generic.status.${type}`)
-    },
-    statusClass() {
-      const darkTheme = useSettingsStore().darkTheme,
-        status = useMachinesModelStore().state.status
-      switch (status) {
-        case MachineStatus.disconnected:
-          return darkTheme ? 'red darken-2 white--text' : 'red darken-1 white--text'
-        case MachineStatus.starting:
-          return darkTheme ? 'light-blue darken-3' : 'light-blue accent-1'
-        case MachineStatus.updating:
-          return darkTheme ? 'blue darken-3' : 'blue lighten-3'
-        case MachineStatus.off:
-          return darkTheme ? 'red darken-2 white--text' : 'red darken-1 white--text'
-        case MachineStatus.halted:
-          return 'red white--text'
-        case MachineStatus.pausing:
-          return darkTheme ? 'yellow darken-3' : 'orange accent-2'
-        case MachineStatus.paused:
-          return darkTheme ? 'orange darken-2' : 'yellow lighten-1'
-        case MachineStatus.resuming:
-          return darkTheme ? 'yellow darken-3' : 'orange accent-2'
-        case MachineStatus.cancelling:
-          return 'red white--text'
-        case MachineStatus.processing:
-          return 'green white--text'
-        case MachineStatus.simulating:
-          return darkTheme ? 'light-blue darken-3' : 'light-blue accent-1'
-        case MachineStatus.busy:
-          return darkTheme ? 'amber darken-2 white--text' : 'amber white--text'
-        case MachineStatus.changingTool:
-          return darkTheme ? 'grey darken-3' : 'blue lighten-5'
-        case MachineStatus.idle:
-          return darkTheme ? 'light-green darken-3' : 'light-green lighten-4'
-        default:
-          const _exhaustiveCheck: never = status
-          return 'red white--text'
-      }
-    },
-  },
+let statusText = computed(() => {
+  let type: string = useMachinesModelStore().state.status
+  console.log(useMachinesModelStore().state)
+  if (!type) {
+    type = 'unknown'
+  } else if (
+    type === MachineStatus.processing &&
+    useMachinesModelStore().state.machineMode === MachineMode.fff
+  ) {
+    type = 'printing'
+  }
+  console.log(type)
+  return t(`generic.status.${type}`)
+})
+
+// todo not quite the same style as old
+let statusClass = computed(() => {
+  const _darkTheme = darkTheme.value,
+    status = state.value.status
+  switch (status) {
+    case MachineStatus.disconnected:
+      return _darkTheme ? 'bg-red-500 text-white' : 'bg-red-500 text-white'
+    case MachineStatus.starting:
+      return _darkTheme ? 'bg-blue-300' : 'bg-blue-300'
+    case MachineStatus.updating:
+      return _darkTheme ? 'bg-blue-700' : 'bg-blue-700'
+    case MachineStatus.off:
+      return _darkTheme ? 'bg-red-500 text-white' : 'bg-red-500 text-white'
+    case MachineStatus.halted:
+      return 'bg-red-500 text-white'
+    case MachineStatus.pausing:
+      return _darkTheme ? 'bg-yellow-500' : 'bg-orange-500'
+    case MachineStatus.paused:
+      return _darkTheme ? 'bg-orange-500' : 'bg-yellow-500'
+    case MachineStatus.resuming:
+      return _darkTheme ? 'bg-yellow-500' : 'bg-orange-500'
+    case MachineStatus.cancelling:
+      return 'bg-red-500 text-white'
+    case MachineStatus.processing:
+      return 'bg-green-600 text-white'
+    case MachineStatus.simulating:
+      return _darkTheme ? 'bg-blue-300' : 'bg-blue-300'
+    case MachineStatus.busy:
+      return _darkTheme ? 'amber text-white' : 'amber text-white'
+    case MachineStatus.changingTool:
+      return _darkTheme ? 'bg-gray-500' : 'bg-blue-700'
+    case MachineStatus.idle:
+      return _darkTheme ? 'bg-green-600' : 'bg-green-600'
+    default:
+      const _exhaustiveCheck: never = status
+      return 'bg-red-500 text-white'
+  }
 })
 </script>
-
-<style scoped>
-span {
-  border-radius: 5px;
-}
-</style>

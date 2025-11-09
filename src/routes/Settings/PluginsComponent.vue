@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-simple-table v-show="plugins.length > 0">
+    <!-- <v-simple-table v-show="plugins.length > 0">
       <template #default>
         <thead>
           <tr>
@@ -104,35 +104,37 @@
         <v-icon small class="mr-1"> mdi-refresh </v-icon>
         {{ $t('tabs.plugins.refreshNow') }}
       </v-btn>
-    </v-alert>
+    </v-alert> -->
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
 import { Plugin, PluginManifest } from '@duet3d/objectmodel'
 
 import packageInfo from '@/../package.json'
 
 import Plugins from '@/plugins'
 
-import { LogType } from '@/utils/logging'
-import { getErrorMessage } from '@/utils/errors'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { useRootStore } from '@/stores'
-import { useSettingsStore } from '@/stores/settings'
+import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { useMachinesSettingsStore } from '@/stores/machineSettings'
+import { useSettingsStore } from '@/stores/settings'
+import { getErrorMessage } from '@/utils/errors'
+import { LogType } from '@/utils/logging'
 
-import { defineComponent } from 'vue'
-import { makeNotification } from '@/utils/notifications'
 import DwcPlugin from '@/plugins/DwcPlugin'
+import { makeNotification } from '@/utils/notifications'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       dwcPluginsUnloaded: false,
-      busyPlugins: new Array<string>(),
+      busyPlugins: [] as string[],
     }
   },
   computed: {
@@ -140,7 +142,7 @@ export default defineComponent({
       const plugins: (Plugin | DwcPlugin)[] = [...Plugins]
       for (const plugin of useMachinesModelStore().plugins.values()) {
         if (plugin !== null) {
-          plugins.push(plugin)
+          plugins.push(plugin as Plugin)
         }
       }
       return plugins

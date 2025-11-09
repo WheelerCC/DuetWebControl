@@ -45,7 +45,7 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx"
-  ],
+, "src/routes/Control/StatusComponent.old"  ],
   
   "exclude": [
     "node_modules",

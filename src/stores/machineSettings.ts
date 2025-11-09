@@ -3,7 +3,6 @@ import { AxisLetter } from '@duet3d/objectmodel'
 import { FileNotFoundError } from '@/utils/errors'
 import { getLocalSetting, removeLocalSetting, setLocalSetting } from '@/utils/localStorage'
 import patch from '@/utils/patch'
-import Path from '@/utils/path'
 
 import { defineStore } from 'pinia'
 import { useRootStore } from '.'
@@ -11,6 +10,7 @@ import { useMachinesStore } from './machines'
 import { defaultMachine } from './misc'
 import { resetSettingsTimer } from './observer'
 import { useSettingsStore } from './settings'
+import { pathObj } from '@/utils/path'
 
 /**
  * Default settings defined by third-party plugins
@@ -292,6 +292,7 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
     spindleRPM: (state) => state[useRootStore().selectedMachine].spindleRPM,
     enabledPlugins: (state) => state[useRootStore().selectedMachine].enabledPlugins,
     plugins: (state) => state[useRootStore().selectedMachine].plugins,
+    numMoveSteps: (state) => state[useRootStore().selectedMachine].moveSteps.default.length
   },
   actions: {
     getMoveSteps(axis: AxisLetter): number[] {
@@ -299,10 +300,6 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
       return this[machineName].moveSteps[axis] !== undefined
         ? this[machineName].moveSteps[axis]
         : this[machineName].moveSteps.default
-    },
-    numMoveSteps(): number {
-      let machineName = useRootStore().selectedMachine
-      return this[machineName].moveSteps.default.length
     },
     toolChangeParameter(): string {
       let machineName = useRootStore().selectedMachine
@@ -341,7 +338,7 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
           const content = new Blob([JSON.stringify({ main: settingsStore, machine: this })])
           const machinesStore = useMachinesStore()
           await machinesStore.upload({
-            filename: Path.dwcSettingsFile,
+            filename: pathObj.dwcSettingsFile,
             content,
             showProgress: false,
             showSuccess: false,
@@ -378,7 +375,7 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
         try {
           settings = await machinesStore.download(
             {
-              filename: Path.dwcSettingsFile,
+              filename: pathObj.dwcSettingsFile,
               showProgress: false,
               showSuccess: false,
               showError: false,
@@ -396,7 +393,7 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
           try {
             settings = await machinesStore.download(
               {
-                filename: Path.dwcFactoryDefaults,
+                filename: pathObj.dwcFactoryDefaults,
                 showProgress: false,
                 showSuccess: false,
                 showError: false,
@@ -415,7 +412,7 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
           try {
             settings = await machinesStore.download(
               {
-                filename: Path.legacyDwcSettingsFile,
+                filename: pathObj.legacyDwcSettingsFile,
                 showProgress: false,
                 showSuccess: false,
                 showError: false,
@@ -435,7 +432,7 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
           try {
             settings = await machinesStore.download(
               {
-                filename: Path.legacyDwcFactoryDefaults,
+                filename: pathObj.legacyDwcFactoryDefaults,
                 showProgress: false,
                 showSuccess: false,
                 showError: false,

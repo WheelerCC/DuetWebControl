@@ -128,6 +128,9 @@ import { MachineSettingsState, useMachinesSettingsStore } from '@/stores/machine
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     itemKey: {
       type: String as PropType<keyof MachineSettingsState['temperatures'] | 'spindleRPM'>,

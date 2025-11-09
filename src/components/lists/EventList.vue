@@ -2,27 +2,14 @@
 <!-- TODO prefer to not need this waiver -->
 <template>
   <div class="component">
-    <v-data-table
-      :headers="headers"
-      :items="events"
-      item-key="date"
-      disable-pagination
-      hide-default-footer
-      :mobile-breakpoint="0"
-      :custom-sort="sort"
-      v-model:sort-by="sortBy"
-      v-model:sort-desc="sortDesc"
-      must-sort
-      class="elevation-3"
-      :class="{ 'empty-table-fix': !events.length }"
-    >
-      <template #no-data>
+    <v-data-table :headers="headers" :items="events">
+      <!-- <template #no-data>
         <v-alert :value="true" type="info" class="text-left ma-0">
           {{ $t('list.eventLog.noEvents') }}
         </v-alert>
-      </template>
+      </template> -->
 
-      <template #[`header.btn`]>
+      <!-- <template #[`header.btn`]>
         <v-menu offset-y>
           <template #activator="{ on }">
             <v-btn icon v-on="on">
@@ -45,7 +32,7 @@
             </v-list-item>
           </v-list>
         </v-menu>
-      </template>
+      </template> -->
 
       <template #item="{ item }">
         <tr :class="getClassByEvent(item.type)">
@@ -76,54 +63,74 @@ import { defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 3,
+  },
   computed: {
-    headers(): Array<DataTableHeader> {
+    headers(): DataTableHeader[] {
       return [
         {
+          key: 'date',
           title: useI18n().t('list.eventLog.date'),
-          value: 'date',
           width: '15%',
         },
-        {
-          title: useI18n().t('list.eventLog.message'),
-          value: 'message',
-          sortable: false,
-          width: '74%',
-        },
-        {
-          title: '',
-          value: 'btn',
-          sortable: false,
-          width: '1%',
-        },
+        // {
+        //   title: useI18n().t('list.eventLog.message'),
+        //   key: 'message',
+        //   sortable: false,
+        //   width: '74%',
+        // },
+        // {
+        //   title: '',
+        //   key: 'btn',
+        //   sortable: false,
+        //   width: '1%',
+        // },
       ]
     },
     sortBy: {
-      get(): string {
-        return useMachinesCacheStore().sorting.events.column
+      get(): Array<{ key: string; order: 'asc' | 'desc' }> {
+        const cache = useMachinesCacheStore().sorting.events
+        return [{ key: cache.column, order: cache.descending ? 'desc' : 'asc' }]
       },
-      set(value: string) {
-        useMachinesCacheStore().setSorting({
-          table: 'events',
-          column: value,
-          descending: this.sortDesc,
-        })
-      },
-    },
-    sortDesc: {
-      get() {
-        return useMachinesCacheStore().sorting.events.descending
-      },
-      set(value: boolean) {
-        useMachinesCacheStore().setSorting({
-          table: 'events',
-          column: this.sortBy,
-          descending: value,
-        })
+      set(value: Array<{ key: string; order: 'asc' | 'desc' }>) {
+        if (value.length > 0) {
+          useMachinesCacheStore().setSorting({
+            table: 'events',
+            column: value[0].key,
+            descending: value[0].order === 'desc',
+          })
+        }
       },
     },
+
+    // sortBy: {
+    //   get(): string {
+    //     return useMachinesCacheStore().sorting.events.column
+    //   },
+    //   set(value: string) {
+    //     useMachinesCacheStore().setSorting({
+    //       table: 'events',
+    //       column: value,
+    //       descending: this.sortDesc,
+    //     })
+    //   },
+    // },
+    // sortDesc: {
+    //   get() {
+    //     return useMachinesCacheStore().sorting.events.descending
+    //   },
+    //   set(value: boolean) {
+    //     useMachinesCacheStore().setSorting({
+    //       table: 'events',
+    //       column: this.sortBy,
+    //       descending: value,
+    //     })
+    //   },
+    // },
     events(): Array<MachineEvent> {
-      return useMachinesStore().events
+      return []
+      // return useMachinesStore().events
     },
   },
   methods: {

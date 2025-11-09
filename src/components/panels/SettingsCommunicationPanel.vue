@@ -102,6 +102,9 @@ import { PollConnector, RestConnector } from '@duet3d/connectors'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   computed: {
     isRestConnector(): boolean {
       return useMachinesStore().connector instanceof RestConnector

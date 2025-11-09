@@ -1,25 +1,23 @@
 <template>
-  <v-row :dense="$vuetify.display.mobile">
-    <v-col cols="12" class="pt-1">
-      <code-input solo />
-    </v-col>
-    <v-col cols="12">
-      <event-list />
-    </v-col>
-  </v-row>
+  <div class="flex flex-col">
+    <CodeInput />
+
+    <EventList />
+  </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import CodeInput from '@/components/inputs/CodeInput.vue'
+import EventList from '@/components/lists/EventList.vue'
+
 import { useRootStore } from '@/stores'
 
-import { defineComponent } from 'vue'
+import { onActivated, onDeactivated } from 'vue'
 
-export default defineComponent({
-  activated() {
-    useRootStore().hideCodeReplyNotifications
-  },
-  deactivated() {
-    useRootStore().showCodeReplyNotifications
-  },
+onActivated(() => {
+  useRootStore().hideCodeReplyNotifications = true
+})
+onDeactivated(() => {
+  useRootStore().hideCodeReplyNotifications = false
 })
 </script>

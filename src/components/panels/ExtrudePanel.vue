@@ -114,6 +114,9 @@ import { MachineStatus, Tool } from '@duet3d/objectmodel'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       busy: false,
@@ -232,11 +235,17 @@ export default defineComponent({
         this.mix = ['mix']
       }
     },
-    extruderAmounts() {
-      this.amount = this.extruderAmounts[3]
+    extruderAmounts: {
+      handler(val, oldVal) {
+        this.amount = this.extruderAmounts[3]
+      },
+      deep: true,
     },
-    extruderFeedrates() {
-      this.feedrate = this.extruderFeedrates[3]
+    extruderFeedrates: {
+      handler(val, oldVal) {
+        this.feedrate = this.extruderFeedrates[3]
+      },
+      deep: true,
     },
   },
   mounted() {

@@ -1,312 +1,205 @@
-<!-- eslint-disable vue/no-v-html -->
-<!-- TODO prefer to not need this waiver -->
+filepath: /Users/william/DuetWebControl/src/components/misc/NotificationDisplay.vue
 <template>
-  <v-fade-transition>
-    <v-snackbar
-      v-if="fileTransferNotification !== null"
-      :value="true"
-      :style="{ 'padding-bottom': `${$vuetify.application.bottom + 8}px` }"
-      :timeout="-1"
-      color="info"
-    >
-      <v-progress-linear
-        :color="progressColor"
-        :indeterminate="fileTransferNotification.progress === 0"
-        striped
-        :value="fileTransferNotification.progress"
-        class="progress-bar"
-      />
+  <!-- File Transfer Notification -->
+  <!-- <Snackbar
+    v-if="fileTransferNotification"
+    open
+    color="info"
+    :timeout="-1"
+    class="fixed left-0 right-0 top-0 z-50 rounded shadow"
+  >
+    <Progress
+      :color="progressColor"
+      :indeterminate="fileTransferNotification.progress === 0"
+      :value="fileTransferNotification.progress"
+      striped
+      class="absolute left-0 right-0 top-0 rounded"
+    />
 
-      <div class="d-flex mt-1">
-        <v-icon class="mr-4">
-          {{ fileTransferIcon }}
-        </v-icon>
-
-        <div class="d-block">
-          <strong>
-            {{
-              $t(`notification.${fileTransferNotification.type}.title`, [
-                fileTransferNotification.filename,
-                displayTransferSpeed(fileTransferNotification.speed),
-                Math.round(fileTransferNotification.progress || 0),
-              ])
-            }}
-          </strong>
-          <p class="mb-0">
-            {{ $t(`notification.${fileTransferNotification.type}.message`) }}
-          </p>
-        </div>
+    <div class="flex items-center mt-1">
+      <Icon :name="fileTransferIcon" class="mr-4" />
+      <div>
+        <strong>
+          {{
+            t(`notification.${fileTransferNotification.type}.title`, [
+              fileTransferNotification.filename,
+              displayTransferSpeed(fileTransferNotification.speed),
+              Math.round(fileTransferNotification.progress || 0),
+            ])
+          }}
+        </strong>
+        <p class="mb-0">
+          {{ t(`notification.${fileTransferNotification.type}.message`) }}
+        </p>
       </div>
+    </div>
+    <template #actions>
+      <Button color="white" variant="ghost" @click.stop="cancel">
+        {{ t('generic.cancel') }}
+      </Button>
+    </template>
+  </Snackbar>
 
-      <template #action="{ attrs }">
-        <v-btn v-bind="attrs" color="white" text @click.stop="cancel">
-          {{ $t('generic.cancel') }}
-        </v-btn>
-      </template>
-    </v-snackbar>
-    <v-snackbar
-      v-else-if="notification !== null"
-      :value="true"
-      :timeout="-1"
-      :color="notification !== null ? notification.type : 'info'"
-      :style="{ 'padding-bottom': `${$vuetify.application.bottom + 8}px` }"
-      :class="{ pointer: !!notification.route }"
-      @click="clicked"
+  <Snackbar
+    v-else-if="notification"
+    open
+    :color="notification.type || 'info'"
+    :timeout="-1"
+    @click="clicked"
+  >
+    <Progress
+      v-if="animateProgress"
+      ref="progressBar"
+      :color="progressColor"
+      :indeterminate="notification.progress === 0"
+      :model-value="100"
+      class="animate-progress"
+    />
+    <Progress
+      v-else-if="notification.progress !== null"
+      :color="progressColor"
+      :indeterminate="notification.progress === 0"
+      :model-value="notification.progress"
+    />
+
+    <div
+      class="flex items-center"
+      :class="{ 'mt-1': notification.timeout && notification.timeout > 0 }"
     >
-      <v-progress-linear
-        v-if="animateProgress"
-        ref="progressBar"
-        :color="progressColor"
-        :indeterminate="notification.progress === 0"
-        :value="100"
-        class="progress-bar"
-        :class="{ 'animate-progress': animateProgress }"
-      />
-      <v-progress-linear
-        v-else-if="notification.progress !== null"
-        :color="progressColor"
-        :indeterminate="notification.progress === 0"
-        :value="notification.progress"
-        class="progress-bar"
-      />
-
-      <div
-        class="d-flex"
-        :class="{ 'mt-1': notification.timeout !== null && notification.timeout > 0 }"
-      >
-        <v-icon v-if="notification.icon !== null" class="mr-4">
-          {{ notification.icon }}
-        </v-icon>
-
-        <div class="d-block">
-          <strong v-if="notification.title !== null" v-html="notificationTitle" />
-          <p v-if="notification.message !== null" class="mb-0" v-html="notificationMessage" />
-        </div>
+      <Icon v-if="notification.icon" :name="notification.icon" class="mr-4" />
+      <div>
+        <strong v-if="notification.title" v-html="notificationTitle" />
+        <p v-if="notification.message" class="mb-0" v-html="notificationMessage" />
       </div>
-
-      <template #action="{ attrs }">
-        <v-btn v-bind="attrs" color="white" text @click.stop="close">
-          {{ notification.cancel ? $t('generic.cancel') : $t('generic.close') }}
-        </v-btn>
-      </template>
-    </v-snackbar>
-  </v-fade-transition>
+    </div>
+    <template #actions>
+      <Button color="white" variant="ghost" @click.stop="close">
+        {{ notification.cancel ? t('generic.cancel') : t('generic.close') }}
+      </Button>
+    </template>
+  </Snackbar> -->
+  <div></div>
 </template>
 
-<script lang="ts">
-import {
-  fileTransferNotifications,
-  FileTransferType,
-  Notification,
-  notifications,
-} from '@/utils/notifications'
+<script setup lang="ts">
+// import { displayTransferSpeed } from '@/utils/display'
+// import { FileTransferType, Notification } from '@/utils/notifications'
+// import { computed, nextTick, ref, watch } from 'vue'
+// import { useI18n } from 'vue-i18n'
 
-import { displayTransferSpeed } from '@/utils/display'
-import { defineComponent } from 'vue'
+// // Replace these with your shadcn-vue or custom equivalents
+// import { Button } from '@/components/ui/button'
+// import { Progress } from '@/components/ui/progress'
+// const { t } = useI18n()
 
-export default defineComponent({
-  data() {
-    return {
-      autoCloseTimer: null as NodeJS.Timeout | null,
-      fileTransferNotifications,
-      notifications,
-      whenShown: null as Date | null,
-    }
-  },
-  computed: {
-    animateProgress(): boolean {
-      return (
-        this.notification !== null &&
-        this.notification.timeout !== null &&
-        this.notification.timeout > 0
-      )
-    },
-    progressColor(): string {
-      return this.$vuetify.theme.name == 'dark' ? 'grey darken-3' : 'grey lighten-4'
-    },
-    fileTransferNotification(): Notification | null {
-      return this.fileTransferNotifications.length > 0 ? this.fileTransferNotifications[0] : null
-    },
-    fileTransferIcon(): string {
-      if (this.fileTransferNotification !== null) {
-        const fileTransferType = this.fileTransferNotification.type as FileTransferType
-        switch (fileTransferType) {
-          case FileTransferType.upload:
-            return 'mdi-cloud-upload'
-          case FileTransferType.download:
-            return 'mdi-cloud-download'
-          case FileTransferType.systemPackageInstall:
-            return 'mdi-cog-sync'
-          default:
-            const _exhaustiveCheck: never = fileTransferType
-            break
-        }
-      }
-      return ''
-    },
-    notification(): Notification | null {
-      return this.notifications.length > 0 ? this.notifications[0] : null
-    },
-    notificationTitle(): string {
-      if (this.notification !== null && this.notification.title !== null) {
-        return this.notification.title.replace(/\n/g, '<br>')
-      }
-      return ''
-    },
-    notificationMessage(): string {
-      if (this.notification !== null && this.notification.message !== null) {
-        return this.notification.message.replace(/\n/g, '<br>')
-      }
-      return ''
-    },
-  },
-  watch: {
-    notification(to: Notification | null, from: Notification | null) {
-      this.notificationChanged(to, from)
-    },
-    fileTransferNotification(to: Notification | null) {
-      if (this.notification !== null) {
-        if (to !== null) {
-          this.notificationChanged(null, this.notification)
-        } else {
-          this.notificationChanged(this.notification, null)
-        }
-      }
-    },
-  },
-  methods: {
-    displayTransferSpeed,
-    clicked() {
-      if (this.notification && this.notification.route) {
-        this.$router.push(this.notification.route)
-        this.notification.close()
-      }
-    },
-    cancel() {
-      if (this.fileTransferNotification?.cancel) {
-        this.fileTransferNotification.cancel()
-      }
-    },
-    close() {
-      if (this.notification?.cancel) {
-        this.notification.cancel()
-      } else if (this.notification?.close) {
-        this.notification.close()
-      }
-    },
-    notificationChanged(to: Notification | null, from: Notification | null) {
-      if (to === from) {
-        // For some reason Vue sometimes triggers this even when nothing has changed
-        return
-      }
+// const autoCloseTimer = ref<NodeJS.Timeout | null>(null)
+// const fileTransferNotifications = ref<any>(null)
+// const notifications = ref<any>(null)
+// const whenShown = ref<Date | null>(null)
 
-      if (from !== null) {
-        if (this.whenShown !== null) {
-          from.timeDisplayed = new Date().getTime() - this.whenShown.getTime()
-        }
+// const progressBar = ref<HTMLElement | null>(null)
 
-        if (this.autoCloseTimer !== null) {
-          clearInterval(this.autoCloseTimer)
-          this.autoCloseTimer = null
-        }
-      }
+// const fileTransferNotification = computed<Notification | null>(() =>
+//   fileTransferNotifications.value.length > 0 ? fileTransferNotifications.value[0] : null,
+// )
+// const notification = computed<Notification | null>(() =>
+//   notifications.value.length > 0 ? notifications.value[0] : null,
+// )
 
-      if (to !== null) {
-        this.whenShown = new Date()
-        if (to.timeout !== null && to.timeout > 0) {
-          // Reset animations if needed
-          for (const animation of document.getAnimations()) {
-            if (
-              animation instanceof CSSAnimation &&
-              ['animate-progress', 'animate-progress-bg'].includes(animation.animationName)
-            ) {
-              animation.cancel()
-              animation.play()
-            }
-          }
+// const animateProgress = computed(
+//   () => notification.value && notification.value.timeout !== null && notification.value.timeout > 0,
+// )
 
-          // Set CSS animation properties when the notification has been rendered
-          this.$nextTick(() => {
-            if (this.$refs.progressBar) {
-              // Apply custom CSS animation duration to progress bar
-              const progressDiv = (this.$refs.progressBar as any).$el.querySelector(
-                '.v-progress-linear__determinate',
-              ) as HTMLDivElement | undefined
-              if (progressDiv) {
-                progressDiv.style['animationDelay'] = `${-to.timeDisplayed}ms`
-                progressDiv.style['animationDuration'] = `${to.timeout}ms`
-              }
+// const progressColor = computed(() => {
+//   // Replace with your theme logic if needed
+//   return document.documentElement.classList.contains('dark') ? 'gray-800' : 'gray-200'
+// })
 
-              // Apply custom CSS animation duration to progress bar background
-              const progressBgDiv = (this.$refs.progressBar as any).$el.querySelector(
-                '.v-progress-linear__background',
-              ) as HTMLDivElement | undefined
-              if (progressBgDiv) {
-                progressBgDiv.style['animationDelay'] = `${-to.timeDisplayed}ms`
-                progressBgDiv.style['animationDuration'] = `${to.timeout}ms`
-              }
-            }
-          })
+// const fileTransferIcon = computed(() => {
+//   if (fileTransferNotification.value) {
+//     switch (fileTransferNotification.value.type) {
+//       case FileTransferType.upload:
+//         return 'cloud-upload'
+//       case FileTransferType.download:
+//         return 'cloud-download'
+//       case FileTransferType.systemPackageInstall:
+//         return 'cog-sync'
+//       default:
+//         return ''
+//     }
+//   }
+//   return ''
+// })
 
-          // Close the notification automatically when the timeout expires
-          this.autoCloseTimer = setInterval(this.close, Math.max(to.timeout - to.timeDisplayed, 0))
-        }
-      }
-    },
-  },
-})
+// const notificationTitle = computed(() =>
+//   notification.value && notification.value.title
+//     ? notification.value.title.replace(/\n/g, '<br>')
+//     : '',
+// )
+// const notificationMessage = computed(() =>
+//   notification.value && notification.value.message
+//     ? notification.value.message.replace(/\n/g, '<br>')
+//     : '',
+// )
+
+// // Watchers
+// watch(notification, (to, from) => {
+//   notificationChanged(to, from)
+// })
+// watch(fileTransferNotification, (to) => {
+//   if (notification.value) {
+//     if (to) {
+//       notificationChanged(null, notification.value)
+//     } else {
+//       notificationChanged(notification.value, null)
+//     }
+//   }
+// })
+
+// // Methods
+// function clicked() {
+//   if (notification.value && notification.value.route) {
+//     window.location.href = notification.value.route
+//     notification.value.close?.()
+//   }
+// }
+
+// function cancel() {
+//   fileTransferNotification.value?.cancel?.()
+// }
+
+// function close() {
+//   if (notification.value?.cancel) {
+//     notification.value.cancel()
+//   } else if (notification.value?.close) {
+//     notification.value.close()
+//   }
+// }
+
+// function notificationChanged(to: Notification | null, from: Notification | null) {
+//   if (to === from) return
+
+//   if (from) {
+//     if (whenShown.value) {
+//       from.timeDisplayed = new Date().getTime() - whenShown.value.getTime()
+//     }
+//     if (autoCloseTimer.value) {
+//       clearInterval(autoCloseTimer.value)
+//       autoCloseTimer.value = null
+//     }
+//   }
+
+//   if (to) {
+//     whenShown.value = new Date()
+//     if (to.timeout !== null && to.timeout > 0) {
+//       nextTick(() => {
+//         if (progressBar.value) {
+//           // You can use Tailwind's animate-[custom] utilities if you add them via plugin
+//           // Or use transition classes for progress bar animation
+//         }
+//       })
+//       autoCloseTimer.value = setInterval(close, Math.max(to.timeout - (to.timeDisplayed || 0), 0))
+//     }
+//   }
+// }
 </script>
-
-<style>
-.v-snack {
-  z-index: 1 !important;
-}
-
-@keyframes animate-progress {
-  from {
-    width: 0%;
-  }
-
-  to {
-    width: 100%;
-  }
-}
-
-@keyframes animate-progress-bg {
-  from {
-    left: 0%;
-    width: 100%;
-  }
-
-  to {
-    left: 100%;
-    width: 0%;
-  }
-}
-
-.animate-progress .v-progress-linear__determinate {
-  animation-name: 'animate-progress';
-  animation-duration: 5s;
-  animation-timing-function: linear;
-}
-
-.animate-progress .v-progress-linear__background {
-  animation-name: 'animate-progress-bg';
-  animation-duration: 5s;
-  animation-timing-function: linear;
-}
-</style>
-
-<style scoped>
-.progress-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  border-radius: 4px;
-}
-
-.pointer {
-  cursor: pointer;
-}
-</style>

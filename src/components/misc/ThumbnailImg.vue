@@ -9,6 +9,9 @@ import QOI from 'qoijs'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     icon: Boolean,
     thumbnail: {

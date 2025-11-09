@@ -8,17 +8,18 @@ import ObjectModel, {
   Heater,
   initCollection,
   initObject,
+  KinematicsName,
   MachineStatus,
   Move,
+  MoveCompensationType,
   Network,
   Probe,
   Sensors,
   State,
   Tool,
 } from '@duet3d/objectmodel'
-import Vue from 'vue'
 
-import { translateResponse } from '@/i18n'
+import { translateResponse } from '@/i18n/utils'
 import { isPaused, isPrinting } from '@/utils/enums'
 import patch from '@/utils/patch'
 
@@ -83,8 +84,8 @@ export const DefaultModel = initObject(ObjectModel, {
   ]),
 })
 
-export const useMachinesModelStore = defineStore('machinesModelSettings', {
-  state: (): Record<string, ObjectModel> => ({
+export const useMachinesModelStore = defineStore('machinesModel', {
+  state: (): Record<string, WritableDeep<ObjectModel>> => ({
     [defaultMachine]: DefaultModel,
   }),
   getters: {
@@ -110,6 +111,44 @@ export const useMachinesModelStore = defineStore('machinesModelSettings', {
     state: (state) => state[useRootStore().selectedMachine].state,
     tools: (state) => state[useRootStore().selectedMachine].tools,
     volumes: (state) => state[useRootStore().selectedMachine].volumes,
+    visibleAxes: (state) => state[useRootStore().selectedMachine].move.axes.filter((axis) => axis.visible) as Axis[],
+    isDelta: (state) => [KinematicsName.delta, KinematicsName.rotaryDelta].includes(
+            state[useRootStore().selectedMachine].move.kinematics.name,
+    ),
+    unhomedAxes: (state) => state[useRootStore().selectedMachine].move.axes.filter(
+        (axis) => axis.visible && !axis.homed,
+    ) as Axis[],
+    workplaceNumber: (state) => state[useRootStore().selectedMachine].move.workplaceNumber,
+    isCompensationEnabled: (state) => state[useRootStore().selectedMachine].move.compensation.type !== MoveCompensationType.none,
+    compensationType: (state) => state[useRootStore().selectedMachine].move.compensation.type,
+    jobProgress: (state) => {
+      let machineName = useRootStore().selectedMachine
+      if (isPrinting(state[machineName].state.status)) {
+        if (
+          !isPaused(state[machineName].state.status) &&
+          state[machineName].state.status !== MachineStatus.simulating &&
+          state[machineName].move.extruders.length > 0 &&
+          state[machineName].job.file !== null &&
+          state[machineName].job.file.filament.length > 0
+        ) {
+          // Get the total amount of filament extruded (according to the slicer)
+          let totalRawExtruded = 0
+          for (const extruder of state[machineName].move.extruders) {
+            totalRawExtruded += extruder.rawPosition
+          }
+
+          // Compute the progress according to the filamet usage
+          const totalFilamentRequired = state[machineName].job.file.filament.reduce((a, b) => a + b)
+          if (totalFilamentRequired > 0) {
+            // Limit the maximum in case the user put extra extrusions in the start/end G-code
+            return Math.min(totalRawExtruded / totalFilamentRequired, 1)
+          }
+        }
+        // return getters.fractionPrinted
+        return 0
+      }
+      return state[machineName].job.lastFileName ? 1 : 0
+    },
   },
   actions: {
     // Convert actions
@@ -159,33 +198,7 @@ export const useMachinesModelStore = defineStore('machinesModelSettings', {
       }
       return maxTemp
     },
-    jobProgress(getters) {
-      let machineName = useRootStore().selectedMachine
-      if (isPrinting(this[machineName].state.status)) {
-        if (
-          !isPaused(this[machineName].state.status) &&
-          this[machineName].state.status !== MachineStatus.simulating &&
-          this[machineName].move.extruders.length > 0 &&
-          this[machineName].job.file !== null &&
-          this[machineName].job.file.filament.length > 0
-        ) {
-          // Get the total amount of filament extruded (according to the slicer)
-          let totalRawExtruded = 0
-          for (const extruder of this[machineName].move.extruders) {
-            totalRawExtruded += extruder.rawPosition
-          }
-
-          // Compute the progress according to the filamet usage
-          const totalFilamentRequired = this[machineName].job.file.filament.reduce((a, b) => a + b)
-          if (totalFilamentRequired > 0) {
-            // Limit the maximum in case the user put extra extrusions in the start/end G-code
-            return Math.min(totalRawExtruded / totalFilamentRequired, 1)
-          }
-        }
-        return getters.fractionPrinted
-      }
-      return this[machineName].job.lastFileName ? 1 : 0
-    },
+    
 
     // Convert mutations
     // - Mutations do not exist any more. These can be converted to actions instead, or you can just assign directly to the store within your components (eg. userStore.firstName = 'First')
@@ -220,7 +233,7 @@ export const useMachinesModelStore = defineStore('machinesModelSettings', {
             ).job!.file!.customInfo = data.job.file.customInfo
           }
         } else if (key === 'plugins') {
-          Vue.set(this[useRootStore().selectedMachine], 'plugins', data.plugins!)
+          this[useRootStore().selectedMachine].plugins = data.plugins!
         } else if (key === 'sbc' && this[useRootStore().selectedMachine].sbc === null) {
           this[useRootStore().selectedMachine].sbc = data.sbc ?? null
         } else {

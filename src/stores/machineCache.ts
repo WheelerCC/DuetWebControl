@@ -3,13 +3,13 @@ import { GCodeFileInfo } from '@duet3d/objectmodel'
 import { FileNotFoundError } from '@/utils/errors'
 import { getLocalSetting, removeLocalSetting, setLocalSetting } from '@/utils/localStorage'
 import patch from '@/utils/patch'
-import Path from '@/utils/path'
 
 import { defineStore } from 'pinia'
 import { useRootStore } from '.'
 import { useMachinesStore } from './machines'
 import { defaultMachine } from './misc'
 import { useSettingsStore } from './settings'
+import { equals, extractDirectory, pathObj } from '@/utils/path'
 
 export interface MachineCacheState {
   /**
@@ -101,7 +101,7 @@ export const useMachinesCacheStore = defineStore('machinesCache', {
         try {
           cache = await machines.download(
             {
-              filename: Path.dwcCacheFile,
+              filename: pathObj.dwcCacheFile,
               showProgress: false,
               showSuccess: false,
               showError: false,
@@ -118,14 +118,14 @@ export const useMachinesCacheStore = defineStore('machinesCache', {
           try {
             cache = await machines.download(
               {
-                filename: Path.legacyDwcCacheFile,
+                filename: pathObj.legacyDwcCacheFile,
                 showProgress: false,
                 showSuccess: false,
                 showError: false,
               },
               machineName,
             )
-            await machines.delete(Path.legacyDwcCacheFile, machineName)
+            await machines.delete(pathObj.legacyDwcCacheFile, machineName)
           } catch (e) {
             if (!(e instanceof FileNotFoundError)) {
               throw e
@@ -159,7 +159,7 @@ export const useMachinesCacheStore = defineStore('machinesCache', {
           const content = new Blob([JSON.stringify(this[machineName])])
           machines.upload(
             {
-              filename: Path.dwcCacheFile,
+              filename: pathObj.dwcCacheFile,
               content,
               showProgress: false,
               showSuccess: false,
@@ -206,7 +206,7 @@ export const useMachinesCacheStore = defineStore('machinesCache', {
         } else {
           // Delete directory items
           for (let filename in this[machineName].fileInfos) {
-            if (Path.equals(fileOrDirectory, Path.extractDirectory(filename))) {
+            if (equals(fileOrDirectory, extractDirectory(filename))) {
               delete this[machineName].fileInfos[filename]
             }
           }

@@ -1,55 +1,128 @@
 <template>
-  <v-row
-    class="component flex-shrink-1"
-    :class="{ 'mt-2': solo, grow: grow }"
-    no-gutters
-    align="center"
-  >
-    <v-col>
-      <v-combobox
-        ref="input"
-        :solo="solo"
-        hide-details
-        :disabled="uiFrozen"
-        :placeholder="$t('input.code.placeholder')"
-        :search-input="code instanceof Object ? code.value : (code ?? '')"
-        :loading="doingCode"
-        :items="displayedCodes"
-        hide-selected
-        append-icon=""
-        maxlength="255"
-        @update:search-input="code = $event ?? ''"
-        @keyup.enter="sendOnEnter"
-        @change="change"
-        @blur="wasFocused = showItems = ignoreEnter = false"
-        @click="click"
-        @keyup.down="showItems = true"
-      >
-        <template #item="{ item }">
-          <code>{{ item.text }}</code>
-          <v-spacer />
-          <v-btn icon @click.prevent.stop="removeLastSentCode(item.value)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
-        </template>
-      </v-combobox>
-    </v-col>
+  <!-- <div class="w-full flex flex-row gap-1.5"> -->
+  <!-- TODO this is completely scuffed -->
+  <div>
+    <Command className="rounded-lg border shadow-md md:min-w-[450px]">
+      <CommandInput placeholder="Type a command or search..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Suggestions">
+          <CommandItem value="calendar"> Calendar </CommandItem>
+          <CommandItem value="search-emoji"> Search Emoji </CommandItem>
+          <CommandItem value="calculator"> Calculator </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading="Settings">
+          <CommandItem value="profile"> Profile </CommandItem>
+          <CommandItem value="billing"> Billing </CommandItem>
+          <CommandItem value="settings"> Settings </CommandItem>
+        </CommandGroup>
+      </CommandList>
+    </Command>
 
-    <v-col class="ml-2 flex-shrink-1" cols="auto">
-      <v-btn color="info" :disabled="uiFrozen" :loading="doingCode" @click="send">
-        <v-icon class="mr-2"> mdi-send </v-icon> {{ $t('input.code.send') }}
-      </v-btn>
-    </v-col>
-  </v-row>
+    <Combobox v-model="code" by="value" class="w-full m-2">
+      <ComboboxAnchor>
+        <div class="relative w-full">
+          <ComboboxInput
+            ref="input"
+            :disabled="uiFrozen"
+            :placeholder="$t('input.code.placeholder')"
+            :display-value="(val) => val?.text ?? val ?? ''"
+            maxlength="255"
+            :loading="doingCode"
+            @click="click"
+            @keyup.down="showItems = true"
+            @blur="wasFocused = showItems = ignoreEnter = false"
+            @change="change"
+            @keyup.enter="sendOnEnter"
+            @update:model-value="code = $event ?? ''"
+          />
+          <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+            <Search class="size-4 text-muted-foreground" />
+          </span>
+        </div>
+      </ComboboxAnchor>
+
+      <ComboboxList v-if="showItems">
+        <ComboboxEmpty v-if="!displayedCodes.length">
+          {{ t('input.code.noMatch') }}
+        </ComboboxEmpty>
+        <ComboboxGroup>
+          <ComboboxItem
+            v-for="item in displayedCodes"
+            :key="item.value"
+            :value="item"
+            class="flex items-center gap-2"
+          >
+            <code>{{ item.text }}</code>
+            <Button
+              variant="ghost"
+              size="icon"
+              @click.prevent.stop="removeLastSentCode(item.value)"
+            >
+              <Delete class="w-4 h-4" />
+            </Button>
+          </ComboboxItem>
+        </ComboboxGroup>
+      </ComboboxList>
+    </Combobox>
+  </div>
+
+  <!-- 
+    <Input
+      :disabled="uiFrozen"
+      :loading="doingCode"
+      maxlength="255"
+      @click="click"
+      @keyup.down="showItems = true"
+      @blur="wasFocused = showItems = ignoreEnter = false"
+      @change="change"
+      @keyup.enter="sendOnEnter"
+      @update:search-input="code = $event ?? ''"
+      :search-input="code instanceof Object ? code.value : (code ?? '')"
+      :items="displayedCodes"
+      id="email"
+      type="email"
+      :placeholder="$t('input.code.placeholder')"
+    />
+    <Button :disabled="uiFrozen" :loading="doingCode" @click="send" type="submit">
+      <SendHorizontal class="w-4 h-4 mr-2" /> {{ $t('input.code.send') }}
+    </Button> -->
+  <!-- </div> -->
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import {
+  Combobox,
+  ComboboxAnchor,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@/components/ui/combobox'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command'
 import { useRootStore } from '@/stores'
 import { useMachinesCacheStore } from '@/stores/machineCache'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useSettingsStore } from '@/stores/settings'
 import { MessageBox } from '@duet3d/objectmodel'
+import { Delete, Search } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { Button } from '../ui/button'
+
+const { t } = useI18n()
 
 const conditionalKeywords = [
   'abort',
@@ -65,178 +138,168 @@ const conditionalKeywords = [
   'set',
 ]
 
-import { defineComponent } from 'vue'
+let code = ref<string | { value: string }>('')
+let ignoreEnter = ref(false)
+let wasFocused = ref(false)
+let showItems = ref(false)
+let sendPending = ref(false)
+let doingCode = ref(false)
 
-export default defineComponent({
-  props: {
-    grow: Boolean,
-    solo: Boolean,
-  },
-  data() {
-    return {
-      code: '' as string | { value: string },
-      ignoreEnter: false,
-      wasFocused: false,
-      showItems: false,
-      sendPending: false,
-      doingCode: false,
-    }
-  },
-  computed: {
-    uiFrozen(): boolean {
-      return useRootStore().uiFrozen
-    },
-    displayedCodes(): Array<{ text: string; value: string }> {
-      if (this.showItems && !useSettingsStore().disableAutoComplete) {
-        const currentCode = (
-          this.code instanceof Object ? this.code.value : (this.code ?? '')
-        ).toLowerCase()
-        return useMachinesCacheStore()
-          .lastSentCodes.filter(
-            (code) => currentCode === '' || code.toLowerCase().includes(currentCode),
-          )
-          .map((code) => ({ text: code, value: code }))
-          .reverse()
-      }
-      return []
-    },
-    messageBox(): MessageBox | null {
-      return useMachinesModelStore().state.messageBox
-    },
-  },
-  watch: {
-    code(to: string | { value: string }) {
-      if (typeof to === 'string' && to.length >= 2) {
-        this.showItems = true
-      }
-    },
-    messageBox(to: MessageBox | null) {
-      if (to) {
-        // Don't handle "Enter" immediately when returning from a message box
-        this.ignoreEnter = true
-        setTimeout(() => (this.ignoreEnter = false), 1000)
-      }
-    },
-  },
-  methods: {
-    click() {
-      if (this.wasFocused) {
-        this.showItems = !this.showItems
-      } else {
-        this.wasFocused = true
-      }
-    },
-    removeLastSentCode(code: string) {
-      useMachinesCacheStore().removeLastSentCode(code)
-    },
-    change(value: string | { value: string } | null) {
-      this.code = value !== null ? value : ''
-    },
-    hasUnprecedentedParameters: (code: string) =>
-      !code || /(M23|M28|M30|M32|M36|M117)[^0-9]/i.test(code),
-    async sendOnEnter() {
-      if (this.ignoreEnter) {
-        this.ignoreEnter = false
-      } else {
-        await this.send()
-      }
-    },
-    async send() {
-      this.ignoreEnter = false
-      this.showItems = false
-
-      const code = this.code instanceof Object ? this.code.value : this.code
-      if (code.trim() !== '' && !this.doingCode) {
-        let codeToSend = '',
-          bareCode = '',
-          inQuotes = false,
-          inExpression = false,
-          inWhiteSpace = false,
-          inComment = false
-        if (
-          !this.hasUnprecedentedParameters(codeToSend) &&
-          !conditionalKeywords.some((keyword) => code.trim().startsWith(keyword))
-        ) {
-          // Convert code to upper-case and remove comments
-          for (let i = 0; i < code.length; i++) {
-            const char = code[i]
-            if (inQuotes) {
-              if (i < code.length - 1 && char === '\\' && code[i + 1] === '"') {
-                codeToSend += '\\"'
-                i++
-              } else {
-                if (char === '"') {
-                  inQuotes = false
-                }
-                codeToSend += char
-              }
-            } else if (inExpression) {
-              codeToSend += char
-              inExpression = char !== '}'
-            } else if (inComment) {
-              codeToSend += char
-              inComment = char !== ')'
-            } else {
-              if (char === '"') {
-                // don't convert escaped strings
-                inQuotes = true
-              } else if (char === ' ' || char === '\t') {
-                // remove duplicate white spaces
-                if (inWhiteSpace) {
-                  continue
-                }
-                inWhiteSpace = true
-              } else if (char === ';') {
-                // stop when final comments start
-                break
-              } else if (char === '(') {
-                // don't process chars from encapsulated comments
-                inComment = true
-              } else if (char === '{') {
-                // don't process chars from expressions
-                inExpression = true
-              }
-              inWhiteSpace = false
-              codeToSend += char.toUpperCase()
-              bareCode += code.toUpperCase()
-            }
-          }
-        } else {
-          // Don't modify the user input
-          codeToSend = code
-        }
-
-        // Send the code and wait for completion
-        this.doingCode = true
-        try {
-          const reply = await useMachinesStore().sendCode({
-            code: codeToSend,
-            fromInput: true,
-          })
-
-          if (
-            !inQuotes &&
-            !useSettingsStore().disableAutoComplete &&
-            !reply!.startsWith('Error: ') &&
-            !reply!.startsWith('Warning: ') &&
-            bareCode.indexOf('M587') === -1 &&
-            bareCode.indexOf('M589') === -1
-          ) {
-            // Automatically remember successful codes
-            useMachinesCacheStore().addLastSentCode(codeToSend.trim())
-          }
-        } catch {
-          // handled before we get here
-        }
-        this.doingCode = false
-      }
-    },
-  },
+let { uiFrozen } = storeToRefs(useRootStore())
+let { state } = storeToRefs(useMachinesModelStore())
+let { lastSentCodes } = storeToRefs(useMachinesCacheStore())
+let props = defineProps({
+  grow: Boolean,
+  solo: Boolean,
 })
-</script>
 
-<style scoped>
-.grow {
-  flex-grow: 1;
+let displayedCodes = computed(() => {
+  if (showItems && !useSettingsStore().disableAutoComplete) {
+    const currentCode = (
+      code.value instanceof Object ? code.value.value : (code.value ?? '')
+    ).toLowerCase()
+    return lastSentCodes.value
+      .filter((_code) => currentCode === '' || _code.toLowerCase().includes(currentCode))
+      .map((_code) => ({ text: _code, value: _code }))
+      .reverse()
+  }
+  return []
+})
+
+let messageBox = computed(() => {
+  return state.value.messageBox as MessageBox | null
+})
+
+function click() {
+  if (wasFocused.value) {
+    showItems.value = !showItems.value
+  } else {
+    wasFocused.value = true
+  }
 }
-</style>
+
+function removeLastSentCode(code: string) {
+  useMachinesCacheStore().removeLastSentCode(code)
+}
+
+function change(value: string | { value: string } | null) {
+  code.value = value !== null ? value : ''
+}
+
+function hasUnprecedentedParameters(_code: string) {
+  return !_code || /(M23|M28|M30|M32|M36|M117)[^0-9]/i.test(_code)
+}
+
+async function sendOnEnter() {
+  if (ignoreEnter.value) {
+    ignoreEnter.value = false
+  } else {
+    await send()
+  }
+}
+
+watch(code, (newVal, oldVal) => {
+  if (typeof newVal === 'string' && newVal.length >= 2) {
+    showItems.value = true
+  }
+})
+
+watch(messageBox, (newVal, oldVal) => {
+  if (newVal) {
+    // Don't handle "Enter" immediately when returning from a message box
+    ignoreEnter.value = true
+    setTimeout(() => (ignoreEnter.value = false), 1000)
+  }
+})
+
+async function send() {
+  ignoreEnter.value = false
+  showItems.value = false
+
+  const _code = code.value instanceof Object ? code.value.value : code.value
+  if (_code.trim() !== '' && !doingCode.value) {
+    let codeToSend = '',
+      bareCode = '',
+      inQuotes = false,
+      inExpression = false,
+      inWhiteSpace = false,
+      inComment = false
+    if (
+      !hasUnprecedentedParameters(codeToSend) &&
+      !conditionalKeywords.some((keyword) => _code.trim().startsWith(keyword))
+    ) {
+      // Convert code to upper-case and remove comments
+      for (let i = 0; i < _code.length; i++) {
+        const char = code[i]
+        if (inQuotes) {
+          if (i < _code.length - 1 && char === '\\' && _code[i + 1] === '"') {
+            codeToSend += '\\"'
+            i++
+          } else {
+            if (char === '"') {
+              inQuotes = false
+            }
+            codeToSend += char
+          }
+        } else if (inExpression) {
+          codeToSend += char
+          inExpression = char !== '}'
+        } else if (inComment) {
+          codeToSend += char
+          inComment = char !== ')'
+        } else {
+          if (char === '"') {
+            // don't convert escaped strings
+            inQuotes = true
+          } else if (char === ' ' || char === '\t') {
+            // remove duplicate white spaces
+            if (inWhiteSpace) {
+              continue
+            }
+            inWhiteSpace = true
+          } else if (char === ';') {
+            // stop when final comments start
+            break
+          } else if (char === '(') {
+            // don't process chars from encapsulated comments
+            inComment = true
+          } else if (char === '{') {
+            // don't process chars from expressions
+            inExpression = true
+          }
+          inWhiteSpace = false
+          codeToSend += char.toUpperCase()
+          bareCode += _code.toUpperCase()
+        }
+      }
+    } else {
+      // Don't modify the user input
+      codeToSend = _code
+    }
+
+    // Send the code and wait for completion
+    doingCode.value = true
+    try {
+      const reply = await useMachinesStore().sendCode({
+        code: codeToSend,
+        fromInput: true,
+      })
+
+      if (
+        !inQuotes &&
+        !useSettingsStore().disableAutoComplete &&
+        !reply!.startsWith('Error: ') &&
+        !reply!.startsWith('Warning: ') &&
+        bareCode.indexOf('M587') === -1 &&
+        bareCode.indexOf('M589') === -1
+      ) {
+        // Automatically remember successful codes
+        useMachinesCacheStore().addLastSentCode(codeToSend.trim())
+      }
+    } catch {
+      // handled before we get here
+    }
+    doingCode.value = false
+  }
+}
+</script>

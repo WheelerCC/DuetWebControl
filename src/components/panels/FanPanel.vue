@@ -46,6 +46,9 @@ import { Fan, Tool } from '@duet3d/objectmodel'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       fan: -1,

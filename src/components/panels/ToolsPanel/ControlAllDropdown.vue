@@ -1,82 +1,72 @@
 <template>
-  <v-menu v-model="dropdownShown" left offset-y :close-on-content-click="false">
-    <template #activator="{ on }">
-      <a href="javascript:void(0)" v-on="on">
-        <v-icon small>mdi-menu-down</v-icon>
-        {{ $t('panel.tools.controlHeaters') }}
-      </a>
-    </template>
+  <!-- TODO Tab key navigation to next dropdown item not working -->
+  <!-- TODO prevent closing on click -->
 
-    <v-card>
-      <v-layout justify-center column class="pt-2 pb-3 px-2">
-        <v-btn
-          block
-          color="primary"
-          class="mb-3 pa-2"
-          :disabled="!canTurnEverythingOff"
-          @click="turnEverythingOff"
-        >
-          <v-icon class="mr-1"> mdi-power-standby </v-icon>
-          {{ $t('panel.tools.turnEverythingOff') }}
-        </v-btn>
+  <div class="flex flex-col gap-2">
+    <Button @click="turnEverythingOff" :disabled="!canTurnEverythingOff">
+      <PowerOffIcon :size="18" />
+      {{ $t('panel.tools.turnEverythingOff') }}
+    </Button>
 
-        <v-divider class="mb-2" />
+    <div class="grid gap-2">
+      <div class="flex flex-row gap-2 justify-between" v-if="hasTools">
+        <Label for="controlTools">{{ $t('panel.tools.setToolTemperatures') }}</Label>
+        <Switch id="controlTools" v-model:model-value="controlTools" />
+      </div>
 
-        <control-input
-          :label="$t('panel.tools.setActiveTemperatures')"
+      <div class="flex flex-row gap-2 justify-between" v-if="hasBeds">
+        <Label for="controlBeds">{{ $t('panel.tools.setBedTemperatures') }}</Label>
+        <Switch id="controlBeds" v-model:model-value="controlBeds" />
+      </div>
+
+      <div class="flex flex-row gap-2 justify-between" v-if="hasChambers">
+        <Label for="controlChambers">{{ $t('panel.tools.setChamberTemperatures') }}</Label>
+        <Switch id="controlChambers" v-model:model-value="controlChambers" />
+      </div>
+
+      <div class="flex flex-row gap-2 justify-between">
+        <Label for="setActiveTemperatures">{{ $t('panel.tools.setActiveTemperatures') }}</Label>
+        <ControlInput
+          id="setActiveTemperatures"
           type="all"
           :control-tools="controlTools"
           :control-beds="controlBeds"
           :control-chambers="controlChambers"
           active
         />
-        <control-input
-          :label="$t('panel.tools.setStandbyTemperatures')"
+      </div>
+
+      <div class="flex flex-row gap-2 justify-between">
+        <Label for="setStandbyTemperatures">{{ $t('panel.tools.setStandbyTemperatures') }}</Label>
+        <ControlInput
+          id="setStandbyTemperatures"
           type="all"
           :control-tools="controlTools"
           :control-beds="controlBeds"
           :control-chambers="controlChambers"
           standby
+          active
         />
-
-        <v-switch
-          v-show="hasTools"
-          v-model="controlTools"
-          hide-details
-          class="mx-1 mt-0"
-          :label="$t('panel.tools.setToolTemperatures')"
-        />
-        <v-switch
-          v-show="hasBeds"
-          v-model="controlBeds"
-          hide-details
-          class="mx-1"
-          :label="$t('panel.tools.setBedTemperatures')"
-        />
-        <v-switch
-          v-show="hasChambers"
-          v-model="controlChambers"
-          hide-details
-          class="mx-1"
-          :label="$t('panel.tools.setChamberTemperatures')"
-        />
-      </v-layout>
-    </v-card>
-  </v-menu>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { HeaterState } from '@duet3d/objectmodel'
 import { computed, ref } from 'vue'
 
+import ControlInput from '@/components/inputs/ControlInput.vue'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import { log, LogType } from '@/utils/logging'
+import { PowerOffIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-
-const dropdownShown = ref(false)
 
 // Turn everything off
 const canTurnEverythingOff = computed(() => {

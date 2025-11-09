@@ -2,25 +2,25 @@
 <!-- TODO prefer to not need this waiver -->
 <template>
   <v-dialog v-model="shown" :no-click-animation="isPersistent" :persistent="isPersistent">
-    <v-card>
+    <!-- <v-card>
       <v-card-title class="justify-center">
         <span class="headline">
           {{ messageBox.title }}
         </span>
       </v-card-title>
 
-      <v-card-text>
-        <!-- Main message -->
-        <div
+      <v-card-text> -->
+    <!-- Main message -->
+    <!-- <div
           class="text-center"
           :class="{ 'mb-6': displayedAxes.length > 0 }"
           v-html="messageBox.message"
-        />
+        /> -->
 
-        <!-- Jog control -->
-        <v-row v-for="axis in displayedAxes" :key="axis.letter" dense>
-          <!-- Decreasing movements -->
-          <v-col>
+    <!-- Jog control -->
+    <!-- <v-row v-for="axis in displayedAxes" :key="axis.letter" dense> -->
+    <!-- Decreasing movements -->
+    <!-- <v-col>
             <v-row no-gutters>
               <v-col
                 v-for="index in numMoveSteps"
@@ -40,17 +40,17 @@
                 </code-btn>
               </v-col>
             </v-row>
-          </v-col>
+          </v-col> -->
 
-          <!-- Current position -->
-          <v-col cols="auto" class="d-flex align-center px-3">
+    <!-- Current position -->
+    <!-- <v-col cols="auto" class="d-flex align-center px-3">
             <strong>
               {{ axis.letter + ' = ' + displayAxisPosition(axis) }}
             </strong>
-          </v-col>
+          </v-col> -->
 
-          <!-- Increasing movements -->
-          <v-col>
+    <!-- Increasing movements -->
+    <!-- <v-col>
             <v-row no-gutters>
               <v-col
                 v-for="index in numMoveSteps"
@@ -71,10 +71,10 @@
               </v-col>
             </v-row>
           </v-col>
-        </v-row>
+        </v-row> -->
 
-        <!-- Inputs-->
-        <form v-if="needsNumberInput || needsStringInput" @submit.prevent="ok">
+    <!-- Inputs-->
+    <!-- <form v-if="needsNumberInput || needsStringInput" @submit.prevent="ok">
           <v-text-field
             v-if="needsNumberInput"
             v-model.number="numberInput"
@@ -127,7 +127,7 @@
 
     <div v-if="showEmergencyStop" class="persistent d-flex justify-end pe-4 pt-3">
       <emergency-btn />
-    </div>
+    </div> -->
   </v-dialog>
 </template>
 
@@ -143,6 +143,9 @@ import { display, displayZ } from '@/utils/display'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       messageBox: new MessageBox(),
@@ -157,7 +160,7 @@ export default defineComponent({
       return (axisLetter: AxisLetter) => useMachinesSettingsStore().getMoveSteps(axisLetter)
     },
     numMoveSteps(): number {
-      return useMachinesSettingsStore().numMoveSteps()
+      return useMachinesSettingsStore().numMoveSteps
     },
     isReconnecting(): boolean {
       return useMachinesStore().isReconnecting
@@ -190,12 +193,12 @@ export default defineComponent({
 
       return true
     },
-    displayedAxes(): Array<Axis> {
+    displayedAxes(): Axis[] {
       const axisControls =
         this.messageBox && this.messageBox.axisControls !== null ? this.messageBox.axisControls : 0
       return useMachinesModelStore().move.axes.filter(
         (axis, index) => axis.visible && (axisControls & (1 << index)) !== 0,
-      )
+      ) as Axis[]
     },
     hasButtons(): boolean {
       return this.messageBox.mode !== MessageBoxMode.noButtons

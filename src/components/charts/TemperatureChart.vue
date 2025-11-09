@@ -1,53 +1,64 @@
 <template>
-  <v-card class="d-flex flex-column flex-grow-1">
-    <v-card-title class="pt-2 pb-0">
-      <v-icon class="mr-1"> mdi-chart-timeline-variant </v-icon>
-      {{ $t('chart.temperature.caption') }}
-    </v-card-title>
-
-    <v-card-text v-show="hasTemperaturesToDisplay" class="content flex-grow-1 px-2 py-0">
-      <canvas ref="chart" />
-    </v-card-text>
-    <template v-if="!hasTemperaturesToDisplay">
-      <v-spacer />
-      <v-card-text class="pa-0">
-        <v-alert :value="true" type="info" class="mb-0">
-          {{ $t('chart.temperature.noData') }}
-        </v-alert>
-      </v-card-text>
-    </template>
-  </v-card>
+  <CardContent class="h-full w-full">
+    <Line :options="chartOptions" :data="chartData" class="w-full h-full"
+      >Failed to render line chart</Line
+    >
+  </CardContent>
+  <CardFooter class="flex flex-row mx-auto gap-2">
+    <Badge
+      v-for="series in temps.filter((dataset) => dataset.showLine)"
+      :key="series.index"
+      :class="series.hidden ? 'opacity-15' : 'opacity-100'"
+      class="cursor-pointer"
+      @click="series.hidden = !series.hidden"
+      >{{ series.label }}</Badge
+    >
+  </CardFooter>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
-import { defaultMachine } from '@/stores/misc'
 import { useSettingsStore } from '@/stores/settings'
-import { getRealHeaterColor } from '@/utils/colors'
-import Events from '@/utils/events'
 import { AnalogSensor } from '@duet3d/objectmodel'
 import {
-  Chart,
-  ChartDataset,
-  Legend,
+  ChartData,
+  Chart as ChartJS,
+  ChartOptions,
   LinearScale,
-  LineController,
   LineElement,
   PointElement,
   TimeScale,
 } from 'chart.js'
-import dateFnsLocale from 'date-fns/locale/en-US'
+import 'chartjs-adapter-date-fns'
+
+import { useMachinesSamplesStore } from '@/stores/machineSamples'
+import { getRealHeaterColor } from '@/utils/colors'
+import { storeToRefs } from 'pinia'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Line } from 'vue-chartjs'
 import { useI18n } from 'vue-i18n'
+import { Badge } from '../ui/badge'
+import { CardContent, CardFooter } from '../ui/card'
+
+let { t, locale } = useI18n()
+
+let { darkTheme } = storeToRefs(useSettingsStore())
+let { selectedMachine } = storeToRefs(useRootStore())
+let { hasTemperaturesToDisplay } = storeToRefs(useMachinesStore())
+let { sensors, heat } = storeToRefs(useMachinesModelStore())
+let { temps, times } = storeToRefs(useMachinesSamplesStore())
+let { temperatures, displayedExtraTemperatures } = storeToRefs(useMachinesSettingsStore())
 
 // Register required components and scales
-Chart.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Legend)
+ChartJS.register(LineElement, PointElement, LinearScale, TimeScale)
+// Chart.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Legend)
 /**
  * Specifies the interval at which temperature samples are recorded
  */
-const sampleInterval = 1000
+const sampleInterval = 500
 
 /**
  * Default maximum minimum in case it cannot be determined from the object model (in C)
@@ -62,88 +73,21 @@ const defaultMaxTemperature = 300
 /**
  * Maximum time to save sample data (in ms, defaults to 10min)
  */
+// TODO make this configuarble, e.g. I'd prefer something like 5mins
 const maxSampleTime = 600000
 
-/**
- * Extra values for Chart.JS dataset values
- */
-interface ExtraDatasetValues {
-  /**
-   * Index of the sensor
-   */
-  index: number
-
-  /**
-   * Whether this is an extra sensor
-   */
-  extra: boolean
-
-  /**
-   * Locale used when rendering
-   */
-  locale: string
-
-  /**
-   * Raw label of this dataset (equal to to sensor.name)
-   */
-  rawLabel: string | null
-}
-
-/**
- * Type used for chart datasets in this component
- */
-type TempChartDataset = ChartDataset & ExtraDatasetValues & { showLine: boolean }
-
-/**
- * Make a new dataset to render temperature data
- * @param index Sensor index
- * @param extra If this is an extra sensor
- * @param label Label of this sensor
- * @param numSamples Number of current samples to generate for the resulting datset
- */
-function makeDataset(
-  index: number,
-  extra: boolean,
-  label: string,
-  numSamples: number,
-): TempChartDataset {
-  const color = getRealHeaterColor(index, extra)
-  return {
-    index,
-    extra,
-    label,
-    fill: false,
-    backgroundColor: color,
-    borderColor: color,
-    borderDash: extra ? [10, 5] : undefined,
-    borderWidth: 2,
-    data: new Array<number>(numSamples).fill(NaN),
-    locale: useI18n().locale.value,
-    pointRadius: 0,
-    pointHitRadius: 0,
-    rawLabel: null,
-    showLine: true,
+function getName(index: number, type: 'heater' | 'sensor', sensor: AnalogSensor) {
+  let name
+  if (sensor.name) {
+    const matches = /(.*)\[(.*)\]$/.exec(sensor.name)
+    name = matches ? matches[1] : sensor.name
+  } else if (type == 'sensor') {
+    name = t('chart.temperature.sensor', [index])
+  } else {
+    name = t('chart.temperature.heater', [index])
   }
+  return name
 }
-
-/**
- * Temperature samples to save per connected machine
- */
-interface TempSampleData {
-  times: Array<number>
-  temps: TempChartDataset[]
-}
-
-/**
- * Collection of machines vs. collected temp samples
- */
-const tempSamples: Record<string, TempSampleData> = {
-  [defaultMachine]: {
-    times: [],
-    temps: [],
-  },
-}
-
 /**
  * Push sensor data of a given machine to the dataset
  * @param machine Machine to add samples to
@@ -151,312 +95,291 @@ const tempSamples: Record<string, TempSampleData> = {
  * @param extra If it is an extra sensor
  * @param sensor Sensor item
  */
-function pushSeriesData(machine: string, index: number, extra: boolean, sensor: AnalogSensor) {
-  // Get series from dataset
-  const machineData = tempSamples[machine]
-  let dataset = machineData.temps.find((item) => {
-    if (item.index === index && item.extra === extra) {
+function pushSensorDataToMachineSamples(
+  index: number,
+  type: 'heater' | 'sensor',
+  sensor: AnalogSensor,
+) {
+  // Do we already have any samples recorded for this sensor?
+
+  let datasetIndex = temps.value.findIndex((item) => {
+    if (item.index === index && item.sensorType && type) {
       return item
     }
   })
 
-  // Check if the dataset has to be created first
-  if (!dataset || dataset.locale !== useI18n().locale.value || dataset.rawLabel !== sensor.name) {
-    let name
-    if (sensor.name) {
-      const matches = /(.*)\[(.*)\]$/.exec(sensor.name)
-      name = matches ? matches[1] : sensor.name
-    } else if (extra) {
-      name = useI18n().t('chart.temperature.sensor', [index])
-    } else {
-      name = useI18n().t('chart.temperature.heater', [index])
-    }
+  while (datasetIndex < 0) {
+    const color = getRealHeaterColor(index, type == 'sensor')
+    const newData = new Array<number>(times.value.length).fill(NaN)
 
-    if (dataset) {
-      dataset.rawLabel = sensor.name
-      dataset.label = name
-      dataset.locale = useI18n().locale.value
-    } else {
-      dataset = makeDataset(index, extra, name, tempSamples[machine].times.length)
-      machineData.temps.push(dataset)
+    useMachinesSamplesStore()[selectedMachine.value].temps.push({
+      index,
+      sensorType: type,
+      label: getName(index, type, sensor),
+      fill: false,
+      backgroundColor: color,
+      borderColor: color,
+      borderDash: type == 'sensor' ? [10, 5] : undefined,
+      borderWidth: 2,
+      data: newData,
+      locale: locale.value,
+      pointStyle: false,
+      // pointRadius: 0,
+      // pointHitRadius: 0,
+      rawLabel: null,
+      showLine: false,
+    })
+
+    datasetIndex = temps.value.findIndex((item) => {
+      if (item.index === index && item.sensorType && type) {
+        return item
+      }
+    })
+  }
+
+  let dataset = temps.value[datasetIndex]
+
+  // Check if the dataset has to be created first
+  if (dataset.locale !== locale.value || dataset.rawLabel !== sensor.name) {
+    useMachinesSamplesStore()[selectedMachine.value].temps[datasetIndex] = {
+      ...dataset,
+      rawLabel: sensor.name,
+      label: getName(index, type, sensor),
+      locale: locale.value,
     }
   }
 
-  // Add new sample
-  dataset.data!.push(sensor.lastReading !== null ? sensor.lastReading : NaN)
+  useMachinesSamplesStore()[selectedMachine.value].temps[datasetIndex] = {
+    ...dataset,
+    data: [...dataset.data, sensor.lastReading !== null ? sensor.lastReading : NaN],
+  }
 }
 
-let storeSubscribed = false,
-  instances: Array<{ update: () => void }> = []
+let lastUpdate = ref(0)
 
-import eventbus from '@/utils/eventbus'
-import { defineComponent } from 'vue'
+let maxX = ref(maxSampleTime)
+let minX = computed(() => maxX.value - maxSampleTime)
+let interval: NodeJS.Timeout | null = null
 
-export default defineComponent({
-  data() {
-    return {
-      chart: {} as Chart,
-      lastUpdate: 0,
-    }
-  },
-  computed: {
-    darkTheme(): boolean {
-      return useSettingsStore().darkTheme
+let chartOptions = computed<ChartOptions<'line'>>(() => {
+  return {
+    spanGaps: true,
+    showLine: false, // disable for all datasets
+    animation: {
+      duration: 0, // general animation time
     },
-    selectedMachine(): string {
-      return useRootStore().selectedMachine
+    elements: {
+      line: {
+        tension: 0, // disable bezier curves
+      },
     },
-    hasTemperaturesToDisplay(): boolean {
-      return useMachinesStore().hasTemperaturesToDisplay
+    plugins: {
+      legend: {
+        // labels: {
+        //   filter: (legendItem, data) =>
+        //     (data.datasets![legendItem.datasetIndex!] as TempChartDataset).showLine,
+        //   font: {
+        //     family: 'Roboto,sans-serif',
+        //   },
+        // },
+      },
     },
-    minConfiguredTemperature(): number {
-      let minTemperature = 0
-      for (const bedTemp of useMachinesSettingsStore().temperatures.bed.active) {
-        if (bedTemp < minTemperature) {
-          minTemperature = bedTemp
-        }
-      }
-      for (const bedTemp of useMachinesSettingsStore().temperatures.bed.standby) {
-        if (bedTemp < minTemperature) {
-          minTemperature = bedTemp
-        }
-      }
-      for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
-        if (chamberTemp < minTemperature) {
-          minTemperature = chamberTemp
-        }
-      }
-      for (const chamberTemp of useMachinesSettingsStore().temperatures.chamber) {
-        if (chamberTemp < minTemperature) {
-          minTemperature = chamberTemp
-        }
-      }
-      for (const toolTemp of useMachinesSettingsStore().temperatures.tool.active) {
-        if (toolTemp < minTemperature) {
-          minTemperature = toolTemp
-        }
-      }
-      for (const toolTemp of useMachinesSettingsStore().temperatures.tool.standby) {
-        if (toolTemp < minTemperature) {
-          minTemperature = toolTemp
-        }
-      }
-      return minTemperature
+    maintainAspectRatio: false,
+    responsive: true,
+    clip: 0,
+    hover: {
+      axis: 'xy',
     },
-    minHeaterTemperature(): number | null {
-      return useMachinesModelStore().minHeaterTemperature()
-    },
-    maxHeaterTemperature(): number | null {
-      return useMachinesModelStore().maxHeaterTemperature()
-    },
-  },
-  watch: {
-    darkTheme(to: boolean) {
-      this.applyDarkTheme(to)
-    },
-    selectedMachine(machine: string) {
-      // Each chart instance is fixed to the currently selected machine
-      // Reassign the corresponding dataset whenever the selected machine changes
-      this.chart.config.data = {
-        labels: tempSamples[machine].times,
-        datasets: tempSamples[machine].temps,
-      }
-      this.update()
-    },
-  },
-  mounted() {
-    // Create the dataset if necessary
-    if (!tempSamples[this.selectedMachine]) {
-      tempSamples[this.selectedMachine] = {
-        times: [],
-        temps: [],
-      }
-    }
+    scales: {
+      x: {
+        min: minX.value,
+        max: maxX.value,
 
-    // Create the chart
-    this.chart = new Chart(this.$refs.chart as HTMLCanvasElement, {
-      type: 'line',
-      options: {
-        animation: {
-          duration: 0, // general animation time
+        type: 'time',
+        // adapters: {
+        //   date: {
+        //     locale: enUS,
+        //   },
+        // },
+        grid: {
+          // display: true,
         },
-        elements: {
-          line: {
-            tension: 0, // disable bezier curves
+        time: {
+          unit: 'minute',
+          displayFormats: {
+            minute: 'HH:mm',
           },
         },
-        plugins: {
-          legend: {
-            labels: {
-              filter: (legendItem, data) =>
-                (data.datasets![legendItem.datasetIndex!] as TempChartDataset).showLine,
-              font: {
-                family: 'Roboto,sans-serif',
-              },
-            },
-          },
-        },
-        maintainAspectRatio: false,
-        responsive: true,
-        scales: {
-          x: {
-            min: new Date().getTime() - maxSampleTime,
-            max: new Date().getTime(),
-            type: 'time',
-            adapters: {
-              date: {
-                locale: dateFnsLocale,
-              },
-            },
-            grid: {
-              display: true,
-            },
-            time: {
-              unit: 'minute',
-              displayFormats: {
-                minute: 'HH:mm',
-              },
-            },
-            ticks: {
-              font: {
-                family: 'Roboto,sans-serif',
-              },
-            },
-          },
-          y: {
-            min: 0,
-            max: defaultMaxTemperature,
-            grid: {
-              display: true,
-            },
-            ticks: {
-              stepSize: 50,
-              font: {
-                family: 'Roboto,sans-serif',
-              },
-            },
+
+        ticks: {
+          minRotation: 45,
+          maxRotation: 45,
+          font: {
+            family: 'Roboto,sans-serif',
           },
         },
       },
-      data: {
-        labels: tempSamples[this.selectedMachine].times,
-        datasets: tempSamples[this.selectedMachine].temps,
+      y: {
+        min: Math.min(
+          minConfiguredTemperature.value,
+          minHeaterTemperature.value !== null ? minHeaterTemperature.value : defaultMinTemperature,
+        ),
+        max:
+          maxHeaterTemperature.value !== null ? maxHeaterTemperature.value : defaultMaxTemperature,
+        grid: {
+          // display: true,
+        },
+        ticks: {
+          stepSize: 50,
+          font: {
+            family: 'Roboto,sans-serif',
+          },
+        },
       },
-    })
-    this.applyDarkTheme(this.darkTheme)
+    },
+  }
+})
 
-    // Keep track of updates
-    instances.push(this)
-    if (!storeSubscribed) {
-      eventbus.$on(Events.machineAdded, (hostname: string) => {
-        tempSamples[hostname] = {
-          times: [],
-          temps: [],
-        }
-      })
-      eventbus.$on(Events.machineRemoved, (hostname: string) => {
-        delete tempSamples[hostname]
-      })
+// let chartData = ref<any | null>(null)
+let chartData = computed<ChartData<'line', number[]>>(() => {
+  return {
+    labels: times.value,
+    datasets: temps.value,
+  }
+})
 
-      eventbus.$on(Events.machineModelUpdated, (hostname: string) => {
-        const dataset = tempSamples[hostname],
-          now = new Date().getTime()
-        if (
-          dataset.times.length === 0 ||
-          now - dataset.times[dataset.times.length - 1] > sampleInterval
-        ) {
-          // Record sensor temperatures
-          useMachinesModelStore().sensors.analog.forEach((sensor, sensorIndex) => {
-            if (sensor !== null) {
-              const heaters: Array<{ sensor: number } | null> = useMachinesModelStore().heat.heaters
-              const heaterIndex: number = heaters.findIndex(
-                (heater: { sensor: number } | null, idx: number) =>
-                  heater !== null && heater.sensor === sensorIndex,
-              )
-              if (heaterIndex !== -1) {
-                pushSeriesData(hostname, heaterIndex, false, sensor)
-              } else {
-                pushSeriesData(hostname, sensorIndex, true, sensor)
-              }
-            }
-          })
+watch(
+  chartData,
+  (newVal) => {
+    console.log(newVal)
+  },
+  { deep: true },
+)
 
-          // Record time and deal wih expired temperature samples
-          while (dataset.times.length && now - dataset.times[0] > maxSampleTime) {
-            dataset.times.shift()
-            dataset.temps.forEach((data) => data.data!.shift())
+function applyDarkTheme(active: boolean) {
+  const ticksColor = active ? '#FFF' : '#666'
+  console.log('todo dark')
+  // chartOptions.value.plugins!.legend!.labels!.color = ticksColor
+
+  // chartOptions.value.scales!.x!.ticks!.color = ticksColor
+  // chartOptions.value.scales!.y!.ticks!.color = ticksColor
+
+  // const gridLineColor = active ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+  // chartOptions.value.scales!.x!.grid!.color = gridLineColor
+  // chartOptions.value.scales!.y!.grid!.color = gridLineColor
+  // zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
+}
+
+let minConfiguredTemperature = computed(() => {
+  let minTemperature = 0
+  for (const bedTemp of temperatures.value.bed.active) {
+    if (bedTemp < minTemperature) {
+      minTemperature = bedTemp
+    }
+  }
+  for (const bedTemp of temperatures.value.bed.standby) {
+    if (bedTemp < minTemperature) {
+      minTemperature = bedTemp
+    }
+  }
+  for (const chamberTemp of temperatures.value.chamber) {
+    if (chamberTemp < minTemperature) {
+      minTemperature = chamberTemp
+    }
+  }
+  for (const chamberTemp of temperatures.value.chamber) {
+    if (chamberTemp < minTemperature) {
+      minTemperature = chamberTemp
+    }
+  }
+  for (const toolTemp of temperatures.value.tool.active) {
+    if (toolTemp < minTemperature) {
+      minTemperature = toolTemp
+    }
+  }
+  for (const toolTemp of temperatures.value.tool.standby) {
+    if (toolTemp < minTemperature) {
+      minTemperature = toolTemp
+    }
+  }
+  return minTemperature
+})
+
+let minHeaterTemperature = computed(() => {
+  return useMachinesModelStore().minHeaterTemperature()
+})
+
+let maxHeaterTemperature = computed(() => {
+  return useMachinesModelStore().maxHeaterTemperature()
+})
+
+watch(darkTheme, (newVal, oldVal) => {
+  applyDarkTheme(newVal)
+})
+
+// watch(selectedMachine, (newVal, oldVal) => {
+//   // Each chart instance is fixed to the currently selected machine
+//   // Reassign the corresponding dataset whenever the selected machine changes
+//   chartData.value = {
+//     labels: tempSamples[newVal].times,
+//     datasets: tempSamples[newVal].temps,
+//   }
+//   update()
+// })
+watch(
+  [sensors, heat],
+  ([newSensorsVal, newHeatVal]) => {
+    const now = new Date().getTime()
+    if (times.value.length === 0 || now - times.value[times.value.length - 1] > sampleInterval) {
+      // Record sensor temperatures
+      newSensorsVal.analog.forEach((sensor, sensorIndex) => {
+        if (sensor !== null) {
+          const heaterIndex: number = newHeatVal.heaters.findIndex(
+            (maybeHeater) => maybeHeater !== null && maybeHeater.sensor === sensorIndex,
+          )
+          if (heaterIndex !== -1) {
+            pushSensorDataToMachineSamples(heaterIndex, 'heater', sensor)
+          } else {
+            pushSensorDataToMachineSamples(sensorIndex, 'sensor', sensor)
           }
-          dataset.times.push(now)
-
-          // Deal with visibility and tell chart instances to update
-          dataset.temps.forEach((dataset) => {
-            dataset.showLine =
-              !dataset.extra ||
-              useMachinesSettingsStore().displayedExtraTemperatures.includes(dataset.index)
-          }, this)
-          instances.forEach((instance) => instance.update())
         }
       })
 
-      storeSubscribed = true
+      // Record time and deal wih expired temperature samples
+      while (times.value.length && now - times.value[0] > maxSampleTime) {
+        console.log('deleting time, and one data from each dataset')
+        times.value.shift()
+        temps.value.forEach((data) => data.data!.shift())
+      }
+      times.value.push(now)
+
+      // Deal with visibility and tell chart instances to update
+      useMachinesSamplesStore()[selectedMachine.value].temps = temps.value.map((dataset) => {
+        return {
+          ...dataset,
+          showLine:
+            dataset.sensorType === 'heater' ||
+            displayedExtraTemperatures.value.includes(dataset.index),
+        }
+      })
     }
   },
-  beforeUnmount() {
-    // Don't update this instance any more...
-    instances = instances.filter((instance) => instance !== this, this)
-  },
-  methods: {
-    update() {
-      const now = new Date().getTime()
-      if (now - this.lastUpdate >= 1000) {
-        // this.chart.config.options!.scales!.yAxes![0].ticks!.min = Math.min(this.minConfiguredTemperature, (this.minHeaterTemperature !== null) ? this.minHeaterTemperature : defaultMinTemperature);
-        // this.chart.config.options!.scales!.yAxes![0].ticks!.max = (this.maxHeaterTemperature !== null) ? this.maxHeaterTemperature : defaultMaxTemperature;
-        // this.chart.config.options!.scales!.xAxes![0].ticks!.min = (new Date()).getTime() - maxSampleTime;
-        // this.chart.config.options!.scales!.xAxes![0].ticks!.max = (new Date()).getTime();
-        this.chart.config.options!.scales!.y!.min = Math.min(
-          this.minConfiguredTemperature,
-          this.minHeaterTemperature !== null ? this.minHeaterTemperature : defaultMinTemperature,
-        )
-        this.chart.config.options!.scales!.y!.max =
-          this.maxHeaterTemperature !== null ? this.maxHeaterTemperature : defaultMaxTemperature
-        const now = new Date().getTime()
-        this.chart.config.options!.scales!.x!.min = now - maxSampleTime
-        this.chart.config.options!.scales!.x!.max = now
+  { deep: true },
+)
 
-        this.chart.update()
-        this.lastUpdate = now
-      }
-    },
-    applyDarkTheme(active: boolean) {
-      const ticksColor = active ? '#FFF' : '#666'
-      this.chart.config.options!.plugins!.legend!.labels!.color = ticksColor
+onMounted(() => {
+  applyDarkTheme(darkTheme.value)
+  interval = setInterval(() => {
+    maxX.value = new Date().getTime()
+  }, sampleInterval)
+})
 
-      this.chart.config.options!.scales!.x!.ticks!.color = ticksColor
-      this.chart.config.options!.scales!.y!.ticks!.color = ticksColor
-
-      const gridLineColor = active ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-      this.chart.config.options!.scales!.x!.grid!.color = gridLineColor
-      this.chart.config.options!.scales!.y!.grid!.color = gridLineColor
-      // zeroLineColor is not supported in Chart.js v3+, so this line is removed or you may need to handle it differently if needed
-
-      this.chart.update()
-    },
-  },
+onUnmounted(() => {
+  // Don't update this instance any more...
+  // instances.value = instances.value.filter((instance) => instance !== this, this)
+  // Don't forget to remove the interval before destroying the component
+  if (interval) {
+    clearInterval(interval)
+  }
 })
 </script>
-
-<style scoped>
-.card {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.content {
-  position: relative;
-}
-
-.content > canvas {
-  position: absolute;
-}
-</style>

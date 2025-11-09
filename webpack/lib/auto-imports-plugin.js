@@ -14,8 +14,8 @@ class AutoImportsPlugin {
                 "/**\n" +
                 " * DO NOT MODIFY THIS FILE! IT IS AUTO-GENERATED ON COMPILATION!\n" +
                 "*/\n" +
-                "import { initCollection } from \"@duet3d/objectmodel\";\n" +
-                "import DwcPlugin from \"./DwcPlugin\";\n" +
+                "import { initCollection } from \'@duet3d/objectmodel\';\n" +
+                "import DwcPlugin from \'./DwcPlugin\';\n" +
                 "\n" +
                 "export default initCollection(DwcPlugin, [\n";
 
@@ -55,10 +55,10 @@ class AutoImportsPlugin {
 
                 // Generate plugin entry
                 importsFile += "	{\n";
-                importsFile += `        id: "${manifest.id}",\n`;
-                importsFile += `        name: "${manifest.name}",\n`;
-                importsFile += `        author: "${manifest.author}",\n`;
-                importsFile += `        version: "${manifest.version === "auto" ? packageInfo.version : manifest.version}",\n`;
+                importsFile += `        id: '${manifest.id}',\n`;
+                importsFile += `        name: '${manifest.name}',\n`;
+                importsFile += `        author: '${manifest.author}',\n`;
+                importsFile += `        version: '${manifest.version === "auto" ? packageInfo.version : manifest.version}',\n`;
                 importsFile += "        loadDwcResources: () => import(\n";
                 importsFile += `            /* webpackChunkName: "${file.name}" */\n`;
                 importsFile += `            "${entryFile}"\n`;

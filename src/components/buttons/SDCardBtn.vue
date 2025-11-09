@@ -1,29 +1,32 @@
 <template>
-  <v-menu offset-y>
-    <template #activator="{ on }">
-      <v-btn v-bind="$props" color="success" :loading="mounting" v-on="on">
-        <v-icon class="mr-1"> mdi-sd </v-icon>
+  <Select v-model="value">
+    <SelectTrigger class="w-[180px]">
+      <SelectValue :loading="mounting">
+        <CardSimIcon />
         {{ getVolumeName(value) }}
-        <v-icon class="ml-1"> mdi-menu-down </v-icon>
-      </v-btn>
-    </template>
-
-    <v-list ref="list">
-      <v-list-item v-for="(volume, index) in volumes" :key="index" @click="selectVolume(index)">
-        <v-icon class="mr-1">
-          {{ volume.mounted ? 'mdi-check' : 'mdi-close' }}
-        </v-icon>
-        {{ getVolumeName(index) }} ({{
-          $t(volume.mounted ? 'generic.mounted' : 'generic.notMounted')
-        }})
-      </v-list-item>
-    </v-list>
-  </v-menu>
+      </SelectValue>
+    </SelectTrigger>
+    <SelectContent>
+      <SelectGroup>
+        <SelectItem v-for="(volume, index) in volumes" :key="index" :value="index">
+          {{ getVolumeName(index) }}
+        </SelectItem>
+      </SelectGroup>
+    </SelectContent>
+  </Select>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { log } from '@/utils/logging'
-import { Volume } from '@duet3d/objectmodel'
+import { CardSimIcon } from 'lucide-vue-next'
 
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
@@ -31,71 +34,62 @@ import { useMachinesStore } from '@/stores/machines'
 import { getErrorMessage } from '@/utils/errors'
 import { LogType } from '@/utils/logging'
 
-import { defineComponent } from 'vue'
+import { storeToRefs } from 'pinia'
+import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-export default defineComponent({
-  props: {
-    value: {
-      type: Number,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      mounting: false,
-    }
-  },
-  computed: {
-    isConnected(): boolean {
-      return useRootStore().isConnected
-    },
-    volumes(): Array<Volume> {
-      return useMachinesModelStore().volumes
-    },
-  },
-  methods: {
-    getVolumeName(index: number) {
-      if (index >= 0 && index < this.volumes.length && this.volumes[index].name) {
-        return this.volumes[index].name
-      }
-      return this.$t('generic.sdCard', [index])
-    },
-    async selectVolume(index: number) {
-      if (!this.isConnected) {
-        return
-      }
+let value = defineModel<number>('value', { required: true })
 
-      // Check if the volume is already mounted
-      const volume = this.volumes[index]
-      if (volume.mounted) {
-        this.$emit('input', index)
-        return
-      }
-
-      // Try to mount it
-      let success = true,
-        response
-      this.mounting = true
-      try {
-        response = await useMachinesStore().sendCode({
-          code: `M21 P${index}`,
-          log: false,
-        })
-        success = response.indexOf('Error') === -1
-      } catch (e) {
-        response = getErrorMessage(e)
-        success = false
-      }
-      this.mounting = false
-
-      // Deal with the result
-      if (success) {
-        log(LogType.success, this.$t('notification.mount.successTitle'), response)
-        this.$emit('input', index)
-      } else {
-        log(LogType.error, this.$t('notification.mount.errorTitle'), response)
-      }
-    },
-  },
+watch(value, (newVal, oldVal) => {
+  selectVolume(newVal)
 })
+
+let mounting = ref(false)
+
+let { isConnected } = storeToRefs(useRootStore())
+let { volumes } = storeToRefs(useMachinesModelStore())
+let { t } = useI18n()
+let emit = defineEmits(['input'])
+function getVolumeName(index: number) {
+  if (index >= 0 && index < volumes.value.length && volumes.value[index].name) {
+    return volumes.value[index].name
+  }
+  return t('generic.sdCard', [index])
+}
+async function selectVolume(index: number) {
+  if (!isConnected.value) {
+    return
+  }
+
+  // Check if the volume is already mounted
+  const volume = volumes.value[index]
+  if (volume.mounted) {
+    emit('input', index)
+    return
+  }
+
+  // Try to mount it
+  let success = true,
+    response
+  mounting.value = true
+  try {
+    response = await useMachinesStore().sendCode({
+      code: `M21 P${index}`,
+      log: false,
+    })
+    success = response.indexOf('Error') === -1
+  } catch (e) {
+    response = getErrorMessage(e)
+    success = false
+  }
+  mounting.value = false
+
+  // Deal with the result
+  if (success) {
+    log(LogType.success, t('notification.mount.successTitle'), response)
+    emit('input', index)
+  } else {
+    log(LogType.error, t('notification.mount.errorTitle'), response)
+  }
+}
 </script>

@@ -1,73 +1,63 @@
 <template>
-  <v-btn
-    v-bind="$props"
-    :disabled="$props.disabled || uiFrozen"
-    :elevation="1"
+  <Button
+    class="cursor-pointer"
+    :disabled="disabled || uiFrozen"
     :loading="waitingForCode"
     @click="click"
+    :variant="variant"
     @contextmenu="$emit('contextmenu', $event)"
   >
     <slot />
-  </v-btn>
+  </Button>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { Button, ButtonVariants } from '@/components/ui/button'
 import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
-import { defineComponent } from 'vue'
+import { computed, ref } from 'vue'
 
-export default defineComponent({
-  props: {
-    code: {
-      type: String,
-      required: true,
-    },
-    disabled: Boolean,
-    log: {
-      type: Boolean,
-      default: true,
-    },
-    noWait: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  computed: {
-    uiFrozen(): boolean {
-      return useRootStore().uiFrozen
-    },
-  },
-  data() {
-    return {
-      waitingForCode: false,
-    }
-  },
-  methods: {
-    async click() {
+interface Props {
+  variant?: ButtonVariants['variant']
+  code: string
+  count?: number
+  disabled?: boolean
+  log?: boolean
+  noWait?: boolean
+}
+
+const {
+  code,
+  disabled = false,
+  log = true,
+  noWait = false,
+  variant = 'default',
+} = defineProps<Props>()
+
+const waitingForCode = ref(false)
+const uiFrozen = computed(() => useRootStore().uiFrozen)
+
+async function click() {
+  try {
+    if (noWait) {
+      await useMachinesStore().sendCode({
+        code: code,
+        log: log ?? true,
+        noWait: true,
+      })
+    } else {
+      waitingForCode.value = true
       try {
-        if (this.noWait) {
-          // Run the requested code but don't wait for a result
-          await useMachinesStore().sendCode({
-            code: this.code,
-            log: this.log,
-            noWait: true,
-          })
-        } else {
-          // Wait for the code to complete and block while doing so
-          this.waitingForCode = true
-          try {
-            await useMachinesStore().sendCode({
-              code: this.code,
-              log: this.log,
-            })
-          } finally {
-            this.waitingForCode = false
-          }
-        }
-      } catch (e) {
-        // handled before we get here
+        await useMachinesStore().sendCode({
+          code: code,
+          log: log ?? true,
+        })
+      } finally {
+        waitingForCode.value = false
       }
-    },
-  },
-})
+    }
+  } catch (e) {
+    // handled before we get here
+  }
+}
 </script>

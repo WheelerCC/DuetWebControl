@@ -1,50 +1,38 @@
 <template>
-  <code-btn
+  <CodeBtn
+    class="h-15"
     v-bind="$props"
     :code="'M112\nM999'"
     :log="false"
-    :color="color || 'error'"
-    :disabled="$props.disabled || isDisabled"
+    variant="destructive"
+    :disabled="isDisabled"
     :title="$t('button.emergencyStop.title')"
   >
-    <v-icon class="mr-1"> mdi-flash </v-icon>
-    <span class="hidden-xs-only">
-      {{ $t('button.emergencyStop.caption') }}
-    </span>
-  </code-btn>
+    <Zap />
+    {{ $t('button.emergencyStop.caption') }}
+  </CodeBtn>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import eventbus from '@/utils/eventbus'
-import { defineComponent } from 'vue'
+import { Zap } from 'lucide-vue-next'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import CodeBtn from './CodeBtn.vue'
 
-export default defineComponent({
-  props: {
-    color: {
-      type: String,
-      default: null,
-    },
-  },
-  data() {
-    return {
-      isDisabled: false,
-    }
-  },
-  mounted() {
-    eventbus.$on('dialog-closing', this.onDialogClosing)
-  },
-  beforeUnmount() {
-    eventbus.$off('dialog-closing', this.onDialogClosing)
-  },
-  methods: {
-    onDialogClosing() {
-      this.isDisabled = true
+const isDisabled = ref(false)
 
-      const that = this
-      setTimeout(function () {
-        that.isDisabled = false
-      }, 500)
-    },
-  },
+onMounted(() => {
+  eventbus.$on('dialog-closing', onDialogClosing)
 })
+
+onBeforeUnmount(() => {
+  eventbus.$off('dialog-closing', onDialogClosing)
+})
+
+function onDialogClosing() {
+  isDisabled.value = true
+  setTimeout(() => {
+    isDisabled.value = false
+  }, 500)
+}
 </script>

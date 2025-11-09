@@ -86,15 +86,18 @@ import '@/utils/monaco-editor'
 import '@/utils/monaco-menu'
 import '@/utils/monaco-STM32'
 import '@/utils/monaco-syntax'
-import Path from '@/utils/path'
 
 const mediumFileThreshold = 4194304 // 4 MiB
 const bigFileThreshold = 33554432 // 32 MiB
 
 import eventbus from '@/utils/eventbus'
+import { equals, pathObj, startsWith } from '@/utils/path'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     shown: {
       type: Boolean,
@@ -137,7 +140,7 @@ export default defineComponent({
     },
     language(): string {
       if (
-        Path.startsWith(this.filename, this.macrosDirectory) ||
+        startsWith(this.filename, this.macrosDirectory) ||
         /(\.g|\.gcode|\.gc|\.gco|\.nc|\.ngc|\.tap)(\.bak)?$/i.test(this.filename)
       ) {
         return this.fffMode ? 'gcode-fdm' : 'gcode-cnc'
@@ -145,10 +148,10 @@ export default defineComponent({
       if (/\.json$/i.test(this.filename)) {
         return 'json'
       }
-      if (Path.startsWith(this.filename, this.menuDirectory)) {
+      if (startsWith(this.filename, this.menuDirectory)) {
         return 'menu'
       }
-      if (Path.equals(this.filename, Path.boardFile)) {
+      if (equals(this.filename, pathObj.boardFile)) {
         return 'STM32'
       }
       return ''
@@ -157,7 +160,7 @@ export default defineComponent({
       return this.language.startsWith('gcode')
     },
     isMenu(): boolean {
-      return Path.startsWith(this.filename, this.menuDirectory)
+      return startsWith(this.filename, this.menuDirectory)
     },
     isMobile(): boolean {
       return /(Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone)/i.test(navigator.userAgent)

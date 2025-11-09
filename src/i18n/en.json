@@ -1,5 +1,8 @@
 {
   "language": "English",
+  "errors": {
+    "pageNotFound": "404 page not found"
+  },
   "$vuetify": {
     "badge": "Badge",
     "close": "Close",
@@ -424,7 +427,8 @@
   "input": {
     "code": {
       "send": "Send",
-      "placeholder": "Send code..."
+      "placeholder": "Send code...",
+      "noMatch": "No match"
     },
     "addTemperature": "Value of new temperature",
     "addRPM": "Value of new preset",
@@ -445,6 +449,7 @@
   "list": {
     "baseFileList": {
       "fileName": "Filename",
+      "fileType": "File Type",
       "size": "Size",
       "lastModified": "Last modified",
       "download": "Download File",
@@ -525,7 +530,8 @@
     "settings": {
       "caption": "Settings",
       "general": "General",
-      "machine": "Machine-Specific"
+      "machine": "Machine-Specific",
+      "debug": "Debug"
     }
   },
   "notification": {

@@ -33,6 +33,9 @@ import { SettingsState, useSettingsStore } from '@/stores/settings'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   computed: {
     behaviourJobStart: {
       get(): boolean {

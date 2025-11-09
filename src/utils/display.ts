@@ -1,10 +1,10 @@
-import { AnalogSensor, AnalogSensorType, Axis, AxisLetter, MachineMode } from '@duet3d/objectmodel'
+import { AnalogSensor, AnalogSensorType, Axis, AxisLetter, MachineMode, Tool } from '@duet3d/objectmodel'
 
+import i18n from '@/i18n'
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { UnitOfMeasure, useSettingsStore } from '@/stores/settings'
-import { useI18n } from 'vue-i18n'
-
+import { WritableObjectDeep } from 'type-fest/source/writable-deep'
 /**
  * Display a numeric value with a given precision and an optional unit.
  * @param value Value(s) to display
@@ -19,7 +19,7 @@ export function display(
 ) {
   if (typeof value === 'number') {
     if (isNaN(value)) {
-      return useI18n().t('generic.noValue')
+      return i18n.global.t('generic.noValue')
     }
     return value.toFixed(precision !== undefined ? precision : 2) + (unit ? ' ' + unit : '')
   }
@@ -28,22 +28,60 @@ export function display(
       .map((item) =>
         item !== undefined
           ? item.toFixed(precision !== undefined ? precision : 0) + (unit ? ' ' + unit : '')
-          : useI18n().t('generic.noValue'),
+          : i18n.global.t('generic.noValue'),
       )
       .join(', ')
   }
-  return value && value.constructor === String ? value : useI18n().t('generic.noValue')
+  return value && value.constructor === String ? value : i18n.global.t('generic.noValue')
 }
+
+
+/**
+ * Display an axis wcs offset
+ * @param axis Axis position to display
+ * @param workOffset Which work offset to display
+ * @returns Formatted axis wcs offset
+ */
+export function displayWCSOffset(axis: Axis, workOffset: number) {
+  let position = axis.workplaceOffsets[workOffset]
+  if (position === null) {
+    return i18n.global.t('generic.noValue')
+  }
+
+  let settingsStore = useSettingsStore()
+
+  position = position / (settingsStore.displayUnits === UnitOfMeasure.imperial ? 25.4 : 1)
+  return display(position, settingsStore.decimalPlaces)
+}
+
+/**
+ * Display tool offset
+ * @param axis Tool to display offset for
+ * @param index Which axis's work offset to display
+ * @returns Formatted tool offset
+ */
+export function displayToolOffset(tool: Tool | null, index: number) {
+  let position = tool ? tool.offsets[index] : 0
+  if (position === null) {
+    return i18n.global.t('generic.noValue')
+  }
+
+  let settingsStore = useSettingsStore()
+
+  position = position / (settingsStore.displayUnits === UnitOfMeasure.imperial ? 25.4 : 1)
+  return display(position, settingsStore.decimalPlaces)
+}
+
 
 /**
  * Display an axis position
  * @param axis Axis position to display
  * @returns Formatted axis position
  */
-export function displayAxisPosition(axis: Axis, machinePosition: boolean = false) {
+export function displayAxisPosition(axis: Axis | WritableObjectDeep<Axis>, machinePosition: boolean = false) {
   let position = machinePosition ? axis.machinePosition : axis.userPosition
   if (position === null) {
-    return useI18n().t('generic.noValue')
+    return i18n.global.t('generic.noValue')
   }
 
   let settingsStore = useSettingsStore()
@@ -96,7 +134,7 @@ export function displaySensorValue(sensor: AnalogSensor) {
  */
 export function displaySize(bytes: number | null | undefined) {
   if (typeof bytes !== 'number') {
-    return useI18n().t('generic.noValue')
+    return i18n.global.t('generic.noValue')
   }
   let settingsStore = useSettingsStore()
 
@@ -137,9 +175,9 @@ export function displaySize(bytes: number | null | undefined) {
  */
 export function displayMoveSpeed(speed: number | null | undefined) {
   if (typeof speed === 'number' && useSettingsStore().displayUnits === UnitOfMeasure.imperial) {
-    return display((speed * 60) / 25.4, 1, useI18n().t('panel.settingsAppearance.unitInchSpeed'))
+    return display((speed * 60) / 25.4, 1, i18n.global.t('panel.settingsAppearance.unitInchSpeed'))
   }
-  return display(speed, 1, useI18n().t('panel.settingsAppearance.unitMmSpeed'))
+  return display(speed, 1, i18n.global.t('panel.settingsAppearance.unitMmSpeed'))
 }
 
 /**
@@ -149,7 +187,7 @@ export function displayMoveSpeed(speed: number | null | undefined) {
  */
 export function displayTransferSpeed(bytesPerSecond: number | null | undefined) {
   if (typeof bytesPerSecond !== 'number') {
-    return useI18n().t('generic.noValue')
+    return i18n.global.t('generic.noValue')
   }
   let settingsStore = useSettingsStore()
 
@@ -191,7 +229,7 @@ export function displayTransferSpeed(bytesPerSecond: number | null | undefined) 
  */
 export function displayTime(value: number | null | undefined, showTrailingZeroes = false) {
   if (typeof value !== 'number' || isNaN(value)) {
-    return useI18n().t('generic.noValue')
+    return i18n.global.t('generic.noValue')
   }
 
   value = Math.round(value)

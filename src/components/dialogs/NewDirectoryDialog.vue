@@ -13,11 +13,14 @@ import { useMachinesStore } from '@/stores/machines'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import { LogType } from '@/utils/logging'
 import { makeNotification } from '@/utils/notifications'
-import Path from '@/utils/path'
+import { combine } from '@/utils/path'
 
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     shown: {
       type: Boolean,
@@ -75,7 +78,7 @@ export default defineComponent({
     async createDirectory(directory: string) {
       const currentDirectory = this.directory
       try {
-        const path = Path.combine(currentDirectory, directory)
+        const path = combine(currentDirectory, directory)
         await useMachinesStore().makeDirectory(path)
 
         this.$emit('directoryCreated', path)

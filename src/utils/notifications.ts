@@ -1,11 +1,15 @@
 import { CancellationToken, OnProgressCallback } from '@duet3d/connectors'
-import { reactive } from 'vue'
+import { Component, reactive, ref } from 'vue'
 
 import { useI18n } from 'vue-i18n'
 
 import { useSettingsStore } from '@/stores/settings'
 import { extractFileName } from '@/utils/path'
 import { LogType } from './logging'
+import { toast } from 'vue-sonner'
+import { Banana, CloudDownload, CloudUpload, Cog } from 'lucide-vue-next'
+import { displayTransferSpeed } from './display'
+import i18n from '@/i18n'
 
 /**
  * Possible file transfer types
@@ -99,7 +103,7 @@ export interface Notification {
 /**
  * List of active notifications
  */
-export const notifications = reactive(new Array<Notification>())
+export const notifications = reactive([] as Notification[])
 
 /**
  * Persistent message notification (see M117)
@@ -109,7 +113,7 @@ let messageNotification: Notification | null = null
 /**
  * List of active file transfer notifications
  */
-export const fileTransferNotifications = reactive(new Array<Notification>())
+export const fileTransferNotifications = ref<Notification[]>([])
 
 /**
  * Show a new notification
@@ -217,6 +221,22 @@ export function closeNotifications(includingMessage = false) {
   }
 }
 
+function fileTransferIcon(type?: NotificationType): Component {
+  if (type !== null) {
+    switch (type) {
+      case FileTransferType.upload:
+        return CloudUpload
+      case FileTransferType.download:
+        return CloudDownload
+      case FileTransferType.systemPackageInstall:
+        return Cog
+      default:
+        break
+    }
+  }
+  return Banana
+};
+
 /**
  * Show a new file transfer notification
  * @param type Upload target type
@@ -258,13 +278,39 @@ export function makeFileTransferNotification(
       }
     },
     close() {
-      const index = fileTransferNotifications.indexOf(item)
+      const index = fileTransferNotifications.value.indexOf(item)
       if (index !== -1) {
-        fileTransferNotifications.splice(index, 1)
+        fileTransferNotifications.value.splice(index, 1)
       }
     },
   }
-  fileTransferNotifications.push(item)
+  // fileTransferNotifications.value.push(item)
+  
+  // const promise = () => new Promise((resolve) => setTimeout(resolve, 2000));
+
+  // toast.promise(promise, {
+  //   loading: 'Loading...',
+  //   success: (data) => {
+  //     return `${data.name} toast has been added`;
+  //   },
+  //   error: (data: any) => 'Error',
+  // });
+  console.log('todo, toast needs work, progrss and closing')
+  toast(item, {
+    // icon: fileTransferIcon(item.type),
+    description: `[${i18n.global.t(`notification.${item.type}.title`, [
+          item.filename,
+          displayTransferSpeed(item.speed),
+          Math.round(item.progress || 0),
+        ])
+      }], ${i18n.global.t(`notification.${item.type}.message`)}`,
+
+    action: {
+      label: i18n.global.t('generic.cancel'),
+      onClick: () => console.log('todo cancel'),
+    },
+  })
+  
   return item
 }
 
@@ -284,7 +330,7 @@ export function showMessage(message: string | null): Notification | null {
   if (messageNotification === null) {
     messageNotification = makeNotification(
       LogType.info,
-      useI18n().t('notification.message'),
+      i18n.global.t('notification.message'),
       message,
       0,
       null,

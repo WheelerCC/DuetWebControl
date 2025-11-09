@@ -39,6 +39,9 @@ import { useMachinesStore } from '@/stores/machines'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   props: {
     shown: {
       type: Boolean,

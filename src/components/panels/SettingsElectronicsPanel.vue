@@ -13,24 +13,26 @@
 
     <v-simple-table v-if="isConnected">
       <thead>
-        <th>
-          {{ 'Product' }}
-        </th>
-        <th>
-          {{ 'Short Name' }}
-        </th>
-        <th>
-          {{ 'Version' }}
-        </th>
+        <tr>
+          <th>
+            {{ 'Product' }}
+          </th>
+          <th>
+            {{ 'Short Name' }}
+          </th>
+          <th>
+            {{ 'Version' }}
+          </th>
+        </tr>
       </thead>
       <tbody>
         <!-- Boards -->
         <tr v-for="(board, index) in boards" :key="index">
           <td>
             {{ board.name }}
-            <v-tooltip v-if="board.canAddress" bottom>
-              <template #activator="{ on, attrs }">
-                <v-icon small v-bind="attrs" v-on="on"> mdi-information-outline </v-icon>
+            <v-tooltip v-if="board.canAddress" location="bottom">
+              <template #activator="{ props }">
+                <v-icon v-bind="props" size="small"> mdi-information-outline </v-icon>
               </template>
               <span>
                 {{ $t('panel.settingsElectronics.canAddress', [board.canAddress]) }}
@@ -103,6 +105,9 @@ import packageInfo from '../../../package.json'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
+  compatConfig: {
+    MODE: 2,
+  },
   data() {
     return {
       buildDateTime: process.env.BUILD_DATETIME,
@@ -116,8 +121,8 @@ export default defineComponent({
     isRestConnector(): boolean {
       return useMachinesStore().connector instanceof RestConnector
     },
-    boards(): Array<Board> {
-      return useMachinesModelStore().boards.filter((board) => board !== null)
+    boards(): Board[] {
+      return useMachinesModelStore().boards.filter((board) => board !== null) as Board[]
     },
     isDuetFirmware(): boolean {
       return this.boards.some(

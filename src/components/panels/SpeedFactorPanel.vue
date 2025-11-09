@@ -1,66 +1,59 @@
 <template>
-  <v-card>
-    <v-card-title class="pb-0">
-      <v-icon small class="mr-1"> mdi-timer </v-icon>
-      {{ $t('panel.speedFactor.caption') }}
+  <CardHeader>
+    <CardTitle class="flex flex-row items-center gap-2">
+      <Timer :size="18" />
 
-      <v-spacer />
+      {{ t('panel.speedFactor.caption') }}
 
       <a
-        v-show="speedFactor !== 100 && !uiFrozen"
+        v-show="speedFactor[0] !== 100 && !uiFrozen"
         href="javascript:void(0)"
-        class="subtitle-2"
-        @click.prevent="sendCode('M220 S100')"
+        class="ml-auto flex flex-row gap-2 items-center"
+        @click.prevent="useMachinesStore().sendCode('M220 S100')"
       >
-        <v-icon small class="mr-1">mdi-backup-restore</v-icon>
-        {{ $t('generic.reset') }}
+        <Eraser :size="18" /> {{ t('generic.reset') }}
       </a>
-    </v-card-title>
+    </CardTitle>
+  </CardHeader>
 
-    <v-card-text class="py-0">
-      <percentage-input
-        v-model="speedFactor"
-        :min="speedFactorMin"
-        :max="speedFactorMax"
-        :disabled="uiFrozen"
-      />
-    </v-card-text>
-  </v-card>
+  <CardContent>
+    <Slider
+      :disabled="uiFrozen"
+      :default-value="speedFactor"
+      :max="speedFactorMax"
+      :min="speedFactorMin"
+      :step="1"
+      @value-commit="(payload) => useMachinesStore().sendCode(`M220 S${payload[0]}`)"
+    />
+  </CardContent>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
+import { Eraser, Timer } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+let { t } = useI18n()
 
-import { defineComponent } from 'vue'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Slider } from '../ui/slider'
 
-export default defineComponent({
-  computed: {
-    uiFrozen(): boolean {
-      return useRootStore().uiFrozen
-    },
-    speedFactor: {
-      get(): number {
-        return useMachinesModelStore().move.speedFactor !== null
-          ? useMachinesModelStore().move.speedFactor * 100
-          : 100
-      },
-      set(value: number) {
-        this.sendCode(`M220 S${value}`)
-      },
-    },
-    speedFactorMin(): number {
-      return Math.max(1, Math.min(100, this.speedFactor - 50))
-    },
-    speedFactorMax(): number {
-      return Math.max(150, this.speedFactor + 50)
-    },
-  },
-  methods: {
-    async sendCode(code: string) {
-      await useMachinesStore().sendCode(code)
-    },
-  },
+let { uiFrozen } = storeToRefs(useRootStore())
+
+let speedFactor = computed(() => {
+  return useMachinesModelStore().move.speedFactor !== null
+    ? [useMachinesModelStore().move.speedFactor * 100]
+    : [100]
+})
+
+let speedFactorMin = computed(() => {
+  return Math.max(1, Math.min(100, speedFactor.value[0] - 50))
+})
+
+let speedFactorMax = computed(() => {
+  return Math.max(150, speedFactor.value[0] + 50)
 })
 </script>
