@@ -149,21 +149,31 @@ export const useMachinesModelStore = defineStore('machinesModel', {
       }
       return state[machineName].job.lastFileName ? 1 : 0
     },
+    currentTool(state) {
+      let machineName = useRootStore().selectedMachine
+      if (
+        state[machineName].state.currentTool >= 0 &&
+        state[machineName].state.currentTool < state[machineName].tools.length
+      ) {
+        return state[machineName].tools[state[machineName].state.currentTool]
+      }
+      return null
+    },
+    showATXPanel: (state) => state[useRootStore().selectedMachine].state.atxPower !== null,
+    showFansPanel(): boolean {
+      return (this.currentTool !== null && this.currentTool.fans.length > 0) ||
+        useMachinesModelStore().fans.some(
+          (fan) => fan !== null && fan.thermostatic.sensors.length === 0,
+        )
+    },
+    currentMachineName: (state) => state[useRootStore().selectedMachine].network.name
+
   },
   actions: {
     // Convert actions
     // Remove the first context argument from each action. Everything should be accessible from this instead
     // If using other stores either import them directly or access them on Vuex, the same as for getters
-    currentTool() {
-      let machineName = useRootStore().selectedMachine
-      if (
-        this[machineName].state.currentTool >= 0 &&
-        this[machineName].state.currentTool < this[machineName].tools.length
-      ) {
-        return this[machineName].tools[this[machineName].state.currentTool]
-      }
-      return null
-    },
+
     fractionPrinted() {
       let machineName = useRootStore().selectedMachine
       if (

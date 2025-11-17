@@ -1,187 +1,175 @@
 <template>
-  <v-card outlined>
-    <v-card-title class="pb-0">
-      {{ $t('panel.settingsMachine.caption') }}
-    </v-card-title>
+  <div class="grid grid-cols-1 sm:grid-cols-2">
+    <div class="flex flex-col gap-1">
+      <Label>{{ $t('panel.settingsMachine.babystepAmount', ['mm']) }}</Label>
+      <Input v-model.number="internalBabystepAmount" type="number" step="any" min="0.001" />
+    </div>
+    <div class="flex flex-row gap-1 items-center">
+      <Switch v-model="checkVersions" />
+      <Label>{{ $t('panel.settingsMachine.checkVersions') }}</Label>
+    </div>
 
-    <v-card-text>
-      <v-row :dense="$vuetify.display.mobile">
-        <v-col cols="12" lg="6">
-          <v-text-field
-            v-model.number="babystepAmount"
-            type="number"
-            step="any"
-            min="0.001"
-            :label="$t('panel.settingsMachine.babystepAmount', ['mm'])"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12">
-          <v-switch
-            v-model="checkVersions"
-            :label="$t('panel.settingsMachine.checkVersions')"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" lg="6">
-          <v-text-field
-            v-model.number="moveFeedrate"
-            type="number"
-            step="any"
-            min="0.001"
-            :label="$t('panel.settingsMachine.moveFeedrate', ['mm/min'])"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12">
-          <v-autocomplete
-            v-model="toolChangeMacros"
-            :items="toolChangeMacroList"
-            chips
-            clearable
-            :label="$t('panel.settingsMachine.toolChangeMacros')"
-            multiple
-            hide-details
+    <div class="flex flex-col gap-1">
+      <Label>{{ $t('panel.settingsMachine.moveFeedrate', ['mm/min']) }}</Label>
+      <Input v-model.number="internalMoveFeedrate" type="number" step="any" min="0.001" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <Label>{{ $t('panel.settingsMachine.toolChangeMacros') }}</Label>
+      <Popover v-model:open="comboboxOpen">
+        <PopoverTrigger as-child>
+          <Button
+            variant="outline"
+            role="combobox"
+            :aria-expanded="comboboxOpen"
+            class="justify-between"
           >
-            <template #selection="{ attrs, item, select, selected }">
-              <v-chip
-                v-bind="attrs"
-                :input-value="selected"
-                close
-                @click="select"
-                @click:close="removeToolChangeMacro(item.value)"
+            <div class="flex flex-wrap gap-1">
+              <Badge
+                v-for="macro in selectedMacros"
+                :key="macro.value"
+                variant="secondary"
+                class="text-xs"
               >
-                {{ item.text }}
-              </v-chip>
-            </template>
-          </v-autocomplete>
-        </v-col>
-        <v-col cols="12">
-          <v-switch
-            v-model="groupTools"
-            :label="$t('panel.settingsAppearance.groupTools')"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="6">
-          <v-switch
-            v-model="singleBedControl"
-            :label="$t('panel.settingsAppearance.singleBedControl')"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="6">
-          <v-switch
-            v-model="singleChamberControl"
-            :label="$t('panel.settingsAppearance.singleChamberControl')"
-            hide-details
-          />
-        </v-col>
-      </v-row>
-    </v-card-text>
-  </v-card>
+                {{ macro.text }}
+                <button
+                  type="button"
+                  class="ml-1 hover:bg-muted-foreground/20 rounded-full"
+                  @click.stop="removeToolChangeMacro(macro.value)"
+                >
+                  ×
+                </button>
+              </Badge>
+              <span v-if="selectedMacros.length === 0" class="text-muted-foreground">
+                Select macros...
+              </span>
+            </div>
+            <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent class="p-0">
+          <Command>
+            <CommandInput placeholder="Search macros..." />
+            <CommandEmpty>No macro found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                v-for="macro in toolChangeMacroList"
+                :key="macro.value"
+                :value="macro.text"
+                @select="toggleMacro(macro)"
+              >
+                <Check
+                  :class="[
+                    'mr-2 h-4 w-4',
+                    toolChangeMacros.includes(macro.value) ? 'opacity-100' : 'opacity-0',
+                  ]"
+                />
+                {{ macro.text }}
+              </CommandItem>
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+
+    <div class="flex flex-row gap-1 items-center">
+      <Switch v-model="groupTools" />
+      <Label>{{ $t('panel.settingsAppearance.groupTools') }}</Label>
+    </div>
+    <div class="flex flex-row gap-1 items-center">
+      <Switch v-model="singleBedControl" />
+      <Label>{{ $t('panel.settingsAppearance.singleBedControl') }}</Label>
+    </div>
+
+    <div class="flex flex-row gap-1 items-center">
+      <Switch v-model="singleChamberControl" />
+      <Label>{{ $t('panel.settingsAppearance.singleChamberControl') }}</Label>
+    </div>
+  </div>
 </template>
 
-<script lang="ts">
-import {
-  MachineSettingsState,
-  ToolChangeMacro,
-  useMachinesSettingsStore,
-} from '@/stores/machineSettings'
+<script setup lang="ts">
+import { ToolChangeMacro, useMachinesSettingsStore } from '@/stores/machineSettings'
+import { storeToRefs } from 'pinia'
 
-import { defineComponent } from 'vue'
+import { Check, ChevronsUpDown } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { Switch } from '../ui/switch'
 
-export default defineComponent({
-  compatConfig: {
-    MODE: 2,
+let toolChangeMacroList = ref([
+  {
+    text: 'tfree.g',
+    value: ToolChangeMacro.free,
   },
-  data() {
-    return {
-      toolChangeMacroList: [
-        {
-          text: 'tfree.g',
-          value: ToolChangeMacro.free,
-        },
-        {
-          text: 'tpre.g',
-          value: ToolChangeMacro.pre,
-        },
-        {
-          text: 'tpost.g',
-          value: ToolChangeMacro.post,
-        },
-      ],
+  {
+    text: 'tpre.g',
+    value: ToolChangeMacro.pre,
+  },
+  {
+    text: 'tpost.g',
+    value: ToolChangeMacro.post,
+  },
+])
+
+let machineSettingsStore = useMachinesSettingsStore()
+let {
+  babystepAmount,
+  checkVersions,
+  moveFeedrate,
+  toolChangeMacros,
+  groupTools,
+  singleBedControl,
+  singleChamberControl,
+} = storeToRefs(machineSettingsStore)
+
+let comboboxOpen = ref(false)
+
+let selectedMacros = computed(() =>
+  toolChangeMacroList.value.filter((macro) => toolChangeMacros.value.includes(macro.value)),
+)
+
+let internalBabystepAmount = computed({
+  get(): number {
+    return babystepAmount.value
+  },
+  set(value: number) {
+    if (isFinite(value) && value > 0) {
+      machineSettingsStore.setBabystepAmount(value)
     }
   },
-  computed: {
-    babystepAmount: {
-      get(): number {
-        return useMachinesSettingsStore().babystepAmount
-      },
-      set(value: number) {
-        if (isFinite(value) && value > 0) {
-          this.update({ babystepAmount: value })
-        }
-      },
-    },
-    checkVersions: {
-      get(): boolean {
-        return useMachinesSettingsStore().checkVersions
-      },
-      set(value: boolean) {
-        this.update({ checkVersions: value })
-      },
-    },
-    moveFeedrate: {
-      get(): number {
-        return useMachinesSettingsStore().moveFeedrate
-      },
-      set(value: number) {
-        if (isFinite(value) && value > 0) {
-          this.update({ moveFeedrate: value })
-        }
-      },
-    },
-    toolChangeMacros: {
-      get(): Array<ToolChangeMacro> {
-        return useMachinesSettingsStore().toolChangeMacros
-      },
-      set(value: Array<ToolChangeMacro>) {
-        this.update({ toolChangeMacros: value })
-      },
-    },
-    groupTools: {
-      get(): boolean {
-        return useMachinesSettingsStore().groupTools
-      },
-      set(value: boolean) {
-        this.update({ groupTools: value })
-      },
-    },
-    singleBedControl: {
-      get(): boolean {
-        return useMachinesSettingsStore().singleBedControl
-      },
-      set(value: boolean) {
-        this.update({ singleBedControl: value })
-      },
-    },
-    singleChamberControl: {
-      get(): boolean {
-        return useMachinesSettingsStore().singleChamberControl
-      },
-      set(value: boolean) {
-        this.update({ singleChamberControl: value })
-      },
-    },
+})
+
+let internalMoveFeedrate = computed({
+  get(): number {
+    return moveFeedrate.value
   },
-  methods: {
-    update(data: Partial<MachineSettingsState>) {
-      useMachinesSettingsStore().update(data)
-    },
-    removeToolChangeMacro(item: ToolChangeMacro) {
-      this.toolChangeMacros = this.toolChangeMacros.filter((macro) => macro !== item)
-    },
+  set(value: number) {
+    if (isFinite(value) && value > 0) {
+      machineSettingsStore.setMoveFeedrate(value)
+    }
   },
 })
+
+function removeToolChangeMacro(item: ToolChangeMacro) {
+  machineSettingsStore.setToolChangeMacros(toolChangeMacros.value.filter((macro) => macro !== item))
+}
+
+function toggleMacro(macro: { text: string; value: ToolChangeMacro }) {
+  const currentMacros = [...toolChangeMacros.value]
+  const index = currentMacros.indexOf(macro.value)
+
+  if (index > -1) {
+    currentMacros.splice(index, 1)
+  } else {
+    currentMacros.push(macro.value)
+  }
+
+  machineSettingsStore.setToolChangeMacros(currentMacros)
+}
 </script>

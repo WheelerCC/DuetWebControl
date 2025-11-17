@@ -29,7 +29,6 @@ import { Layer, ModelCollection } from '@duet3d/objectmodel'
 import {
   CategoryScale,
   Chart,
-  Legend,
   LinearScale,
   LineController,
   LineElement,
@@ -50,7 +49,7 @@ Chart.register(
   PointElement,
   LinearScale,
   TimeScale,
-  Legend,
+  // Legend,
   CategoryScale,
 )
 

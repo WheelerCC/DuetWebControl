@@ -1,32 +1,24 @@
 <template>
-  <v-card>
-    <v-card-title>
-      <v-icon small class="mr-1"> mdi-power </v-icon> {{ $t('panel.atx.caption') }}
-    </v-card-title>
-
-    <v-card-text class="pt-0">
-      <v-btn-toggle :value="atxPower" mandatory="force" @change="toggleAtxPower">
-        <v-btn
-          text
-          :value="true"
-          :disabled="uiFrozen"
-          :loading="sendingCode"
-          @click="toggleAtxPower(true)"
-        >
-          {{ $t('panel.atx.on') }}
-        </v-btn>
-        <v-btn
-          text
-          :value="false"
-          :disabled="uiFrozen"
-          :loading="sendingCode"
-          @click="toggleAtxPower(false)"
-        >
-          {{ $t('panel.atx.off') }}
-        </v-btn>
-      </v-btn-toggle>
-    </v-card-text>
-  </v-card>
+  <v-btn-toggle :value="atxPower" mandatory="force" @change="toggleAtxPower">
+    <v-btn
+      text
+      :value="true"
+      :disabled="uiFrozen"
+      :loading="sendingCode"
+      @click="toggleAtxPower(true)"
+    >
+      {{ $t('panel.atx.on') }}
+    </v-btn>
+    <v-btn
+      text
+      :value="false"
+      :disabled="uiFrozen"
+      :loading="sendingCode"
+      @click="toggleAtxPower(false)"
+    >
+      {{ $t('panel.atx.off') }}
+    </v-btn>
+  </v-btn-toggle>
 </template>
 
 <script lang="ts">

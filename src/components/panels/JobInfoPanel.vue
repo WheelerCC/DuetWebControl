@@ -17,40 +17,19 @@
   </p>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useMachinesModelStore } from '@/stores/machineModel'
+import { useSettingsStore } from '@/stores/settings'
 import { display, displayZ } from '@/utils/display'
-import { GCodeFileInfo, MachineMode } from '@duet3d/objectmodel'
+import { GCodeFileInfo } from '@duet3d/objectmodel'
+import { storeToRefs } from 'pinia'
 
-import { defineComponent } from 'vue'
+import { computed } from 'vue'
 
-export default defineComponent({
-  compatConfig: {
-    MODE: 2,
-  },
-  computed: {
-    jobFile(): GCodeFileInfo | null {
-      return useMachinesModelStore().job.file as GCodeFileInfo | null
-    },
-    isFFForUnset(): boolean {
-      return (
-        !useMachinesModelStore().state.machineMode ||
-        useMachinesModelStore().state.machineMode === MachineMode.fff
-      )
-    },
-  },
-  methods: {
-    display,
-    displayZ,
-  },
+let { isFFForUnset } = storeToRefs(useSettingsStore())
+let { job } = storeToRefs(useMachinesModelStore())
+
+let jobFile = computed<GCodeFileInfo | null>(() => {
+  return job.value.file as GCodeFileInfo | null
 })
 </script>
-
-<style scoped>
-p {
-  margin-bottom: 8px;
-}
-p:last-child {
-  margin-bottom: 0;
-}
-</style>

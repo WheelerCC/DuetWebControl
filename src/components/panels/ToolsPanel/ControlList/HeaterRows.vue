@@ -90,7 +90,7 @@
         <a
           :key="`heater-${index}-${heaterIndex}`"
           href="javascript:void(0)"
-          class="flex flex-row gap-1 items-center justify-center bg-yellow-300"
+          class="flex flex-row gap-1 items-center justify-center"
           :class="{ disabled: disabled }"
           @click="heaterClick(index, heater)"
         >
@@ -104,10 +104,10 @@
         </a>
 
         <!-- Heater name -->
-        <div class="bg-blue-700 text-center flex flex-col justify-center">
+        <div class="text-center flex flex-col justify-center">
           <a
-            class="text-nowrap"
-            :class="getHeaterClasses(heaterIndex)"
+            class="text-nowrap font-semibold"
+            :style="{ color: getHeaterClasses(heaterIndex) }"
             href="javascript:void(0)"
             @click="heaterClick(index, heater)"
           >
@@ -120,7 +120,7 @@
         </div>
 
         <!-- Heater value -->
-        <div class="bg-green-400 text-center flex flex-col justify-center">
+        <div class="text-center flex flex-col justify-center">
           {{ getHeaterValue(heater) }}
         </div>
 
@@ -305,11 +305,7 @@ async function allHeatersClick() {
 
 // Individual heater control
 function getHeaterClasses(heater: number) {
-  const classes = [getHeaterColor(heater)]
-  if (disabled.value) {
-    classes.push('disabled-heater')
-  }
-  return classes
+  return getHeaterColor(heater, getComputedStyle(document.body))
 }
 
 function getHeaterName(heater: Heater | WritableDeep<Heater> | null, heaterIndex: number) {

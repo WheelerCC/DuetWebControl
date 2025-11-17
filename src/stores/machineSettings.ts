@@ -295,6 +295,15 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
     numMoveSteps: (state) => state[useRootStore().selectedMachine].moveSteps.default.length
   },
   actions: {
+    setMoveFeedrate(moveFeedrate: number) {
+      this[useRootStore().selectedMachine].moveFeedrate = moveFeedrate;
+    },
+    setBabystepAmount(babystepAmount: number) {
+      this[useRootStore().selectedMachine].babystepAmount = babystepAmount;
+    },
+    setToolChangeMacros(toolChangeMacros: ToolChangeMacro[]) {
+      this[useRootStore().selectedMachine].toolChangeMacros = toolChangeMacros;
+    },
     getMoveSteps(axis: AxisLetter): number[] {
       let machineName = useRootStore().selectedMachine
       return this[machineName].moveSteps[axis] !== undefined

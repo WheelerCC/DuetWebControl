@@ -139,15 +139,14 @@ import {
 import { SidebarFooter, SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { storeToRefs } from 'pinia'
-import { computed, watch } from 'vue'
+import { watch } from 'vue'
 import 'vue-sonner/style.css' // vue-sonner v2 requires this import
 import ConnectDialog from './components/dialogs/ConnectDialog.vue'
 import ConnectionDialog from './components/dialogs/ConnectionDialog.vue'
 import { useRootStore } from './stores'
 
 let { isConnected, isConnecting, isDisconnecting } = storeToRefs(useRootStore())
-let { dashboardMode } = storeToRefs(useSettingsStore())
-let { state } = storeToRefs(useMachinesModelStore())
+let { isFFForUnset } = storeToRefs(useSettingsStore())
 
 watch(isConnected, (newVal, oldVal) => {
   console.log(`isConnected changed from ${oldVal} to ${newVal}`)
@@ -159,17 +158,8 @@ watch(isDisconnecting, (newVal, oldVal) => {
   console.log(`isConnected changed from ${oldVal} to ${newVal}`)
 })
 
-let isFFForUnset = computed(() => {
-  if (dashboardMode.value === DashboardMode.default) {
-    return !state.value.machineMode || state.value.machineMode === MachineMode.fff
-  }
-  return dashboardMode.value === DashboardMode.fff
-})
-
-import { MachineMode } from '@duet3d/objectmodel'
-
 import { useMachinesModelStore } from '@/stores/machineModel'
-import { DashboardMode, useSettingsStore } from '@/stores/settings'
+import { useSettingsStore } from '@/stores/settings'
 import CNCContainerPanel from './components/layout/control/status/CNCContainerPanel.vue'
 import FFFContainerPanel from './components/layout/control/status/FFFContainerPanel.vue'
 import { Separator } from './components/ui/separator'
@@ -206,12 +196,8 @@ import { useMachinesStore } from '@/stores/machines'
 // const showConnectButton = true
 const showConnectButton = process.env.NODE_ENV === 'development'
 
-let { network } = useMachinesModelStore()
+let { currentMachineName } = useMachinesModelStore()
 let { connectedMachines } = useMachinesStore()
-
-const currentMachineName = computed(() => {
-  return network.name
-})
 
 import { useColorMode } from '@vueuse/core'
 import EmergencyBtn from './components/buttons/EmergencyBtn.vue'

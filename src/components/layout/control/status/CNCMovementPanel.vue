@@ -12,15 +12,22 @@
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-72">
-          <!-- <DropdownMenuGroup> -->
-          <!-- <DropdownMenuItem v-show="isCompensationEnabled">
-                <span>{{ $t('panel.movement.compensationInUse', [compensationType]) }}</span>
-              </DropdownMenuItem> -->
-          <!-- </DropdownMenuGroup> -->
+          <template v-if="isCompensationEnabled">
+            <DropdownMenuGroup>
+              <DropdownMenuItem v-show="isCompensationEnabled">
+                <span>{{
+                  $t('panel.movement.compensationInUse', [
+                    $t(`panel.movement.compensationType.${compensationType}`),
+                  ])
+                }}</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
 
-          <!-- <DropdownMenuSeparator /> -->
+            <DropdownMenuSeparator />
+          </template>
+
           <DropdownMenuGroup>
-            <DropdownMenuItem @click="sendCode('G32')">
+            <DropdownMenuItem :disabled="!canHome" @click="sendCode('G32')">
               <span>
                 {{ $t(isDelta ? 'panel.movement.runDelta' : 'panel.movement.runBed') }}
               </span>
@@ -86,7 +93,7 @@
       </Select>
     </CardTitle>
   </CardHeader>
-  <CardContent v-show="visibleAxes.length">
+  <CardContent v-show="visibleAxes.length > 0">
     <div class="flex flex-col w-full gap-1">
       <div class="flex flex-row min-w-0">
         <CodeBtn
@@ -112,8 +119,6 @@
           <CodeBtn
             v-for="(axis, axisIndex) in visibleAxes"
             :key="axisIndex"
-            tile
-            block
             :variant="axis.homed ? 'default' : 'ghost'"
             :disabled="uiFrozen"
             :title="
@@ -204,7 +209,7 @@ import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
-import { Axis, AxisLetter } from '@duet3d/objectmodel'
+import { Axis, AxisLetter, MachineStatus } from '@duet3d/objectmodel'
 import {
   ArrowRightLeft,
   ChevronLeft,
@@ -239,6 +244,7 @@ let {
   workplaceNumber,
   isCompensationEnabled,
   compensationType,
+  state,
 } = storeToRefs(useMachinesModelStore())
 
 function moveSteps(axisLetter: AxisLetter) {
@@ -305,6 +311,15 @@ function getWCSCommand(workspace: number) {
     return `G59.${workspace - 6}`
   }
 }
+
+let canHome = computed(() => {
+  return (
+    !uiFrozen.value &&
+    state.value.status !== MachineStatus.pausing &&
+    state.value.status !== MachineStatus.processing &&
+    state.value.status !== MachineStatus.resuming
+  )
+})
 
 watch(isConnected, (newVal, oldVal) => {
   // Hide dialogs when the connection is interrupted

@@ -11,28 +11,27 @@ import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
 import { CircleX, Power } from 'lucide-vue-next'
 
+import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Spinner } from '../ui/spinner'
 
-const rootStore = useRootStore()
-const machinesStore = useMachinesStore()
 const { t } = useI18n()
 console.log('todo button colour')
 
-const isConnected = computed(() => rootStore.isConnected)
-const isBusy = computed(
-  () => rootStore.isConnecting || machinesStore.isReconnecting || rootStore.isDisconnecting,
-)
+let { isConnected, isConnecting, isDisconnecting } = storeToRefs(useRootStore())
+let { isReconnecting } = storeToRefs(useMachinesStore())
+
+const isBusy = computed(() => isConnecting.value || isReconnecting.value || isDisconnecting.value)
 const buttonVariant = computed(() =>
   isBusy.value ? 'ghost' : isConnected.value ? 'secondary' : 'default',
 )
 const buttonIcon = computed(() => (isConnected.value ? CircleX : Power))
 const caption = computed(() =>
   t(
-    rootStore.isConnecting || machinesStore.isReconnecting
+    isConnecting.value || isReconnecting.value
       ? 'button.connect.connecting'
-      : rootStore.isDisconnecting
+      : isDisconnecting.value
         ? 'button.connect.disconnecting'
         : isConnected.value
           ? 'button.connect.disconnect'
@@ -45,11 +44,11 @@ async function clicked() {
     return
   }
   if (isConnected.value) {
-    await rootStore.disconnect()
+    await useRootStore().disconnect()
   } else if (process.env.NODE_ENV === 'development') {
-    await rootStore.showConnectDialog()
+    await useRootStore().showConnectDialog()
   } else {
-    await rootStore.connect()
+    await useRootStore().connect()
   }
 }
 </script>

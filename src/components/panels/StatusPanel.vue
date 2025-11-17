@@ -250,11 +250,11 @@
 </template>
 
 <script setup lang="ts">
-import { MachineMode, Probe, ProbeType } from '@duet3d/objectmodel'
+import { Probe, ProbeType } from '@duet3d/objectmodel'
 
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
-import { DashboardMode, useSettingsStore } from '@/stores/settings'
+import { useSettingsStore } from '@/stores/settings'
 import { isPrinting } from '@/utils/enums'
 
 import { display, displayAxisPosition, displayMoveSpeed } from '@/utils/display'
@@ -272,15 +272,10 @@ let displayVirtualEPos = ref(false)
 let displayVolumetricFlow = ref(true)
 
 let { isConnected } = storeToRefs(useRootStore())
-let { darkTheme, dashboardMode } = storeToRefs(useSettingsStore())
+let { darkTheme, dashboardMode, isFFForUnset } = storeToRefs(useSettingsStore())
 let { move, state, tools, boards, sensors } = storeToRefs(useMachinesModelStore())
 let { t } = useI18n()
-let isFFForUnset = computed(() => {
-  if (dashboardMode.value === DashboardMode.default) {
-    return !state.value.machineMode || state.value.machineMode === MachineMode.fff
-  }
-  return useSettingsStore().dashboardMode === DashboardMode.fff
-})
+
 let virtualEPos = computed(() => {
   return move.value.virtualEPos
 })

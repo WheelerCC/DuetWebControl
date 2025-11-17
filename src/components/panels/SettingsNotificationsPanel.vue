@@ -1,67 +1,34 @@
 <template>
-  <v-card outlined>
-    <v-card-title>
-      {{ $t('panel.settingsNotifications.caption') }}
-    </v-card-title>
-
-    <v-card-text>
-      <v-row>
-        <v-col cols="6" xs="12">
-          <v-switch
-            v-model="notificationErrorsPersistent"
-            class="mt-0 mb-3"
-            :label="$t('panel.settingsNotifications.notificationErrorsPersistent')"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="6" xs="12">
-          <v-text-field
-            v-model.number="notificationTimeout"
-            type="number"
-            step="any"
-            min="0"
-            :label="$t('panel.settingsNotifications.notificationTimeout', ['ms'])"
-            hide-details
-          />
-        </v-col>
-      </v-row>
-    </v-card-text>
-  </v-card>
+  <div class="grid grid-cols-1 sm:grid-cols-2">
+    <div class="flex flex-row gap-2 items-center">
+      <Switch v-model="notifications.errorsPersistent" />
+      <Label> {{ $t('panel.settingsNotifications.notificationErrorsPersistent') }} </Label>
+    </div>
+    <div class="flex flex-row gap-2 items-center">
+      <Input v-model.number="notificationTimeout" type="number" step="any" min="0" />
+      <Label>{{ $t('panel.settingsNotifications.notificationTimeout', ['ms']) }} </Label>
+    </div>
+  </div>
 </template>
 
-<script lang="ts">
-import { SettingsState, useSettingsStore } from '@/stores/settings'
+<script setup lang="ts">
+import { useSettingsStore } from '@/stores/settings'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Switch } from '../ui/switch'
 
-import { defineComponent } from 'vue'
+let { notifications } = storeToRefs(useSettingsStore())
 
-export default defineComponent({
-  compatConfig: {
-    MODE: 2,
+let notificationTimeout = computed({
+  get(): number {
+    return notifications.value.timeout
   },
-  computed: {
-    notificationErrorsPersistent: {
-      get(): boolean {
-        return useSettingsStore().notifications.errorsPersistent
-      },
-      set(value: boolean) {
-        this.update({ errorsPersistent: value })
-      },
-    },
-    notificationTimeout: {
-      get(): number {
-        return useSettingsStore().notifications.timeout
-      },
-      set(value: number) {
-        if (isFinite(value) && value >= 0) {
-          this.update({ timeout: value })
-        }
-      },
-    },
-  },
-  methods: {
-    update(data: Partial<SettingsState['notifications']>) {
-      useSettingsStore().update({ notifications: data })
-    },
+  set(value: number) {
+    if (isFinite(value) && value >= 0) {
+      notifications.value.timeout = value
+    }
   },
 })
 </script>

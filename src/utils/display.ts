@@ -50,7 +50,7 @@ export function displayWCSOffset(axis: Axis, workOffset: number) {
 
   let settingsStore = useSettingsStore()
 
-  position = position / (settingsStore.displayUnits === UnitOfMeasure.imperial ? 25.4 : 1)
+  position = position / (settingsStore.displayUnits === 'imperial' ? 25.4 : 1)
   return display(position, settingsStore.decimalPlaces)
 }
 
@@ -68,7 +68,7 @@ export function displayToolOffset(tool: Tool | null, index: number) {
 
   let settingsStore = useSettingsStore()
 
-  position = position / (settingsStore.displayUnits === UnitOfMeasure.imperial ? 25.4 : 1)
+  position = position / (settingsStore.displayUnits === 'imperial' ? 25.4 : 1)
   return display(position, settingsStore.decimalPlaces)
 }
 
@@ -86,7 +86,7 @@ export function displayAxisPosition(axis: Axis | WritableObjectDeep<Axis>, machi
 
   let settingsStore = useSettingsStore()
 
-  position = position / (settingsStore.displayUnits === UnitOfMeasure.imperial ? 25.4 : 1)
+  position = position / (settingsStore.displayUnits === 'imperial' ? 25.4 : 1)
   return axis.letter === AxisLetter.Z
     ? displayZ(position, false)
     : display(position, settingsStore.decimalPlaces)
@@ -174,7 +174,7 @@ export function displaySize(bytes: number | null | undefined) {
  * @returns Formatted move speed in mm/s or ipm
  */
 export function displayMoveSpeed(speed: number | null | undefined) {
-  if (typeof speed === 'number' && useSettingsStore().displayUnits === UnitOfMeasure.imperial) {
+  if (typeof speed === 'number' && useSettingsStore().displayUnits === 'imperial') {
     return display((speed * 60) / 25.4, 1, i18n.global.t('panel.settingsAppearance.unitInchSpeed'))
   }
   return display(speed, 1, i18n.global.t('panel.settingsAppearance.unitMmSpeed'))

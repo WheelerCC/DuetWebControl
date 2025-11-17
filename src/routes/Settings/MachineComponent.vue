@@ -1,34 +1,23 @@
 <template>
-  <v-tabs v-model="tab" class="elevation-2 mt-3">
-    <!-- <v-tabs-slider />
-
-    <v-tab v-for="(_tab, index) in tabs" :key="index" :href="`#machine-tab-${index}`">
-      <v-icon v-if="_tab.icon" class="mr-1">
-        {{ _tab.icon }}
-      </v-icon>
-      {{ _tab.translated ? _tab.caption : $t(_tab.caption) }}
-    </v-tab>
-
-    <v-tab-item v-for="(_tab, index) in tabs" :key="index" :value="`machine-tab-${index}`">
+  <Tabs default-value="machine-tab-0" v-model:model-value="tab">
+    <TabsList class="w-full">
+      <TabsTrigger v-for="(_tab, index) in tabs" :key="index" :value="`machine-tab-${index}`">
+        <component v-if="_tab.icon" :is="_tab.icon" />
+        {{ _tab.translated ? _tab.caption : $t(_tab.caption) }}
+      </TabsTrigger>
+    </TabsList>
+    <TabsContent v-for="(_tab, index) in tabs" :key="index" :value="`machine-tab-${index}`">
       <component :is="_tab.component" />
-    </v-tab-item> -->
-  </v-tabs>
+    </TabsContent>
+  </Tabs>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+import { ref } from 'vue'
 import { MachineSettingTabs } from '..'
 
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  compatConfig: {
-    MODE: 2,
-  },
-  data() {
-    return {
-      tab: 'machine-tab-0',
-      tabs: MachineSettingTabs,
-    }
-  },
-})
+let tab = ref('machine-tab-0')
+let tabs = ref(MachineSettingTabs)
 </script>

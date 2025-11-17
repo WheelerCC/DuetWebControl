@@ -15,7 +15,8 @@
 import { Button, ButtonVariants } from '@/components/ui/button'
 import { useRootStore } from '@/stores'
 import { useMachinesStore } from '@/stores/machines'
-import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { ref } from 'vue'
 
 interface Props {
   variant?: ButtonVariants['variant']
@@ -34,8 +35,8 @@ const {
   variant = 'default',
 } = defineProps<Props>()
 
+let { uiFrozen } = storeToRefs(useRootStore())
 const waitingForCode = ref(false)
-const uiFrozen = computed(() => useRootStore().uiFrozen)
 
 async function click() {
   try {

@@ -1,4 +1,4 @@
-import { Component, nextTick, reactive } from 'vue'
+import { Component, nextTick, reactive, ref } from 'vue'
 import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 
 import Console from '@/routes/Control/ConsoleComponent.vue'
@@ -83,6 +83,8 @@ import { ChevronDown, Settings, ChartLine, LayoutDashboard, Code, Info, Save, Pr
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { MachineMode } from '@duet3d/objectmodel'
 import DebugComponent from './Settings/DebugComponent.vue'
+import SettingsGeneralTab from '@/components/tabs/SettingsGeneralTab.vue'
+import SettingsMachineTab from '@/components/tabs/SettingsMachineTab.vue'
 
 /**
  * Actual menu structure (name vs. category descriptor)
@@ -304,7 +306,7 @@ interface TabItem {
   /**
    * Name of the Vue component
    */
-  component: string
+  component: Component
 
   /**
    * Whether the tab caption is already translated (defaults to false)
@@ -315,10 +317,10 @@ interface TabItem {
 /**
  * Tab items in the general settings
  */
-export const GeneralSettingTabs = reactive<Array<TabItem>>([
+export const GeneralSettingTabs = ref<TabItem[]>([
   {
     caption: 'tabs.generalSettings.caption',
-    component: 'settings-general-tab',
+    component: SettingsGeneralTab,
     translated: false,
     // icon: ,
   },
@@ -327,10 +329,10 @@ export const GeneralSettingTabs = reactive<Array<TabItem>>([
 /**
  * Tab items in the machine settings
  */
-export const MachineSettingTabs = reactive<Array<TabItem>>([
+export const MachineSettingTabs = ref<TabItem[]>([
   {
     caption: 'tabs.machineSettings.caption',
-    component: 'settings-machine-tab',
+    component: SettingsMachineTab,
     translated: false,
     // icon: ,
   },

@@ -1,75 +1,66 @@
-<script setup lang="ts">
-import { useRootStore } from '@/stores'
-import { useMachinesModelStore } from '@/stores/machineModel'
-import { MachineMode } from '@duet3d/objectmodel'
-
-import { computed } from 'vue'
-
-const uiFrozen = computed(() => {
-  return useRootStore().uiFrozen
-})
-
-const currentTool = computed(() => {
-  return useMachinesModelStore().currentTool()
-})
-
-const isFFForUnset = computed(() => {
-  return (
-    !useMachinesModelStore().state.machineMode ||
-    useMachinesModelStore().state.machineMode === MachineMode.fff
-  )
-})
-
-const showATXPanel = computed(() => {
-  return useMachinesModelStore().state.atxPower !== null
-})
-
-const showFansPanel = computed(() => {
-  return (
-    (currentTool.value !== null && currentTool.value.fans.length > 0) ||
-    useMachinesModelStore().fans.some(
-      (fan) => fan !== null && fan.thermostatic.sensors.length === 0,
-    )
-  )
-})
-</script>
-
 <template>
-  <div class="grid grid-cols-2">
-    <div>
-      <v-row v-if="isFFForUnset">
-        <v-col
-          sm="12"
-          :md="showATXPanel ? 9 : 12"
-          :lg="showATXPanel ? 9 : 12"
-          :xl="showATXPanel ? 10 : 12"
-        >
-          <extrude-panel />
-        </v-col>
+  <Card class="col-span-full">
+    <FFFMovementPanel />
+  </Card>
 
-        <v-col v-if="showATXPanel" md="3" lg="3" xl="2" align-self="center">
-          <atx-panel />
-        </v-col>
-      </v-row>
+  <template v-if="isFFForUnset">
+    <Card class="col-span-3">
+      <CardHeader>
+        <CardTitle class="flex flex-row items-center gap-2">
+          <Gauge :size="18" /> {{ $t('panel.extrude.caption') }}
+        </CardTitle>
+      </CardHeader>
+      <CardContent class="w-full">
+        <ExtrudePanel />
+      </CardContent>
+    </Card>
 
-      <v-row>
-        <v-col
-          sm="12"
-          :md="!isFFForUnset && showATXPanel ? 9 : 12"
-          :lg="!isFFForUnset && showATXPanel ? 9 : 12"
-          :xl="!isFFForUnset && showATXPanel ? 10 : 12"
-        >
-          <fan-panel />
-        </v-col>
+    <Card class="col-span-3" v-if="showATXPanel">
+      <CardHeader>
+        <CardTitle> <Power :size="18" /> {{ $t('panel.atx.caption') }} </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ATXPanel />
+      </CardContent>
+    </Card>
+  </template>
 
-        <v-col v-if="!isFFForUnset && showATXPanel" md="3" lg="3" xl="2" align-self="center">
-          <atx-panel />
-        </v-col>
-      </v-row>
-    </div>
-    <div>
-      <macro-list />
-    </div>
-    <movement-panel class="mb-2" />
-  </div>
+  <MacroList />
+
+  <Card class="col-span-3">
+    <CardHeader>
+      <CardTitle class="flex flex-row items-center gap-2">
+        <Fan :size="18" />
+        {{ $t('panel.fan.caption') }}
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <FanPanel />
+    </CardContent>
+  </Card>
+
+  <Card class="col-span-3" v-if="!isFFForUnset && showATXPanel">
+    <CardHeader>
+      <CardTitle> <Power :size="18" /> {{ $t('panel.atx.caption') }} </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <ATXPanel />
+    </CardContent>
+  </Card>
 </template>
+
+<script setup lang="ts">
+import MacroList from '@/components/lists/MacroList.vue'
+import ATXPanel from '@/components/panels/ATXPanel.vue'
+import ExtrudePanel from '@/components/panels/ExtrudePanel.vue'
+import FanPanel from '@/components/panels/FanPanel.vue'
+import FFFMovementPanel from '@/components/panels/FFFMovementPanel.vue'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useMachinesModelStore } from '@/stores/machineModel'
+import { useSettingsStore } from '@/stores/settings'
+import { Fan, Gauge, Power } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+
+let { showATXPanel } = storeToRefs(useMachinesModelStore())
+let { isFFForUnset } = storeToRefs(useSettingsStore())
+</script>

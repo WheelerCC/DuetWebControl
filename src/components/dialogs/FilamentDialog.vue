@@ -57,7 +57,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-import { computed, defineEmits, defineProps, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { defineEmits, defineProps, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 let {
@@ -75,9 +76,7 @@ let filaments = ref<string[]>([])
 let innerShown = ref<boolean>(shown)
 let loading = ref<boolean>(false)
 let { t } = useI18n()
-let currentTool = computed(() => {
-  return useMachinesModelStore().currentTool()!
-})
+let { currentTool } = storeToRefs(useMachinesModelStore())
 
 watch(
   () => shown,

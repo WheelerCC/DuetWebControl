@@ -48,6 +48,7 @@ import { displayTime } from '@/utils/display'
 import eventbus from '@/utils/eventbus'
 import { makeNotification } from '@/utils/notifications'
 import { CloudUpload } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -562,12 +563,8 @@ async function dragDrop(e: DragEvent) {
   }
 }
 
-const isConnected = computed(() => {
-  return useRootStore().isConnected
-})
-const uiFrozen = computed(() => {
-  return useRootStore().uiFrozen
-})
+const { uiFrozen, isConnected } = storeToRefs(useRootStore())
+
 const caption = computed(() => {
   if (extracting.value) {
     return t('generic.extracting')

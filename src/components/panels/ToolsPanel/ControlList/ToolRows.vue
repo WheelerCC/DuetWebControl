@@ -141,8 +141,8 @@
           <div class="text-center flex flex-col justify-center">
             <template v-if="toolHeater">
               <a
-                class="text-nowrap"
-                :class="getHeaterClasses(tool.heaters[toolHeaterIndex])"
+                class="text-nowrap font-semibold"
+                :style="{ color: getHeaterClasses(tool.heaters[toolHeaterIndex]) }"
                 href="javascript:void(0)"
                 @click="toolHeaterClick(tool, toolHeater)"
               >
@@ -214,7 +214,6 @@ import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesSettingsStore } from '@/stores/machineSettings'
 import { useMachinesStore } from '@/stores/machines'
-import { getHeaterColor } from '@/utils/colors'
 import { displaySensorValue } from '@/utils/display'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import { log, LogType } from '@/utils/logging'
@@ -233,6 +232,7 @@ import { useI18n } from 'vue-i18n'
 import FilamentDialog from '@/components/dialogs/FilamentDialog.vue'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
+import { getHeaterColor } from '@/utils/colors'
 import { display } from '@/utils/display'
 import { WritableObjectDeep } from 'type-fest/source/writable-deep'
 const emit = defineEmits<{
@@ -456,11 +456,7 @@ function getToolHeaters(tool: Tool) {
 }
 
 function getHeaterClasses(heater: number) {
-  const classes = [getHeaterColor(heater)]
-  if (disabled.value) {
-    classes.push('disabled-heater')
-  }
-  return classes
+  return getHeaterColor(heater, getComputedStyle(document.body))
 }
 
 function getHeaterName(heater: Heater | WritableObjectDeep<Heater> | null, heaterIndex: number) {

@@ -108,7 +108,7 @@
                     @change="useMachinesSettingsStore().toggleExtraVisibility(extraSensor.index)"
                   />
                 </td>
-                <th class="py-2" :class="getExtraColor(extraSensor.index)">
+                <th class="py-2" :style="{ color: getExtraClasses(extraSensor.index) }">
                   {{ formatExtraName(extraSensor) }}
                 </th>
                 <td class="py-2">
@@ -170,6 +170,10 @@ const hasChambers = computed(() =>
       useMachinesModelStore().heat.heaters[chamberHeater] !== null,
   ),
 )
+
+function getExtraClasses(index: number) {
+  return getExtraColor(index, getComputedStyle(document.body))
+}
 
 // Bed control
 const bedHeaters = computed(() => useMachinesModelStore().heat.bedHeaters)

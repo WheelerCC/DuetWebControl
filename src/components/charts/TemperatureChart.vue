@@ -1,5 +1,6 @@
 <template>
-  <CardContent class="h-full w-full">
+  <CardContent class="h-full w-full" ref="card">
+    <!-- TODO changing from light->dark mode won't update the dataset colours, the dataset needs to be recreated. cba at the moment -->
     <Line :options="chartOptions" :data="chartData" class="w-full h-full"
       >Failed to render line chart</Line
     >
@@ -8,12 +9,19 @@
     <Badge
       v-for="series in temps.filter((dataset) => dataset.showLine)"
       :key="series.index"
+      :style="{ background: series.borderColor }"
       :class="series.hidden ? 'opacity-15' : 'opacity-100'"
       class="cursor-pointer"
-      @click="series.hidden = !series.hidden"
+      @click="
+        () => {
+          series.hidden = !series.hidden
+          trigger()
+        }
+      "
       >{{ series.label }}</Badge
     >
   </CardFooter>
+  <!-- {{ cardRef!.class.style.getPropertyValue('--heater-1') }} -->
 </template>
 
 <script setup lang="ts">
@@ -31,11 +39,13 @@ import {
   LineElement,
   PointElement,
   TimeScale,
+  Tooltip,
 } from 'chart.js'
 import 'chartjs-adapter-date-fns'
 
 import { useMachinesSamplesStore } from '@/stores/machineSamples'
 import { getRealHeaterColor } from '@/utils/colors'
+import { watchTriggerable } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Line } from 'vue-chartjs'
@@ -53,12 +63,12 @@ let { temps, times } = storeToRefs(useMachinesSamplesStore())
 let { temperatures, displayedExtraTemperatures } = storeToRefs(useMachinesSettingsStore())
 
 // Register required components and scales
-ChartJS.register(LineElement, PointElement, LinearScale, TimeScale)
+ChartJS.register(LineElement, PointElement, LinearScale, TimeScale, Tooltip)
 // Chart.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Legend)
 /**
  * Specifies the interval at which temperature samples are recorded
  */
-const sampleInterval = 500
+const sampleInterval = 1000
 
 /**
  * Default maximum minimum in case it cannot be determined from the object model (in C)
@@ -109,7 +119,8 @@ function pushSensorDataToMachineSamples(
   })
 
   while (datasetIndex < 0) {
-    const color = getRealHeaterColor(index, type == 'sensor')
+    // const color = '#BBB'
+    const color = getRealHeaterColor(index, type == 'sensor', getComputedStyle(document.body))
     const newData = new Array<number>(times.value.length).fill(NaN)
 
     useMachinesSamplesStore()[selectedMachine.value].temps.push({
@@ -119,15 +130,16 @@ function pushSensorDataToMachineSamples(
       fill: false,
       backgroundColor: color,
       borderColor: color,
+      tension: 0,
       borderDash: type == 'sensor' ? [10, 5] : undefined,
       borderWidth: 2,
       data: newData,
       locale: locale.value,
-      pointStyle: false,
-      // pointRadius: 0,
-      // pointHitRadius: 0,
+      // pointStyle: false,
+      pointRadius: 0,
+      pointHitRadius: 10,
       rawLabel: null,
-      showLine: false,
+      showLine: true,
     })
 
     datasetIndex = temps.value.findIndex((item) => {
@@ -161,25 +173,48 @@ let maxX = ref(maxSampleTime)
 let minX = computed(() => maxX.value - maxSampleTime)
 let interval: NodeJS.Timeout | null = null
 
+// TODO the lines appear glitchy during sudden changes, definitely worse than vue 2 DWC.
+// Suspect it's due to the mess of drawing points vs lines but idk
 let chartOptions = computed<ChartOptions<'line'>>(() => {
   return {
-    spanGaps: true,
-    showLine: false, // disable for all datasets
+    // spanGaps: true,
+    // showLine: false, // disable for all datasets
     animation: {
       duration: 0, // general animation time
     },
     elements: {
       line: {
+        borderWidth: 0,
+        backgroundColor: '#FFF',
         tension: 0, // disable bezier curves
       },
     },
     plugins: {
       legend: {
+        display: false,
         // labels: {
         //   filter: (legendItem, data) =>
         //     (data.datasets![legendItem.datasetIndex!] as TempChartDataset).showLine,
         //   font: {
         //     family: 'Roboto,sans-serif',
+        //   },
+        // },
+      },
+      tooltip: {
+        enabled: true,
+        mode: 'index',
+        // intersect: false,
+        // callbacks: {
+        //   title: (tooltipItems) => {
+        //     if (tooltipItems.length > 0) {
+        //       return new Date(tooltipItems[0].parsed.x!).toLocaleTimeString()
+        //     }
+        //     return ''
+        //   },
+        //   label: (context) => {
+        //     const dataset = context.dataset as any
+        //     const temp = context.parsed.y
+        //     return `${dataset.label}: ${temp!.toFixed(1)}°C`
         //   },
         // },
       },
@@ -247,14 +282,6 @@ let chartData = computed<ChartData<'line', number[]>>(() => {
     datasets: temps.value,
   }
 })
-
-watch(
-  chartData,
-  (newVal) => {
-    console.log(newVal)
-  },
-  { deep: true },
-)
 
 function applyDarkTheme(active: boolean) {
   const ticksColor = active ? '#FFF' : '#666'
@@ -326,7 +353,7 @@ watch(darkTheme, (newVal, oldVal) => {
 //   }
 //   update()
 // })
-watch(
+const { trigger } = watchTriggerable(
   [sensors, heat],
   ([newSensorsVal, newHeatVal]) => {
     const now = new Date().getTime()

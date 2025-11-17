@@ -55,7 +55,7 @@ export interface SettingsState {
   /**
    * Configured dashboard mode
    */
-  dashboardMode: DashboardMode
+  dashboardMode: keyof typeof DashboardMode
 
   /**
    * Show navigation bar at the bottom on small screen sizes
@@ -75,7 +75,7 @@ export interface SettingsState {
   /**
    * Units to display
    */
-  displayUnits: UnitOfMeasure
+  displayUnits: keyof typeof UnitOfMeasure
 
   /**
    * Precision of the values to display
@@ -188,7 +188,7 @@ export interface SettingsState {
   plugins: Record<string, any>
 }
 
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useRootStore } from '.'
 import { useMachinesCacheStore } from './machineCache'
@@ -197,6 +197,7 @@ import { useMachinesStore } from './machines'
 import { useMachinesSettingsStore } from './machineSettings'
 import { resetSettingsTimer } from './observer'
 import { pathObj } from '@/utils/path'
+import { MachineMode } from '@duet3d/objectmodel'
 
 export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
@@ -207,11 +208,11 @@ export const useSettingsStore = defineStore('settings', {
       (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) || false,
     useBinaryPrefix: true,
     disableAutoComplete: false,
-    dashboardMode: DashboardMode.default,
+    dashboardMode: 'default',
     bottomNavigation: true,
     numericInputs: false,
     iconMenu: false,
-    displayUnits: UnitOfMeasure.metric,
+    displayUnits: 'metric',
     decimalPlaces: 3,
 
     settingsStorageLocal: false,
@@ -247,6 +248,16 @@ export const useSettingsStore = defineStore('settings', {
     // Remove any getters that return state under the same name (eg. firstName: (state) => state.firstName), these are not necessary as you can access any state directly from the store instance
     // If you need to access other getters, they are on this instead of using the second argument. Remember that if you are using this then you will have to use a regular function instead of an arrow function. Also note that you will need to specify a return type because of TS limitations, see here for more details
     // If using rootState or rootGetters arguments, replace them by importing the other store directly, or if they still exist in Vuex then access them directly from Vuex
+    isFFForUnset: (_state) => {
+      let { state } = storeToRefs(useMachinesModelStore())
+      if (_state.dashboardMode === 'default') {
+        return !state.value.machineMode || state.value.machineMode === MachineMode.fff
+      }
+      return _state.dashboardMode === 'fff'
+    }
+  
+
+
   },
   actions: {
     // Convert actions

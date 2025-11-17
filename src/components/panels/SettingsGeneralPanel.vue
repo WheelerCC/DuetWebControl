@@ -1,6 +1,6 @@
 <template>
-  <v-card outlined>
-    <v-card-title class="pb-0">
+  <CardHeader>
+    <CardTitle>
       {{ $t('panel.settingsGeneral.caption') }}
 
       <v-spacer />
@@ -9,133 +9,85 @@
         <v-icon small class="mr-1">mdi-restore</v-icon>
         {{ $t('panel.settingsGeneral.factoryReset') }}
       </a>
-    </v-card-title>
+    </CardTitle>
+  </CardHeader>
+  <CardContent class="grid grid-cols-1 sm:grid-cols-2">
+    <div class="flex flex-row gap-2">
+      <Switch v-model:model-value="settingsStorageLocal" :disabled="!localStorageSupported" />
+      <Label> {{ $t('panel.settingsGeneral.settingsStorageLocal') }} </Label>
+    </div>
 
-    <v-card-text>
-      <v-row :dense="$vuetify.display.mobile">
-        <v-col cols="12" sm="6">
-          <v-switch
-            v-model="settingsStorageLocal"
-            :label="$t('panel.settingsGeneral.settingsStorageLocal')"
-            :disabled="!supportsLocalStorage"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" sm="6">
-          <v-text-field
-            v-model.number="settingsSaveDelay"
-            type="number"
-            step="any"
-            min="0"
-            :label="$t('panel.settingsGeneral.settingsSaveDelay', ['ms'])"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" sm="6">
-          <v-switch
-            v-model="cacheStorageLocal"
-            :label="$t('panel.settingsGeneral.cacheStorageLocal')"
-            :disabled="!supportsLocalStorage"
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" sm="6">
-          <v-text-field
-            v-model.number="cacheSaveDelay"
-            type="number"
-            step="any"
-            min="0"
-            :label="$t('panel.settingsGeneral.cacheSaveDelay', ['ms'])"
-            hide-details
-          />
-        </v-col>
-      </v-row>
-    </v-card-text>
+    <div class="flex flex-row gap-2">
+      <Input v-model.number="settingsSaveDelay" type="number" step="any" min="0" />
+      <Label>{{ $t('panel.settingsGeneral.settingsSaveDelay', ['ms']) }}</Label>
+    </div>
 
-    <confirm-dialog
-      v-model:shown="showResetConfirmation"
-      :title="$t('dialog.factoryReset.title')"
-      :prompt="$t('dialog.factoryReset.prompt')"
-      @confirmed="reset"
-    />
-  </v-card>
+    <div class="flex flex-row gap-2">
+      <Switch v-model:model-value="cacheStorageLocal" :disabled="!localStorageSupported" />
+      <Label> {{ $t('panel.settingsGeneral.cacheStorageLocal') }} </Label>
+    </div>
+
+    <div class="flex flex-row gap-2">
+      <Input v-model.number="cacheSaveDelay" type="number" step="any" min="0" />
+      <Label>{{ $t('panel.settingsGeneral.cacheSaveDelay', ['ms']) }}</Label>
+    </div>
+  </CardContent>
+
+  <ConfirmDialog
+    v-model:shown="showResetConfirmation"
+    :title="$t('dialog.factoryReset.title')"
+    :prompt="$t('dialog.factoryReset.prompt')"
+    @confirmed="reset"
+  />
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { useRootStore } from '@/stores'
-import { SettingsState, useSettingsStore } from '@/stores/settings'
+import { useSettingsStore } from '@/stores/settings'
 import { localStorageSupported } from '@/utils/localStorage'
+import { storeToRefs } from 'pinia'
 
-import { defineComponent } from 'vue'
+import { computed, ref } from 'vue'
+import ConfirmDialog from '../dialogs/ConfirmDialog.vue'
+import { CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Switch } from '../ui/switch'
 
-export default defineComponent({
-  compatConfig: {
-    MODE: 2,
+let showResetConfirmation = ref(false)
+
+let { uiFrozen } = storeToRefs(useRootStore())
+let {
+  darkTheme,
+  settingsStorageLocal,
+  cacheStorageLocal,
+  settingsSaveDelay: _settingsSaveDelay,
+  cacheSaveDelay: _cacheSaveDelay,
+} = storeToRefs(useSettingsStore())
+
+let settingsSaveDelay = computed({
+  get(): number {
+    return _settingsSaveDelay.value
   },
-  data() {
-    return {
-      showResetConfirmation: false,
+  set(value: number) {
+    if (isFinite(value) && value >= 0) {
+      _settingsSaveDelay.value = value
     }
   },
-  computed: {
-    uiFrozen(): boolean {
-      return useRootStore().uiFrozen
-    },
-    supportsLocalStorage() {
-      return localStorageSupported
-    },
-    darkTheme: {
-      get(): boolean {
-        return useSettingsStore().darkTheme
-      },
-      set(value: boolean) {
-        this.update({ darkTheme: value })
-      },
-    },
-    settingsStorageLocal: {
-      get(): boolean {
-        return useSettingsStore().settingsStorageLocal
-      },
-      set(value: boolean) {
-        this.update({ settingsStorageLocal: value })
-      },
-    },
-    settingsSaveDelay: {
-      get(): number {
-        return useSettingsStore().settingsSaveDelay
-      },
-      set(value: number) {
-        if (isFinite(value) && value >= 0) {
-          this.update({ settingsSaveDelay: value })
-        }
-      },
-    },
-    cacheStorageLocal: {
-      get(): boolean {
-        return useSettingsStore().cacheStorageLocal
-      },
-      set(value: boolean) {
-        this.update({ cacheStorageLocal: value })
-      },
-    },
-    cacheSaveDelay: {
-      get(): number {
-        return useSettingsStore().cacheSaveDelay
-      },
-      set(value: number) {
-        if (isFinite(value) && value >= 0) {
-          this.update({ cacheSaveDelay: value })
-        }
-      },
-    },
+})
+
+let cacheSaveDelay = computed({
+  get(): number {
+    return _cacheSaveDelay.value
   },
-  methods: {
-    reset() {
-      useSettingsStore().reset()
-    },
-    update(data: Partial<SettingsState>) {
-      useSettingsStore().update(data)
-    },
+  set(value: number) {
+    if (isFinite(value) && value >= 0) {
+      _cacheSaveDelay.value = value
+    }
   },
 })
+
+function reset() {
+  useSettingsStore().reset()
+}
 </script>
