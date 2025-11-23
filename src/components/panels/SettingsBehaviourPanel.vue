@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2">
+  <div class="grid grid-cols-1 md:grid-cols-2">
     <div class="flex flex-row gap-1 items-center">
       <Switch v-model="behaviour.jobStart" />
       <Label>{{ $t('panel.settingsBehaviour.behaviourJobStart') }}</Label>

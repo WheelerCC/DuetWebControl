@@ -1,9 +1,10 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
     <div class="flex flex-col gap-1">
       <Label>{{ $t('panel.settingsMachine.babystepAmount', ['mm']) }}</Label>
       <Input v-model.number="internalBabystepAmount" type="number" step="any" min="0.001" />
     </div>
+
     <div class="flex flex-row gap-1 items-center">
       <Switch v-model="checkVersions" />
       <Label>{{ $t('panel.settingsMachine.checkVersions') }}</Label>
@@ -76,6 +77,7 @@
       <Switch v-model="groupTools" />
       <Label>{{ $t('panel.settingsAppearance.groupTools') }}</Label>
     </div>
+
     <div class="flex flex-row gap-1 items-center">
       <Switch v-model="singleBedControl" />
       <Label>{{ $t('panel.settingsAppearance.singleBedControl') }}</Label>

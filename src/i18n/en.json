@@ -558,7 +558,7 @@
       "errorSubDirectories": "The filament {0} contains sub-directories. Please delete them manually and try again."
     },
     "download": {
-      "title": "Downloading {0} @ {1}, {2}% complete",
+      "title": "Downloading {0} of {1}, {2}% complete",
       "message": "Please stand by while the file is being downloaded...",
       "success": "Download of {0} successful after {1}",
       "error": "Failed to download {0}"

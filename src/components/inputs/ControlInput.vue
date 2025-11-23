@@ -41,7 +41,7 @@
         </div>
       </ComboboxAnchor>
 
-      <ComboboxList class="max-h-[50vh] overflow-auto" :style="{ maxHeight: '50%' }">
+      <ComboboxList class="max-h-[50vh] overflow-auto">
         <ComboboxEmpty v-if="items.length === 0"> No presets found. </ComboboxEmpty>
 
         <ComboboxGroup v-if="items.length > 0">

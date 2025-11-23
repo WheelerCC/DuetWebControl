@@ -273,8 +273,7 @@ export const useSettingsStore = defineStore('settings', {
       // Load settings that are enabled by default
       if (this.enabledPlugins) {
         // TODO multi machine confusion
-        console.log('todo')
-        rootStore.loadDwcPlugins(rootStore.selectedMachine, this.enabledPlugins)
+        rootStore.loadDwcPlugins(this.enabledPlugins)
       }
 
       // Apply different webcam defaults in SBC mode

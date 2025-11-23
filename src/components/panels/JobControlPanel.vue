@@ -28,7 +28,7 @@
   </CodeBtn>
 
   <!-- todo not migrated menu yet -->
-  <v-menu v-if="thumbnails.some((thumbnail) => thumbnail.data !== null)" open-on-click offset-y>
+  <!-- <v-menu v-if="thumbnails.some((thumbnail) => thumbnail.data !== null)" open-on-click offset-y>
     <template #activator="{ props }">
       <v-btn v-bind="props" color="info" block :disabled="uiFrozen" class="mt-3">
         <v-icon class="mr-1"> mdi-image </v-icon>
@@ -53,7 +53,7 @@
         </v-carousel-item>
       </v-carousel>
     </v-card>
-  </v-menu>
+  </v-menu> -->
 </template>
 
 <script setup lang="ts">

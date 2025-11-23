@@ -374,7 +374,6 @@ const { trigger } = watchTriggerable(
 
       // Record time and deal wih expired temperature samples
       while (times.value.length && now - times.value[0] > maxSampleTime) {
-        console.log('deleting time, and one data from each dataset')
         times.value.shift()
         temps.value.forEach((data) => data.data!.shift())
       }

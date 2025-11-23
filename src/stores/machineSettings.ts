@@ -295,6 +295,24 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
     numMoveSteps: (state) => state[useRootStore().selectedMachine].moveSteps.default.length
   },
   actions: {
+    setUpdateInterval(updateInterval: number) {
+      this[useRootStore().selectedMachine].updateInterval = updateInterval
+    },
+    setRetryDelay(retryDelay: number) {
+      this[useRootStore().selectedMachine].retryDelay = retryDelay
+    },
+    setAjaxRetries(ajaxRetries: number) {
+      this[useRootStore().selectedMachine].ajaxRetries = ajaxRetries
+    },
+    setUpdateDelay(updateDelay: number) {
+      this[useRootStore().selectedMachine].updateDelay = updateDelay
+    },
+    setPingInterval(pingInterval: number) {
+      this[useRootStore().selectedMachine].pingInterval = pingInterval
+    },
+    setFileTransferRetryThreshold(fileTransferRetryThreshold: number) {
+      this[useRootStore().selectedMachine].fileTransferRetryThreshold = fileTransferRetryThreshold;
+    },
     setMoveFeedrate(moveFeedrate: number) {
       this[useRootStore().selectedMachine].moveFeedrate = moveFeedrate;
     },
@@ -477,15 +495,12 @@ export const useMachinesSettingsStore = defineStore('machinesSettings', {
       // Load DWC plugins
       if (mainSettings && mainSettings.enabledPlugins) {
         if (machineSettings && machineSettings.enabledPlugins) {
-          console.log('todo')
-          // /*await*/ dispatch("loadDwcPlugins", [...mainSettings.enabledPlugins, ...machineSettings.enabledPlugins], { root: true });
+          useRootStore().loadDwcPlugins([...mainSettings.enabledPlugins, ...machineSettings.enabledPlugins])
         } else {
-          console.log('todo')
-          // /*await*/ dispatch("loadDwcPlugins", mainSettings.enabledPlugins, { root: true });
+          useRootStore().loadDwcPlugins(mainSettings.enabledPlugins)
         }
       } else if (machineSettings && machineSettings.enabledPlugins) {
-        console.log('todo')
-        // /*await*/ dispatch("loadDwcPlugins", machineSettings.enabledPlugins, { root: true });
+          useRootStore().loadDwcPlugins(machineSettings.enabledPlugins)
       }
     },
     // Convert mutations

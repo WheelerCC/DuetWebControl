@@ -1,34 +1,32 @@
 <template>
-  <v-card outlined>
-    <v-card-title>
+  <CardHeader>
+    <CardTitle class="flex flex-row gap-2">
       {{ $t('panel.settingsElectronics.caption') }}
 
-      <v-spacer />
-
-      <a v-show="isConnected" href="javascript:void(0)" @click="diagnostics">
-        <v-icon small>mdi-lifebuoy</v-icon>
+      <a
+        v-show="isConnected"
+        href="javascript:void(0)"
+        @click="diagnostics"
+        class="ml-auto flex flex-row gap-2 items-center"
+      >
+        <LifeBuoy :size="18" />
         {{ $t('panel.settingsElectronics.diagnostics') }}
       </a>
-    </v-card-title>
-
-    <v-simple-table v-if="isConnected">
-      <thead>
-        <tr>
-          <th>
-            {{ 'Product' }}
-          </th>
-          <th>
-            {{ 'Short Name' }}
-          </th>
-          <th>
-            {{ 'Version' }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
+    </CardTitle>
+  </CardHeader>
+  <CardContent class="flex flex-col gap-5">
+    <Table v-if="isConnected">
+      <TableHeader>
+        <TableRow>
+          <TableHead>{{ 'Product' }}</TableHead>
+          <TableHead>{{ 'Short Name' }}</TableHead>
+          <TableHead>{{ 'Version' }}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         <!-- Boards -->
-        <tr v-for="(board, index) in boards" :key="index">
-          <td>
+        <TableRow v-for="(board, index) in internalBoards" :key="index">
+          <TableCell>
             {{ board.name }}
             <v-tooltip v-if="board.canAddress" location="bottom">
               <template #activator="{ props }">
@@ -38,123 +36,111 @@
                 {{ $t('panel.settingsElectronics.canAddress', [board.canAddress]) }}
               </span>
             </v-tooltip>
-          </td>
-          <td>
+          </TableCell>
+          <TableCell>
             {{ board.shortName }}
-          </td>
-          <td :title="$t('panel.settingsAbout.buildDateTime', [board.firmwareDate])">
+          </TableCell>
+          <TableCell :title="$t('panel.settingsAbout.buildDateTime', [board.firmwareDate])">
             {{ board.firmwareVersion }}
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
 
         <!-- WiFi Server-->
-        <tr v-if="wifiVersion !== null">
-          <td>Duet WiFi Server</td>
-          <td>
+        <TableRow v-if="wifiVersion !== null">
+          <TableCell>Duet WiFi Server</TableCell>
+          <TableCell>
             {{ $t('generic.noValue') }}
-          </td>
-          <td>
+          </TableCell>
+          <TableCell>
             {{ wifiVersion }}
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
 
         <!-- DSF-->
-        <tr
+        <TableRow
           v-if="dsfVersion !== null"
           :title="$t('panel.settingsAbout.buildDateTime', [dsfBuildDateTime])"
         >
-          <td>Duet Software Framework</td>
-          <td>DSF</td>
-          <td>
+          <TableCell>Duet Software Framework</TableCell>
+          <TableCell>DSF</TableCell>
+          <TableCell>
             {{ dsfVersion }}
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
 
         <!-- DWC -->
-        <tr>
-          <td>Duet Web Control</td>
-          <td>DWC</td>
-          <td :title="$t('panel.settingsAbout.buildDateTime', [buildDateTime])">
+        <TableRow>
+          <TableCell>Duet Web Control</TableCell>
+          <TableCell>DWC</TableCell>
+          <TableCell :title="$t('panel.settingsAbout.buildDateTime', [buildDateTime])">
             {{ dwcVersion }}
-          </td>
-        </tr>
-      </tbody>
-    </v-simple-table>
-    <v-card-text v-else>
-      {{ $t('panel.settingsElectronics.notConnected') }}
-    </v-card-text>
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
 
-    <upload-btn
+    <div v-else>
+      {{ $t('panel.settingsElectronics.notConnected') }}
+    </div>
+
+    <UploadBtn
       v-if="!isRestConnector || !isDuetFirmware"
-      class="my-3 d-flex justify-center"
-      target="update"
+      class="mx-auto w-full"
+      :target="UploadType.update"
       color="primary"
     />
-  </v-card>
+  </CardContent>
 </template>
 
-<script lang="ts">
-import { RestConnector } from '@duet3d/connectors'
-import { Board, NetworkInterfaceType } from '@duet3d/objectmodel'
+<script setup lang="ts">
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { NetworkInterfaceType } from '@duet3d/objectmodel'
 
 import { useRootStore } from '@/stores'
 import { useMachinesModelStore } from '@/stores/machineModel'
 import { useMachinesStore } from '@/stores/machines'
 import packageInfo from '../../../package.json'
 
-import { defineComponent } from 'vue'
+import router from '@/routes'
+import { LifeBuoy } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
+import { computed, ref } from 'vue'
+import UploadBtn, { UploadType } from '../buttons/UploadBtn.vue'
+import { CardContent, CardHeader, CardTitle } from '../ui/card'
 
-export default defineComponent({
-  compatConfig: {
-    MODE: 2,
-  },
-  data() {
-    return {
-      buildDateTime: process.env.BUILD_DATETIME,
-      dwcVersion: packageInfo.version,
-    }
-  },
-  computed: {
-    isConnected(): boolean {
-      return useRootStore().isConnected
-    },
-    isRestConnector(): boolean {
-      return useMachinesStore().connector instanceof RestConnector
-    },
-    boards(): Board[] {
-      return useMachinesModelStore().boards.filter((board) => board !== null) as Board[]
-    },
-    isDuetFirmware(): boolean {
-      return this.boards.some(
-        (board) => !board.canAddress && board.firmwareFileName.startsWith('Duet'),
-      )
-    },
-    dsfVersion(): string | null {
-      return useMachinesModelStore().sbc?.dsf.version ?? null
-    },
-    dsfBuildDateTime(): string | null {
-      return useMachinesModelStore().sbc?.dsf.buildDateTime ?? null
-    },
-    wifiVersion(): string | null {
-      return (
-        useMachinesModelStore().network.interfaces.find(
-          (iface) => iface.type === NetworkInterfaceType.wifi,
-        )?.firmwareVersion ?? null
-      )
-    },
-  },
-  methods: {
-    async diagnostics() {
-      await useMachinesStore().sendCode('M122')
-      await this.$router.push('/Console')
-    },
-  },
-})
-</script>
+let buildDateTime = ref(process.env.BUILD_DATETIME)
+let dwcVersion = ref(packageInfo.version)
 
-<style scoped>
-th {
-  padding: 0 16px;
-  text-align: left;
+let { isConnected } = storeToRefs(useRootStore())
+let { isRestConnector } = storeToRefs(useMachinesStore())
+let { boards, sbc, network } = storeToRefs(useMachinesModelStore())
+
+let internalBoards = computed(() => boards.value.filter((board) => board !== null))
+
+let isDuetFirmware = computed(() =>
+  internalBoards.value.some(
+    (board) => !board.canAddress && board.firmwareFileName.startsWith('Duet'),
+  ),
+)
+
+let dsfVersion = computed(() => sbc.value?.dsf.version ?? null)
+let dsfBuildDateTime = computed(() => sbc.value?.dsf.buildDateTime ?? null)
+
+let wifiVersion = computed(
+  () =>
+    network.value.interfaces.find((iface) => iface.type === NetworkInterfaceType.wifi)
+      ?.firmwareVersion ?? null,
+)
+
+async function diagnostics() {
+  await useMachinesStore().sendCode('M122')
+  await router.push('/Console')
 }
-</style>
+</script>

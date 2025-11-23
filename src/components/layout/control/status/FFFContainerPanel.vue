@@ -3,6 +3,7 @@
     <Card class="rounded-md">
       <StatusPanel />
     </Card>
+
     <ToolsPanel />
 
     <Card class="rounded-md gap-2">

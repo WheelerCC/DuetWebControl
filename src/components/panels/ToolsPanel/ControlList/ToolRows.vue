@@ -22,7 +22,7 @@
               {{ tool.name || $t('panel.tools.tool', [tool.number]) }}
             </div>
           </a>
-          <v-menu v-else offset-y auto>
+          <!-- <v-menu v-else offset-y auto>
             <template #activator="{ on }">
               <a href="javascript:void(0)" v-on="on" class="flex flex-row gap-2 items-center">
                 <Spinner v-if="isCollapsedToolBusy(tool)" indeterminate />
@@ -30,7 +30,7 @@
                 <span class="text-nowrap">
                   {{ tool.name || $t('panel.tools.tool', [tool.number]) }}
                 </span>
-                <v-icon small>mdi-menu-down</v-icon>
+                <ChevronDown />
               </a>
             </template>
 
@@ -50,14 +50,14 @@
                 </span>
               </div>
             </div>
-          </v-menu>
+          </v-menu> -->
 
           <span class="text-xs text-nowrap">
             T{{ tool.number }}
 
             <template v-if="canLoadFilament(tool)">
               -
-              <v-menu v-if="getFilament(tool)" offset-y auto :disabled="disabled">
+              <!-- <v-menu v-if="getFilament(tool)" offset-y auto :disabled="disabled">
                 <template #activator="{ on }">
                   <a
                     href="javascript:void(0)"
@@ -97,7 +97,7 @@
                 @click="showFilamentDialog(tool, true)"
               >
                 {{ $t('panel.tools.loadFilament') }}
-              </a>
+              </a> -->
             </template>
           </span>
         </div>
@@ -218,10 +218,7 @@ import { displaySensorValue } from '@/utils/display'
 import { DisconnectedError, getErrorMessage } from '@/utils/errors'
 import { log, LogType } from '@/utils/logging'
 import {
-  ArrowDownUpIcon,
-  ArrowUpIcon,
   createLucideIcon,
-  PencilIcon,
   RotateCcwIcon,
   RotateCwIcon,
   SparkleIcon,

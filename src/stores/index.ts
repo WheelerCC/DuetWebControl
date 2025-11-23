@@ -425,7 +425,7 @@ export const useRootStore = defineStore('root', {
      * @param context Action context
      * @param pluginList List of plugin IDs to load
      */
-    async loadDwcPlugins(machineName: string, pluginList: Array<string>) {
+    async loadDwcPlugins(pluginList: Array<string>) {
       let rootStore = useRootStore()
       let settingsStore = useSettingsStore()
       let machinesStore = useMachinesStore()

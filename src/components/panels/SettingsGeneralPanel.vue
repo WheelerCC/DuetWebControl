@@ -11,7 +11,7 @@
       </a>
     </CardTitle>
   </CardHeader>
-  <CardContent class="grid grid-cols-1 sm:grid-cols-2">
+  <CardContent class="grid grid-cols-1 md:grid-cols-2">
     <div class="flex flex-row gap-2">
       <Switch v-model:model-value="settingsStorageLocal" :disabled="!localStorageSupported" />
       <Label> {{ $t('panel.settingsGeneral.settingsStorageLocal') }} </Label>

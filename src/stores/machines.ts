@@ -10,9 +10,11 @@ import {
   OnProgressCallback,
   OperationCancelledError,
   OperationFailedError,
+  PollConnector,
+  RestConnector,
 } from '@duet3d/connectors'
 import { Plugin } from '@duet3d/objectmodel'
-import { markRaw, reactive } from 'vue'
+import { markRaw, reactive, ref } from 'vue'
 
 import Plugins, { checkVersion, loadDwcResources } from '@/plugins'
 import Events from '@/utils/events'
@@ -168,6 +170,12 @@ export const useMachinesStore = defineStore('machines', {
     filesBeingChanged: (state) => state[useRootStore().selectedMachine].filesBeingChanged,
     transferringFiles: (state) => state[useRootStore().selectedMachine].transferringFiles,
     connector: (state) => state[useRootStore().selectedMachine]?._connector ?? null,
+    isRestConnector(): boolean {
+      return this.connector instanceof RestConnector
+    },
+    isPollConnector(): boolean {
+      return this.connector instanceof PollConnector
+    },
     // Remove any getters that return state under the same name (eg. firstName: (state) => state.firstName), these are not necessary as you can access any state directly from the store instance
     // If you need to access other getters, they are on this instead of using the second argument. Remember that if you are using this then you will have to use a regular function instead of an arrow function. Also note that you will need to specify a return type because of TS limitations, see here for more details
     // If using rootState or rootGetters arguments, replace them by importing the other store directly, or if they still exist in Vuex then access them directly from Vuex
@@ -933,7 +941,7 @@ export const useMachinesStore = defineStore('machines', {
         throw new OperationFailedError('download is not available in default machine module')
       }
 
-      const files = reactive([] as FileTransferItem[]),
+      const files = ref([] as FileTransferItem[]),
         cancellationToken: CancellationToken = { cancel() {} }
       const showProgress = payload.showProgress !== undefined ? payload.showProgress : true
       const showSuccess = payload.showSuccess !== undefined ? payload.showSuccess : true
@@ -945,7 +953,7 @@ export const useMachinesStore = defineStore('machines', {
       // Prepare the arguments and tell listeners that an upload is about to start
       let notification: Notification | null = null
       if (payload.filename) {
-        files.push({
+        files.value.push({
           filename: payload.filename,
           content: null,
           type: payload.type || 'json',
@@ -981,7 +989,7 @@ export const useMachinesStore = defineStore('machines', {
         this.setMultiFileTransfer(true)
 
         for (const file of payload.files) {
-          files.push({
+          files.value.push({
             filename: file,
             content: null,
             type: payload.type || 'blob',
@@ -1006,37 +1014,37 @@ export const useMachinesStore = defineStore('machines', {
 
       // Download the file(s)
       try {
-        for (let i = 0; i < files.length; i++) {
-          const item = files[i],
-            filename = item.filename,
-            type = item.type
+        for (let i = 0; i < files.value.length; i++) {
+          let {filename, type, startTime, size, progress, speed, retry, content, error} = files[i]
+
+          console.log(`Downloading ${filename}, ${type}`)
           try {
             // Wait for download to finish
-            item.startTime = new Date()
+            startTime = new Date()
             const response = await this.connector!.download(
               filename,
               type,
               cancellationToken,
-              (loaded, total, retry) => {
-                if (item.startTime === null) {
-                  item.startTime = new Date()
+              (_loaded, _total, _retry) => {
+                if (startTime === null) {
+                  startTime = new Date()
                 }
-                item.size = total
-                item.progress = loaded / total
-                item.speed = loaded / ((new Date().getTime() - item.startTime.getTime()) / 1000)
-                item.retry = retry
+                size = _total
+                progress = _loaded / _total
+                speed = _loaded / ((new Date().getTime() - startTime.getTime()) / 1000)
+                retry = _retry
                 if (notification && notification.onProgress) {
-                  notification.onProgress(loaded, total, item.speed)
+                  notification.onProgress(_loaded, _total, speed)
                 }
               },
               rawPath,
             )
-            item.progress = 1
+            progress = 1
 
             // Show success message
             if (payload.filename && showSuccess) {
               const secondsPassed = Math.round(
-                (new Date().getTime() - item.startTime.getTime()) / 1000,
+                (new Date().getTime() - startTime.getTime()) / 1000,
               )
               log(
                 LogType.success,
@@ -1055,14 +1063,14 @@ export const useMachinesStore = defineStore('machines', {
               filename,
               type,
               num: i,
-              count: files.length,
+              count: files.value.length,
             })
 
             // Return the response if a single file was requested
             if (payload.filename) {
               return response
             }
-            item.content = response
+            content = response
           } catch (e) {
             // Failed to download a file, emit an event
             eventbus.$emit(Events.fileDownloadError, {
@@ -1084,7 +1092,7 @@ export const useMachinesStore = defineStore('machines', {
             }
 
             // Rethrow the error so the caller is notified
-            item.error = e
+            error = e
             throw e
           }
         }
@@ -1096,7 +1104,7 @@ export const useMachinesStore = defineStore('machines', {
           this.setMultiFileTransfer(false)
         }
       }
-      return files
+      return files.value
     },
 
     /**

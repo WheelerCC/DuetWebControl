@@ -1,40 +1,52 @@
 <template>
   <template v-if="singleControl && firstHeater !== null">
+    <!-- TODO I haven't tested this variant -->
     <!-- Single Heater Control-->
 
     <!-- Heater item name -->
-    HELLO HELLO
-    <v-menu bottom offset-y :disabled="disabled">
-      <template #activator="{ props }">
+    <DropdownMenu>
+      <DropdownMenuTrigger as-child>
+        <Button variant="outline"> Open </Button>
         <a v-bind="props" href="javascript:void(0)" :classes="{ disabled: disabled }">
           {{ singleHeaterCaption }}
           <ChevronDown :size="18" />
         </a>
-      </template>
-      <v-list>
-        <div @click="selectHeater(-1, null, -1)">
-          <component :is="props.type === 'bed' ? HeaterIcon : AirVentIcon" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent class="w-56" align="start">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuItem>
+            Profile
+            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
 
-          {{ props.type === 'bed' ? $t('panel.tools.allBeds') : $t('panel.tools.allChambers') }}
-        </div>
-
-        <template v-for="{ heater, heaterIndex, index } in heaterItems">
-          <div
-            v-if="heater !== null"
-            :key="index"
-            @click="selectHeater(index, heater, heaterIndex)"
-          >
+        <div class="flex flex-col">
+          <div @click="selectHeater(-1, null, -1)">
             <component :is="props.type === 'bed' ? HeaterIcon : AirVentIcon" />
-
-            {{
-              props.type === 'bed'
-                ? $t('panel.tools.bed', [index])
-                : $t('panel.tools.chamber', [index])
-            }}
+            {{ props.type === 'bed' ? $t('panel.tools.allBeds') : $t('panel.tools.allChambers') }}
           </div>
-        </template>
-      </v-list>
-    </v-menu>
+
+          <template v-for="{ heater, heaterIndex, index } in heaterItems">
+            <div
+              v-if="heater !== null"
+              :key="index"
+              @click="selectHeater(index, heater, heaterIndex)"
+            >
+              <component :is="props.type === 'bed' ? HeaterIcon : AirVentIcon" />
+
+              {{
+                props.type === 'bed'
+                  ? $t('panel.tools.bed', [index])
+                  : $t('panel.tools.chamber', [index])
+              }}
+            </div>
+          </template>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+
+    <!-- <v-menu bottom offset-y :disabled="disabled"> </v-menu> -->
 
     <!-- Heater name -->
     <th v-if="selectedHeater !== null">
@@ -148,6 +160,17 @@ import { displaySensorValue } from '@/utils/display'
 import { AirVentIcon, ChevronDown, HeaterIcon } from 'lucide-vue-next'
 import { WritableDeep } from 'type-fest'
 import { useI18n } from 'vue-i18n'
+
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const props = defineProps({
   type: {
