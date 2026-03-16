@@ -1,0 +1,6 @@
+[submodule "src/plugins/BtnCmd"]
+	path = src/plugins/BtnCmd
+	url = git@github.com:MintyTrebor/BtnCmd.git
+[submodule "src/plugins/hmi-wizards"]
+	path = src/plugins/HmiWizards
+	url = git@github.com:WheelerCC/hmi-wizards.git

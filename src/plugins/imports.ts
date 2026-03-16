@@ -6,6 +6,16 @@ import DwcPlugin from "./DwcPlugin";
 
 export default initCollection(DwcPlugin, [
 	{
+        id: "BtnCmd",
+        name: "BtnCmd",
+        author: "Minty Trebor",
+        version: "01.03.08",
+        loadDwcResources: () => import(
+            /* webpackChunkName: "BtnCmd" */
+            "./BtnCmd/src/index"
+        )
+    },
+	{
         id: "GCodeViewer",
         name: "G-Code Viewer",
         author: "Juan Rosario",
@@ -23,6 +33,16 @@ export default initCollection(DwcPlugin, [
         loadDwcResources: () => import(
             /* webpackChunkName: "HeightMap" */
             "./HeightMap/index"
+        )
+    },
+	{
+        id: "HmiWizards",
+        name: "HmiWizards",
+        author: "William Wheeler",
+        version: "0.0.1",
+        loadDwcResources: () => import(
+            /* webpackChunkName: "HmiWizards" */
+            "./HmiWizards/index"
         )
     },
 	{
